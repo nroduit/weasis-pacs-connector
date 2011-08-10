@@ -5,7 +5,7 @@
 	<artifactId>weasis-pacs-connector</artifactId>
 	<packaging>war</packaging>
 	<name>Weasis PACS Connector</name>
-	<version>0.5.1-SNAPSHOT</version>
+	<version>0.5.2-SNAPSHOT</version>
 
 	<scm>
 		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_dcm4chee/trunk/weasis-pacs-connector</connection>
@@ -58,7 +58,7 @@
 		<dependency>
 			<groupId>org.weasis</groupId>
 			<artifactId>weasis-dicom-operations</artifactId>
-			<version>0.5.1-SNAPSHOT</version>
+			<version>0.5.1</version>
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
