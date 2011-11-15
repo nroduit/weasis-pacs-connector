@@ -11,15 +11,8 @@
 
 package org.weasis.servlet;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
@@ -29,7 +22,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dcm4che.dicom.DicomNode;
@@ -40,18 +32,14 @@ import org.weasis.launcher.wado.Study;
 import org.weasis.launcher.wado.WadoParameters;
 import org.weasis.launcher.wado.WadoQuery;
 import org.weasis.launcher.wado.WadoQueryException;
+import org.weasis.launcher.wado.xml.Base64;
 import org.weasis.launcher.wado.xml.FileUtil;
 
-public class Weasis_Launcher extends HttpServlet {
-    private static final long serialVersionUID = 8946852726380985736L;
+public class BuildManifest extends HttpServlet {
     /**
      * Logger for this class
      */
-    private static final Logger logger = LoggerFactory.getLogger(Weasis_Launcher.class);
-
-    static final String DEFAULT_JNLP_TEMPLATE_NAME = "launcher.jnlp";
-    static final String JNLP_EXTENSION = ".jnlp";
-    static final String JNLP_MIME_TYPE = "application/x-java-jnlp-file";
+    private static final Logger logger = LoggerFactory.getLogger(BuildManifest.class);
 
     static final String PatientID = "patientID";
     static final String StudyUID = "studyUID";
@@ -64,7 +52,7 @@ public class Weasis_Launcher extends HttpServlet {
     /**
      * Constructor of the object.
      */
-    public Weasis_Launcher() {
+    public BuildManifest() {
         super();
     }
 
@@ -76,45 +64,6 @@ public class Weasis_Launcher extends HttpServlet {
      */
     @Override
     public void init() throws ServletException {
-        logger.debug("init() - getServletContext : {} ", getServletConfig().getServletContext());
-        logger.debug("init() - getRealPath : {}", getServletConfig().getServletContext().getRealPath("/"));
-        try {
-            URL config = this.getClass().getResource("/weasis-pacs-connector.properties");
-            if (config == null) {
-                config = this.getClass().getResource("/weasis-connector-default.properties");
-                logger.info("Default configuration file : {}", config);
-            } else {
-                logger.info("External configuration file : {}", config);
-            }
-            if (config != null) {
-                pacsProperties.load(config.openStream());
-                String requests = pacsProperties.getProperty("request.ids", null);
-                if (requests == null) {
-                    logger.error("No request ID is allowed!");
-                } else {
-                    for (String id : requests.split(",")) {
-                        pacsProperties.put(id, "true");
-                    }
-                }
-            } else {
-                logger.error("Cannot find  a configuration file for weasis-pacs-connector");
-            }
-            URL jnlpTemplate = this.getClass().getResource("/weasis-jnlp.xml");
-            if (jnlpTemplate == null) {
-                jnlpTemplate = this.getClass().getResource("/weasis-jnlp-default.xml");
-                logger.info("Default  Weasis template  : {}", jnlpTemplate);
-            } else {
-                logger.info("External Weasis template : {}", jnlpTemplate);
-            }
-            if (jnlpTemplate == null) {
-                logger.error("Cannot find  JNLP template");
-            } else {
-                pacsProperties.put("weasis.jnlp", jnlpTemplate.toString());
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -156,7 +105,6 @@ public class Weasis_Launcher extends HttpServlet {
         }
         try {
             logRequestInfo(request);
-            response.setContentType(JNLP_MIME_TYPE);
 
             String baseURL = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
             System.setProperty("server.base.url", baseURL);
@@ -187,8 +135,7 @@ public class Weasis_Launcher extends HttpServlet {
                 // If the web server requires an authentication (pacs.web.login=user:pwd)
                 String webLogin = pacsProperties.getProperty("pacs.web.login", null);
                 if (webLogin != null) {
-                    webLogin =
-                        new String(org.apache.commons.codec.binary.Base64.encodeBase64(webLogin.trim().getBytes()));
+                    webLogin = Base64.encodeBytes(webLogin.trim().getBytes());
                 }
                 boolean onlysopuid = Boolean.valueOf(pacsProperties.getProperty("wado.onlysopuid"));
                 String addparams = pacsProperties.getProperty("wado.addparams", "");
@@ -206,52 +153,25 @@ public class Weasis_Launcher extends HttpServlet {
                 }
                 WadoQuery wadoQuery =
                     new WadoQuery(patients, wado, pacsProperties.getProperty("pacs.db.encoding", "utf-8"));
-                ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-                WadoQuery.gzipCompress(new ByteArrayInputStream(wadoQuery.toString().getBytes()), outStream);
-                wadoQueryFile = Base64.encodeBase64String(outStream.toByteArray());
+                int option;
+                if (request.getParameter("gzip") != null) {
+                    option = Base64.GZIP;
+                    response.setContentType("application/x-gzip");
+                } else {
+                    option = Base64.NO_OPTIONS;
+                    response.setContentType("text/xml");
+                }
+                wadoQueryFile = Base64.encodeBytes(wadoQuery.toString().getBytes(), option);
+                PrintWriter outWriter = response.getWriter();
+                outWriter.print(wadoQueryFile);
+                outWriter.close();
 
             } catch (WadoQueryException e) {
                 logger.error(e.getMessage());
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 return;
             }
 
-            InputStream is = null;
-            try {
-                URL jnlpTemplate = new URL((String) pacsProperties.get("weasis.jnlp"));
-                is = jnlpTemplate.openStream();
-                BufferedReader dis = new BufferedReader(new InputStreamReader(is));
-                // response.setContentLength(launcherStr.length());
-                String weasisBaseURL = pacsProperties.getProperty("weasis.base.url", baseURL);
-
-                PrintWriter outWriter = response.getWriter();
-                String s;
-                while ((s = dis.readLine()) != null) {
-                    if (s.trim().equals("</resources>")) {
-                        outWriter.println(s);
-                        outWriter.println("\t<application-desc main-class=\"org.weasis.launcher.WebstartLauncher\">");
-                        outWriter.print("\t\t<argument>$dicom:get -i ");
-                        outWriter.print(wadoQueryFile);
-                        outWriter.println("</argument>");
-                        outWriter.println("\t</application-desc>");
-                    } else {
-                        s = s.replace("${weasis.base.url}", weasisBaseURL);
-                        outWriter.println(s);
-                    }
-                }
-                outWriter.close();
-
-            } catch (MalformedURLException mue) {
-                mue.printStackTrace();
-            } catch (IOException ioe) {
-                ioe.printStackTrace();
-            } finally {
-                try {
-                    is.close();
-                } catch (IOException ioe) {
-                    // just going to ignore this
-                }
-
-            }
         } catch (Exception e) {
             logger.error("doGet(HttpServletRequest, HttpServletResponse)", e);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -280,7 +200,7 @@ public class Weasis_Launcher extends HttpServlet {
     @Override
     protected void doHead(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
-            response.setContentType(JNLP_MIME_TYPE);
+            response.setContentType("text/xml");
 
         } catch (Exception e) {
             logger.error("doHead(HttpServletRequest, HttpServletResponse)", e);

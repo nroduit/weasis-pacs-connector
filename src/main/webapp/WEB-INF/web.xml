@@ -1,16 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee   http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
 
 	<servlet>
-		<servlet-name>Weasis_Launcher</servlet-name>
-		<servlet-class>org.weasis.servlet.Weasis_Launcher</servlet-class>
+		<servlet-name>WeasisLauncher</servlet-name>
+		<servlet-class>org.weasis.servlet.WeasisLauncher</servlet-class>
 	</servlet>
-
+	<servlet>
+		<servlet-name>BuildManifest</servlet-name>
+		<servlet-class>org.weasis.servlet.BuildManifest</servlet-class>
+	</servlet>
 	<servlet-mapping>
-		<servlet-name>Weasis_Launcher</servlet-name>
+		<servlet-name>WeasisLauncher</servlet-name>
 		<url-pattern>/viewer.jnlp</url-pattern>
 	</servlet-mapping>
-
+	<servlet-mapping>
+		<servlet-name>BuildManifest</servlet-name>
+		<url-pattern>/manifest</url-pattern>
+	</servlet-mapping>
 </web-app>
