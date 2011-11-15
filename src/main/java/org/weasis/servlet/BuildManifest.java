@@ -11,11 +11,14 @@
 
 package org.weasis.servlet;
 
+import java.io.Closeable;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
+import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -46,8 +49,6 @@ public class BuildManifest extends HttpServlet {
     static final String AccessionNumber = "accessionNumber";
     static final String SeriesUID = "seriesUID";
     static final String ObjectUID = "objectUID";
-
-    static final Properties pacsProperties = new Properties();
 
     /**
      * Constructor of the object.
@@ -86,6 +87,7 @@ public class BuildManifest extends HttpServlet {
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        Properties pacsProperties = WeasisLauncher.pacsProperties;
         // Test if this client is allowed
         String hosts = pacsProperties.getProperty("hosts.allow");
         if (hosts != null && !hosts.trim().equals("")) {
@@ -103,6 +105,7 @@ public class BuildManifest extends HttpServlet {
                 return;
             }
         }
+
         try {
             logRequestInfo(request);
 
@@ -124,55 +127,61 @@ public class BuildManifest extends HttpServlet {
             String componentAET = pacsProperties.getProperty("aet", "WEASIS");
             List<Patient> patients = getPatientList(request, dicomSource, componentAET);
 
-            String wadoQueryFile = "";
-
             if (patients == null || patients.size() < 1) {
                 logger.warn("No data has been found!");
                 response.sendError(HttpServletResponse.SC_NO_CONTENT, "No data has been found!");
                 return;
             }
-            try {
-                // If the web server requires an authentication (pacs.web.login=user:pwd)
-                String webLogin = pacsProperties.getProperty("pacs.web.login", null);
-                if (webLogin != null) {
-                    webLogin = Base64.encodeBytes(webLogin.trim().getBytes());
-                }
-                boolean onlysopuid = Boolean.valueOf(pacsProperties.getProperty("wado.onlysopuid"));
-                String addparams = pacsProperties.getProperty("wado.addparams", "");
-                String overrideTags = pacsProperties.getProperty("wado.override.tags", null);
-                String httpTags = pacsProperties.getProperty("wado.httpTags", null);
 
-                WadoParameters wado = new WadoParameters(wadoQueriesURL, onlysopuid, addparams, overrideTags, webLogin);
-                if (httpTags != null && !httpTags.trim().equals("")) {
-                    for (String tag : httpTags.split(",")) {
-                        String[] val = tag.split(":");
-                        if (val.length == 2) {
-                            wado.addHttpTag(val[0].trim(), val[1].trim());
-                        }
+            // If the web server requires an authentication (pacs.web.login=user:pwd)
+            String webLogin = pacsProperties.getProperty("pacs.web.login", null);
+            if (webLogin != null) {
+                webLogin = Base64.encodeBytes(webLogin.trim().getBytes());
+            }
+            boolean onlysopuid = Boolean.valueOf(pacsProperties.getProperty("wado.onlysopuid"));
+            String addparams = pacsProperties.getProperty("wado.addparams", "");
+            String overrideTags = pacsProperties.getProperty("wado.override.tags", null);
+            String httpTags = pacsProperties.getProperty("wado.httpTags", null);
+
+            WadoParameters wado = new WadoParameters(wadoQueriesURL, onlysopuid, addparams, overrideTags, webLogin);
+            if (httpTags != null && !httpTags.trim().equals("")) {
+                for (String tag : httpTags.split(",")) {
+                    String[] val = tag.split(":");
+                    if (val.length == 2) {
+                        wado.addHttpTag(val[0].trim(), val[1].trim());
                     }
                 }
-                WadoQuery wadoQuery =
-                    new WadoQuery(patients, wado, pacsProperties.getProperty("pacs.db.encoding", "utf-8"));
-                int option;
-                if (request.getParameter("gzip") != null) {
-                    option = Base64.GZIP;
-                    response.setContentType("application/x-gzip");
-                } else {
-                    option = Base64.NO_OPTIONS;
-                    response.setContentType("text/xml");
-                }
-                wadoQueryFile = Base64.encodeBytes(wadoQuery.toString().getBytes(), option);
-                PrintWriter outWriter = response.getWriter();
-                outWriter.print(wadoQueryFile);
-                outWriter.close();
+            }
+            WadoQuery wadoQuery =
+                new WadoQuery(patients, wado, pacsProperties.getProperty("pacs.db.encoding", "utf-8"));
 
-            } catch (WadoQueryException e) {
-                logger.error(e.getMessage());
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                return;
+            if (request.getParameter("gzip") != null) {
+                response.setContentType("application/x-gzip");
+                Closeable stream = null;
+                GZIPOutputStream gz = null;
+                try {
+                    stream = response.getOutputStream();
+                    gz = new GZIPOutputStream((OutputStream) stream);
+                    gz.write(wadoQuery.toString().getBytes());
+                } finally {
+                    if (gz != null) {
+                        gz.close();
+                    }
+                    if (stream != null) {
+                        stream.close();
+                    }
+                }
+            } else {
+                response.setContentType("text/xml");
+                PrintWriter outWriter = response.getWriter();
+                outWriter.print(wadoQuery.toString());
+                outWriter.close();
             }
 
         } catch (Exception e) {
+            logger.error("doGet(HttpServletRequest, HttpServletResponse)", e);
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        } catch (WadoQueryException e) {
             logger.error("doGet(HttpServletRequest, HttpServletResponse)", e);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
@@ -267,7 +276,7 @@ public class BuildManifest extends HttpServlet {
 
     private boolean isRequestIDAllowed(String id) {
         if (id != null) {
-            return Boolean.valueOf(pacsProperties.getProperty(id));
+            return Boolean.valueOf(WeasisLauncher.pacsProperties.getProperty(id));
         }
         return false;
     }
@@ -275,7 +284,7 @@ public class BuildManifest extends HttpServlet {
     private boolean isValidateAllIDs(String id, List<Patient> patients, HttpServletRequest request) {
         if (id != null && patients != null && patients.size() == 1) {
             Patient patient = patients.get(0);
-            String ids = pacsProperties.getProperty("request." + id);
+            String ids = WeasisLauncher.pacsProperties.getProperty("request." + id);
             if (ids != null) {
                 for (String val : ids.split(",")) {
                     if (val.trim().equals(PatientID)) {

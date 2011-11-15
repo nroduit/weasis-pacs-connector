@@ -5,6 +5,7 @@
 	<servlet>
 		<servlet-name>WeasisLauncher</servlet-name>
 		<servlet-class>org.weasis.servlet.WeasisLauncher</servlet-class>
+		 <load-on-startup>0</load-on-startup>
 	</servlet>
 	<servlet>
 		<servlet-name>BuildManifest</servlet-name>
