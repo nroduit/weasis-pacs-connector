@@ -53,10 +53,10 @@
 
 		<!-- Optional parameter. Allows to get plug-ins translations -->
 		<property name="weasis.i18n" value="${weasis.base.url}/weasis-i18n" />
+		
+        <!-- Optional Weasis Documentation, appears in the menu Help > User Manual -->
+        <!-- <property name="weasis.help.url" value="${weasis.base.url}/weasis-doc" /> -->
 
-		<!-- Optional Weasis Documentation
-		<property name="weasis.help.url" value="${weasis.base.url}/weasis-doc" />
-		 -->
 	</resources>
 
 </jnlp>
