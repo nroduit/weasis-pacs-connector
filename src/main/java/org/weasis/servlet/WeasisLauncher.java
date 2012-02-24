@@ -28,8 +28,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dcm4che.dicom.DicomNode;
-import org.weasis.dcm4che.dicom.Manifest;
+import org.weasis.dicom.BuildManifestDcmQR;
+import org.weasis.dicom.DicomNode;
 import org.weasis.launcher.wado.Patient;
 import org.weasis.launcher.wado.Series;
 import org.weasis.launcher.wado.Study;
@@ -37,7 +37,7 @@ import org.weasis.launcher.wado.WadoParameters;
 import org.weasis.launcher.wado.WadoQuery;
 import org.weasis.launcher.wado.WadoQueryException;
 import org.weasis.launcher.wado.xml.Base64;
-import org.weasis.launcher.wado.xml.FileUtil;
+import org.weasis.launcher.wado.xml.TagUtil;
 
 public class WeasisLauncher extends HttpServlet {
     private static final long serialVersionUID = 8946852726380985736L;
@@ -160,7 +160,7 @@ public class WeasisLauncher extends HttpServlet {
             for (Enumeration e = pacsProperties.propertyNames(); e.hasMoreElements();) {
                 String name = (String) e.nextElement();
                 pacsProperties.setProperty(name,
-                    FileUtil.substVars(pacsProperties.getProperty(name), name, null, pacsProperties));
+                    TagUtil.substVars(pacsProperties.getProperty(name), name, null, pacsProperties));
             }
 
             String wadoQueriesURL = pacsProperties.getProperty("pacs.wado.url", "http://localhost:8080/wado");
@@ -309,27 +309,27 @@ public class WeasisLauncher extends HttpServlet {
         List<Patient> patients = null;
         try {
             if (obj != null && isRequestIDAllowed(ObjectUID)) {
-                patients = Manifest.buildFromSopInstanceUID(dicomSource, componentAET, obj);
+                patients = BuildManifestDcmQR.buildFromSopInstanceUID(dicomSource, componentAET, obj);
                 if (!isValidateAllIDs(ObjectUID, patients, request)) {
                     return null;
                 }
             } else if (ser != null && isRequestIDAllowed(SeriesUID)) {
-                patients = Manifest.buildFromSeriesInstanceUID(dicomSource, componentAET, ser);
+                patients = BuildManifestDcmQR.buildFromSeriesInstanceUID(dicomSource, componentAET, ser);
                 if (!isValidateAllIDs(SeriesUID, patients, request)) {
                     return null;
                 }
             } else if (anb != null && isRequestIDAllowed(AccessionNumber)) {
-                patients = Manifest.buildFromStudyAccessionNumber(dicomSource, componentAET, anb);
+                patients = BuildManifestDcmQR.buildFromStudyAccessionNumber(dicomSource, componentAET, anb);
                 if (!isValidateAllIDs(AccessionNumber, patients, request)) {
                     return null;
                 }
             } else if (stu != null && isRequestIDAllowed(StudyUID)) {
-                patients = Manifest.buildFromStudyInstanceUID(dicomSource, componentAET, stu);
+                patients = BuildManifestDcmQR.buildFromStudyInstanceUID(dicomSource, componentAET, stu);
                 if (!isValidateAllIDs(StudyUID, patients, request)) {
                     return null;
                 }
             } else if (pat != null && isRequestIDAllowed(PatientID)) {
-                patients = Manifest.buildFromPatientID(dicomSource, componentAET, pat);
+                patients = BuildManifestDcmQR.buildFromPatientID(dicomSource, componentAET, pat);
             }
         } catch (Exception e) {
             e.printStackTrace();
