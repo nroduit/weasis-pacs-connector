@@ -54,7 +54,18 @@
 		<dependency>
 			<groupId>org.weasis</groupId>
 			<artifactId>weasis-dicom-operations</artifactId>
-			<version>0.7.0-SNAPSHOT</version>
+			<version>0.7.0</version>
+			<classifier>lite</classifier>
+			<exclusions>
+				<exclusion>
+					<groupId>dcm4che</groupId>
+					<artifactId>dcm4che-imageio</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>dcm4che</groupId>
+					<artifactId>dcm4che-imageio-rle</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
