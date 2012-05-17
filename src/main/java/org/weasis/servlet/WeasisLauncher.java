@@ -222,13 +222,11 @@ public class WeasisLauncher extends HttpServlet {
                 PrintWriter outWriter = response.getWriter();
                 String s;
                 while ((s = dis.readLine()) != null) {
-                    if (s.trim().equals("</resources>")) {
-                        outWriter.println(s);
-                        outWriter.println("\t<application-desc main-class=\"org.weasis.launcher.WebstartLauncher\">");
+                    if (s.trim().equals("</application-desc>")) {
                         outWriter.print("\t\t<argument>$dicom:get -i ");
                         outWriter.print(wadoQueryFile);
                         outWriter.println("</argument>");
-                        outWriter.println("\t</application-desc>");
+                        outWriter.println(s);
                     } else {
                         s = s.replace("${weasis.base.url}", weasisBaseURL);
                         outWriter.println(s);

@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!-- For adding new appenders, see online documentation at http://logback.qos.ch/manual/appenders.html -->
 <configuration>
 
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
 			<pattern>
-				%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+				%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n
 			</pattern>
 		</encoder>
 	</appender>
 
-	<logger name="org.weasis" level="INFO" />
-
-	<root level="INFO">
-		<appender-ref ref="INFO" />
+	<root>
+	<!-- if logging.level system variable is not set, it will assume the default value of INFO -->
+		<level value="${logging.level:-INFO}" />
+		<appender-ref ref="STDOUT" />
 	</root>
 
 </configuration>
