@@ -1,17 +1,16 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.weasis</groupId>
 	<artifactId>weasis-pacs-connector</artifactId>
 	<packaging>war</packaging>
 	<name>Weasis PACS Connector</name>
-	<version>0.5.2-SNAPSHOT</version>
+	<version>0.5.2</version>
 
 	<scm>
-		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_dcm4chee/trunk/weasis-pacs-connector</connection>
-		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_dcm4chee/trunk/weasis-pacs-connector</developerConnection>
-		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_dcm4chee/trunk/weasis-pacs-connector</url>
+		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_dcm4chee/tags/weasis-pacs-connector-0.5.2</connection>
+		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_dcm4chee/tags/weasis-pacs-connector-0.5.2</developerConnection>
+		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_dcm4chee/tags/weasis-pacs-connector-0.5.2</url>
 	</scm>
 
 	<repositories>
@@ -65,7 +64,7 @@
 		<dependency>
 			<groupId>org.weasis</groupId>
 			<artifactId>weasis-dicom-operations</artifactId>
-			<version>0.7.1-SNAPSHOT</version>
+			<version>0.7.1</version>
 			<classifier>lite</classifier>
 			<exclusions>
 				<exclusion>
