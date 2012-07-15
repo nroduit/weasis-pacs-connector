@@ -46,11 +46,17 @@
 
 	<application-desc main-class="org.weasis.launcher.WebstartLauncher">
 		<!-- Should be in property tag of resources. Workaround for having a fully trusted application with 
-			dynamic jnlp, http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6653241 -->
+			dynamic jnlp (only since weasis 1.1.2, for previous version see revision=16573), 
+			http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6653241 -->
 
 		<!-- Required parameter. Define the location of config.properties (the OSGI configuration and the list 
 			of plug-ins to install/start) -->
-		<argument>-VMPfelix.config.properties="${weasis.base.url}/weasis/conf/config.properties"</argument>
+		<argument>-VMPfelix.config.properties="${weasis.base.url}/weasis/conf/config.properties"
+		</argument>
+
+		<!-- Optional parameter. Define the location of ext-config.properties (extend/override config.properties) -->
+		<argument>-VMPfelix.extended.config.properties="${weasis.base.url}/weasis/conf/ext-config.properties"
+		</argument>
 
 		<!-- Required parameter. Define the code base of Weasis for the JNLP -->
 		<argument>-VMPweasis.codebase.url="${weasis.base.url}/weasis"</argument>
