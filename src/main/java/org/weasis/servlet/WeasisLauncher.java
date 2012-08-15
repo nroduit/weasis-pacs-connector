@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.BuildManifestDcmQR;
 import org.weasis.dicom.DicomNode;
+import org.weasis.dicom.util.EncryptUtils;
 import org.weasis.launcher.wado.Patient;
 import org.weasis.launcher.wado.Series;
 import org.weasis.launcher.wado.Study;
@@ -327,6 +328,12 @@ public class WeasisLauncher extends HttpServlet {
                     return null;
                 }
             } else if (pat != null && isRequestIDAllowed(PatientID)) {
+                String key = pacsProperties.getProperty("encrypt.patientID", null);
+                if (key != null) {
+                    String decrypt = EncryptUtils.decrypt(pat, key);
+                    logger.info("Decrypt patientID: {} to {}", pat, decrypt);
+                    pat = decrypt;
+                }
                 patients = BuildManifestDcmQR.buildFromPatientID(dicomSource, componentAET, pat);
             }
         } catch (Exception e) {
