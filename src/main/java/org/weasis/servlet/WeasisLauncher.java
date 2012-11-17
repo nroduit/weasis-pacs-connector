@@ -307,40 +307,53 @@ public class WeasisLauncher extends HttpServlet {
         String obj = request.getParameter(ObjectUID);
         List<Patient> patients = null;
         try {
+            String key = pacsProperties.getProperty("encrypt.key", null);
+
             if (obj != null && isRequestIDAllowed(ObjectUID)) {
-                patients = BuildManifestDcmQR.buildFromSopInstanceUID(dicomSource, componentAET, obj);
+                patients =
+                    BuildManifestDcmQR.buildFromSopInstanceUID(dicomSource, componentAET, decrypt(obj, key, ObjectUID));
                 if (!isValidateAllIDs(ObjectUID, patients, request)) {
                     return null;
                 }
             } else if (ser != null && isRequestIDAllowed(SeriesUID)) {
-                patients = BuildManifestDcmQR.buildFromSeriesInstanceUID(dicomSource, componentAET, ser);
+                patients =
+                    BuildManifestDcmQR.buildFromSeriesInstanceUID(dicomSource, componentAET,
+                        decrypt(ser, key, SeriesUID));
                 if (!isValidateAllIDs(SeriesUID, patients, request)) {
                     return null;
                 }
             } else if (anb != null && isRequestIDAllowed(AccessionNumber)) {
-                patients = BuildManifestDcmQR.buildFromStudyAccessionNumber(dicomSource, componentAET, anb);
+                patients =
+                    BuildManifestDcmQR.buildFromStudyAccessionNumber(dicomSource, componentAET,
+                        decrypt(anb, key, AccessionNumber));
                 if (!isValidateAllIDs(AccessionNumber, patients, request)) {
                     return null;
                 }
             } else if (stu != null && isRequestIDAllowed(StudyUID)) {
-                patients = BuildManifestDcmQR.buildFromStudyInstanceUID(dicomSource, componentAET, stu);
+                patients =
+                    BuildManifestDcmQR
+                        .buildFromStudyInstanceUID(dicomSource, componentAET, decrypt(stu, key, StudyUID));
                 if (!isValidateAllIDs(StudyUID, patients, request)) {
                     return null;
                 }
             } else if (pat != null && isRequestIDAllowed(PatientID)) {
-                String key = pacsProperties.getProperty("encrypt.patientID", null);
-                if (key != null) {
-                    String decrypt = EncryptUtils.decrypt(pat, key);
-                    logger.info("Decrypt patientID: {} to {}", pat, decrypt);
-                    pat = decrypt;
-                }
-                patients = BuildManifestDcmQR.buildFromPatientID(dicomSource, componentAET, pat);
+                patients =
+                    BuildManifestDcmQR.buildFromPatientID(dicomSource, componentAET, decrypt(pat, key, PatientID));
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         return patients;
+    }
+
+    private String decrypt(String message, String key, String level) {
+        if (key != null) {
+            String decrypt = EncryptUtils.decrypt(message, key);
+            logger.debug("Decrypt {}: {} to {}", new Object[] { level, message, decrypt });
+            return decrypt;
+        }
+        return message;
     }
 
     private boolean isRequestIDAllowed(String id) {
