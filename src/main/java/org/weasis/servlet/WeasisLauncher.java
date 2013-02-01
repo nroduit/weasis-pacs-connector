@@ -173,8 +173,9 @@ public class WeasisLauncher extends HttpServlet {
             List<Patient> patients = getPatientList(request, dicomSource, componentAET);
 
             String wadoQueryFile = "";
+            boolean acceptNoImage = Boolean.valueOf(pacsProperties.getProperty("accept.noimage"));
 
-            if (patients == null || patients.size() < 1) {
+            if ((patients == null || patients.size() < 1) && !acceptNoImage) {
                 logger.warn("No data has been found!");
                 response.sendError(HttpServletResponse.SC_NO_CONTENT, "No data has been found!");
                 return;
@@ -201,7 +202,8 @@ public class WeasisLauncher extends HttpServlet {
                     }
                 }
                 WadoQuery wadoQuery =
-                    new WadoQuery(patients, wado, pacsProperties.getProperty("pacs.db.encoding", "utf-8"));
+                    new WadoQuery(patients, wado, pacsProperties.getProperty("pacs.db.encoding", "utf-8"),
+                        acceptNoImage);
                 // ByteArrayOutputStream outStream = new ByteArrayOutputStream();
                 // WadoQuery.gzipCompress(new ByteArrayInputStream(wadoQuery.toString().getBytes()), outStream);
                 wadoQueryFile = Base64.encodeBytes(wadoQuery.toString().getBytes(), Base64.GZIP);

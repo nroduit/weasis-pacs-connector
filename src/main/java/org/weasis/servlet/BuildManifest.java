@@ -126,9 +126,10 @@ public class BuildManifest extends HttpServlet {
             int pacsPort = Integer.parseInt(pacsProperties.getProperty("pacs.port", "11112"));
             DicomNode dicomSource = new DicomNode(pacsAET, pacsHost, pacsPort);
             String componentAET = pacsProperties.getProperty("aet", "WEASIS");
+            boolean acceptNoImage = Boolean.valueOf(pacsProperties.getProperty("accept.noimage"));
             List<Patient> patients = getPatientList(request, dicomSource, componentAET);
 
-            if (patients == null || patients.size() < 1) {
+            if ((patients == null || patients.size() < 1) && acceptNoImage) {
                 logger.warn("No data has been found!");
                 response.sendError(HttpServletResponse.SC_NO_CONTENT, "No data has been found!");
                 return;
@@ -154,7 +155,7 @@ public class BuildManifest extends HttpServlet {
                 }
             }
             WadoQuery wadoQuery =
-                new WadoQuery(patients, wado, pacsProperties.getProperty("pacs.db.encoding", "utf-8"));
+                new WadoQuery(patients, wado, pacsProperties.getProperty("pacs.db.encoding", "utf-8"), acceptNoImage);
 
             if (request.getParameter("gzip") != null) {
                 response.setContentType("application/x-gzip");
