@@ -5,12 +5,12 @@
 	<artifactId>weasis-pacs-connector</artifactId>
 	<packaging>war</packaging>
 	<name>Weasis PACS Connector</name>
-	<version>0.5.3</version>
+	<version>0.5.4-SNAPSHOT</version>
 
 	<scm>
-		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_dcm4chee/tags/weasis-pacs-connector-0.5.3</connection>
-		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_dcm4chee/tags/weasis-pacs-connector-0.5.3</developerConnection>
-		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_dcm4chee/tags/weasis-pacs-connector-0.5.3</url>
+		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_dcm4chee/trunk/3.0.0</connection>
+		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_dcm4chee/trunk/3.0.0</developerConnection>
+		<url>https://dcm4che.svn.sourceforge.net/viewvc/dcm4che/weasis/weasis_dcm4chee/trunk/3.0.0</url>
 	</scm>
 
 	<repositories>
