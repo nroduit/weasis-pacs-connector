@@ -113,37 +113,38 @@ public class BuildManifest extends HttpServlet {
             String baseURL = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
             System.setProperty("server.base.url", baseURL);
 
+            Properties dynamicProps = (Properties) pacsProperties.clone();
             // Perform variable substitution for system properties.
             for (Enumeration e = pacsProperties.propertyNames(); e.hasMoreElements();) {
                 String name = (String) e.nextElement();
-                pacsProperties.setProperty(name,
+                dynamicProps.setProperty(name,
                     TagUtil.substVars(pacsProperties.getProperty(name), name, null, pacsProperties));
             }
 
-            String wadoQueriesURL = pacsProperties.getProperty("pacs.wado.url", "http://localhost:8080/wado");
-            String pacsAET = pacsProperties.getProperty("pacs.aet", "DCM4CHEE");
-            String pacsHost = pacsProperties.getProperty("pacs.host", "localhost");
-            int pacsPort = Integer.parseInt(pacsProperties.getProperty("pacs.port", "11112"));
+            String wadoQueriesURL = dynamicProps.getProperty("pacs.wado.url", "http://localhost:8080/wado");
+            String pacsAET = dynamicProps.getProperty("pacs.aet", "DCM4CHEE");
+            String pacsHost = dynamicProps.getProperty("pacs.host", "localhost");
+            int pacsPort = Integer.parseInt(dynamicProps.getProperty("pacs.port", "11112"));
             DicomNode dicomSource = new DicomNode(pacsAET, pacsHost, pacsPort);
-            String componentAET = pacsProperties.getProperty("aet", "WEASIS");
-            boolean acceptNoImage = Boolean.valueOf(pacsProperties.getProperty("accept.noimage"));
+            String componentAET = dynamicProps.getProperty("aet", "WEASIS");
+            boolean acceptNoImage = Boolean.valueOf(dynamicProps.getProperty("accept.noimage"));
             List<Patient> patients = getPatientList(request, dicomSource, componentAET);
 
-            if ((patients == null || patients.size() < 1) && acceptNoImage) {
+            if ((patients == null || patients.size() < 1) && !acceptNoImage) {
                 logger.warn("No data has been found!");
                 response.sendError(HttpServletResponse.SC_NO_CONTENT, "No data has been found!");
                 return;
             }
 
             // If the web server requires an authentication (pacs.web.login=user:pwd)
-            String webLogin = pacsProperties.getProperty("pacs.web.login", null);
+            String webLogin = dynamicProps.getProperty("pacs.web.login", null);
             if (webLogin != null) {
                 webLogin = Base64.encodeBytes(webLogin.trim().getBytes());
             }
-            boolean onlysopuid = Boolean.valueOf(pacsProperties.getProperty("wado.onlysopuid"));
-            String addparams = pacsProperties.getProperty("wado.addparams", "");
-            String overrideTags = pacsProperties.getProperty("wado.override.tags", null);
-            String httpTags = pacsProperties.getProperty("wado.httpTags", null);
+            boolean onlysopuid = Boolean.valueOf(dynamicProps.getProperty("wado.onlysopuid"));
+            String addparams = dynamicProps.getProperty("wado.addparams", "");
+            String overrideTags = dynamicProps.getProperty("wado.override.tags", null);
+            String httpTags = dynamicProps.getProperty("wado.httpTags", null);
 
             WadoParameters wado = new WadoParameters(wadoQueriesURL, onlysopuid, addparams, overrideTags, webLogin);
             if (httpTags != null && !httpTags.trim().equals("")) {
@@ -155,7 +156,7 @@ public class BuildManifest extends HttpServlet {
                 }
             }
             WadoQuery wadoQuery =
-                new WadoQuery(patients, wado, pacsProperties.getProperty("pacs.db.encoding", "utf-8"), acceptNoImage);
+                new WadoQuery(patients, wado, dynamicProps.getProperty("pacs.db.encoding", "utf-8"), acceptNoImage);
 
             if (request.getParameter("gzip") != null) {
                 response.setContentType("application/x-gzip");
