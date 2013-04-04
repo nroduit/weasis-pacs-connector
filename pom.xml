@@ -6,7 +6,9 @@
 	<packaging>war</packaging>
 	<name>Weasis PACS Connector</name>
 	<version>0.5.4-SNAPSHOT</version>
-
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
 	<scm>
 		<connection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_dcm4chee/trunk/3.0.0</connection>
 		<developerConnection>scm:svn:https://dcm4che.svn.sourceforge.net/svnroot/dcm4che/weasis/weasis_dcm4chee/trunk/3.0.0</developerConnection>
