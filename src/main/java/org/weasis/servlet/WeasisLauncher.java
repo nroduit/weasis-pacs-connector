@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
@@ -301,55 +302,136 @@ public class WeasisLauncher extends HttpServlet {
         logger.debug("logRequestInfo(HttpServletRequest) - getServletPath : {}", request.getServletPath());
     }
 
-    private List<Patient> getPatientList(HttpServletRequest request, DicomNode dicomSource, String componentAET) {
-        String pat = request.getParameter(PatientID);
-        String stu = request.getParameter(StudyUID);
-        String anb = request.getParameter(AccessionNumber);
-        String ser = request.getParameter(SeriesUID);
-        String obj = request.getParameter(ObjectUID);
-        List<Patient> patients = null;
-        try {
-            String key = pacsProperties.getProperty("encrypt.key", null);
+    static List<Patient> getPatientList(HttpServletRequest request, DicomNode dicomSource, String componentAET) {
+        String[] pat = request.getParameterValues(PatientID);
+        String[] stu = request.getParameterValues(StudyUID);
+        String[] anb = request.getParameterValues(AccessionNumber);
+        String[] ser = request.getParameterValues(SeriesUID);
+        String[] obj = request.getParameterValues(ObjectUID);
 
-            if (obj != null && isRequestIDAllowed(ObjectUID)) {
-                patients =
-                    BuildManifestDcmQR.buildFromSopInstanceUID(dicomSource, componentAET, decrypt(obj, key, ObjectUID));
-                if (!isValidateAllIDs(ObjectUID, patients, request)) {
+        final List<Patient> patientList = new ArrayList<Patient>();
+        try {
+            String key = WeasisLauncher.pacsProperties.getProperty("encrypt.key", null);
+
+            if (obj != null && obj.length > 0 && isRequestIDAllowed(ObjectUID)) {
+                for (String id : obj) {
+                    BuildManifestDcmQR.buildFromSopInstanceUID(patientList, dicomSource, componentAET,
+                        decrypt(id, key, ObjectUID));
+                }
+                if (!isValidateAllIDs(ObjectUID, key, patientList, pat, stu, anb, ser)) {
                     return null;
                 }
-            } else if (ser != null && isRequestIDAllowed(SeriesUID)) {
-                patients =
-                    BuildManifestDcmQR.buildFromSeriesInstanceUID(dicomSource, componentAET,
-                        decrypt(ser, key, SeriesUID));
-                if (!isValidateAllIDs(SeriesUID, patients, request)) {
+            } else if (ser != null && ser.length > 0 && isRequestIDAllowed(SeriesUID)) {
+                for (String id : ser) {
+                    BuildManifestDcmQR.buildFromSeriesInstanceUID(patientList, dicomSource, componentAET,
+                        decrypt(id, key, SeriesUID));
+                }
+                if (!isValidateAllIDs(SeriesUID, key, patientList, pat, stu, anb, null)) {
                     return null;
                 }
-            } else if (anb != null && isRequestIDAllowed(AccessionNumber)) {
-                patients =
-                    BuildManifestDcmQR.buildFromStudyAccessionNumber(dicomSource, componentAET,
-                        decrypt(anb, key, AccessionNumber));
-                if (!isValidateAllIDs(AccessionNumber, patients, request)) {
+            } else if (anb != null && anb.length > 0 && isRequestIDAllowed(AccessionNumber)) {
+                for (String id : anb) {
+                    BuildManifestDcmQR.buildFromStudyAccessionNumber(patientList, dicomSource, componentAET,
+                        decrypt(id, key, AccessionNumber));
+                }
+                if (!isValidateAllIDs(AccessionNumber, key, patientList, pat, null, null, null)) {
                     return null;
                 }
-            } else if (stu != null && isRequestIDAllowed(StudyUID)) {
-                patients =
-                    BuildManifestDcmQR
-                        .buildFromStudyInstanceUID(dicomSource, componentAET, decrypt(stu, key, StudyUID));
-                if (!isValidateAllIDs(StudyUID, patients, request)) {
+            } else if (stu != null && stu.length > 0 && isRequestIDAllowed(StudyUID)) {
+                for (String id : stu) {
+                    BuildManifestDcmQR.buildFromStudyInstanceUID(patientList, dicomSource, componentAET,
+                        decrypt(id, key, StudyUID));
+                }
+                if (!isValidateAllIDs(StudyUID, key, patientList, pat, null, null, null)) {
                     return null;
                 }
-            } else if (pat != null && isRequestIDAllowed(PatientID)) {
-                patients =
-                    BuildManifestDcmQR.buildFromPatientID(dicomSource, componentAET, decrypt(pat, key, PatientID));
+            } else if (pat != null && pat.length > 0 && isRequestIDAllowed(PatientID)) {
+                for (String id : pat) {
+                    BuildManifestDcmQR.buildFromPatientID(patientList, dicomSource, componentAET,
+                        decrypt(id, key, PatientID));
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return patients;
+        return patientList;
     }
 
-    private String decrypt(String message, String key, String level) {
+    private static boolean isValidateAllIDs(String id, String key, List<Patient> patientList, String[] pat,
+        String[] stu, String[] anb, String[] ser) {
+        if (id != null && patientList != null && patientList.size() > 0) {
+            String ids = pacsProperties.getProperty("request." + id);
+            if (ids != null) {
+                for (String val : ids.split(",")) {
+                    if (val.trim().equals(PatientID)) {
+                        if (pat == null) {
+                            return false;
+                        }
+                        List<String> list = new ArrayList<String>(pat.length);
+                        for (String s : pat) {
+                            list.add(decrypt(s, key, PatientID));
+                        }
+                        for (Patient p : patientList) {
+                            if (!list.contains(p.getPatientID())) {
+                                return false;
+                            }
+                        }
+                    } else if (val.trim().equals(StudyUID)) {
+                        if (stu == null) {
+                            return false;
+                        }
+                        List<String> list = new ArrayList<String>(stu.length);
+                        for (String s : stu) {
+                            list.add(decrypt(s, key, StudyUID));
+                        }
+                        for (Patient p : patientList) {
+                            for (Study study : p.getStudies()) {
+                                if (!list.contains(study.getStudyID())) {
+                                    return false;
+                                }
+                            }
+                        }
+                    } else if (val.trim().equals(AccessionNumber)) {
+                        if (anb == null) {
+                            return false;
+                        }
+                        List<String> list = new ArrayList<String>(anb.length);
+                        for (String s : anb) {
+                            list.add(decrypt(s, key, AccessionNumber));
+                        }
+                        for (Patient p : patientList) {
+                            for (Study study : p.getStudies()) {
+                                if (!list.contains(study.getAccessionNumber())) {
+                                    return false;
+                                }
+                            }
+                        }
+                    } else if (val.trim().equals(SeriesUID)) {
+                        if (ser == null) {
+                            return false;
+                        }
+                        List<String> list = new ArrayList<String>(ser.length);
+                        for (String s : ser) {
+                            list.add(decrypt(s, key, SeriesUID));
+                        }
+                        for (Patient p : patientList) {
+                            for (Study study : p.getStudies()) {
+                                for (Series series : study.getSeriesList()) {
+                                    if (!list.contains(series.getSeriesInstanceUID())) {
+                                        return false;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    static String decrypt(String message, String key, String level) {
         if (key != null) {
             String decrypt = EncryptUtils.decrypt(message, key);
             logger.debug("Decrypt {}: {} to {}", new Object[] { level, message, decrypt });
@@ -358,14 +440,14 @@ public class WeasisLauncher extends HttpServlet {
         return message;
     }
 
-    private boolean isRequestIDAllowed(String id) {
+    private static boolean isRequestIDAllowed(String id) {
         if (id != null) {
             return Boolean.valueOf(pacsProperties.getProperty(id));
         }
         return false;
     }
 
-    private boolean isValidateAllIDs(String id, List<Patient> patients, HttpServletRequest request) {
+    static boolean isValidateAllIDs(String id, List<Patient> patients, HttpServletRequest request) {
         if (id != null && patients != null && patients.size() == 1) {
             Patient patient = patients.get(0);
             String ids = pacsProperties.getProperty("request." + id);

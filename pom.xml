@@ -66,7 +66,7 @@
 		<dependency>
 			<groupId>org.weasis</groupId>
 			<artifactId>weasis-dicom-operations</artifactId>
-			<version>0.7.2</version>
+			<version>0.7.4-SNAPSHOT</version>
 			<classifier>lite</classifier>
 			<exclusions>
 				<exclusion>

@@ -27,12 +27,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.BuildManifestDcmQR;
 import org.weasis.dicom.DicomNode;
-import org.weasis.dicom.util.EncryptUtils;
 import org.weasis.launcher.wado.Patient;
-import org.weasis.launcher.wado.Series;
-import org.weasis.launcher.wado.Study;
 import org.weasis.launcher.wado.WadoParameters;
 import org.weasis.launcher.wado.WadoQuery;
 import org.weasis.launcher.wado.WadoQueryException;
@@ -128,7 +124,7 @@ public class BuildManifest extends HttpServlet {
             DicomNode dicomSource = new DicomNode(pacsAET, pacsHost, pacsPort);
             String componentAET = dynamicProps.getProperty("aet", "WEASIS");
             boolean acceptNoImage = Boolean.valueOf(dynamicProps.getProperty("accept.noimage"));
-            List<Patient> patients = getPatientList(request, dicomSource, componentAET);
+            List<Patient> patients = WeasisLauncher.getPatientList(request, dicomSource, componentAET);
 
             if ((patients == null || patients.size() < 1) && !acceptNoImage) {
                 logger.warn("No data has been found!");
@@ -239,104 +235,4 @@ public class BuildManifest extends HttpServlet {
         logger.debug("logRequestInfo(HttpServletRequest) - getServletPath : {}", request.getServletPath());
     }
 
-    private List<Patient> getPatientList(HttpServletRequest request, DicomNode dicomSource, String componentAET) {
-        String pat = request.getParameter(PatientID);
-        String stu = request.getParameter(StudyUID);
-        String anb = request.getParameter(AccessionNumber);
-        String ser = request.getParameter(SeriesUID);
-        String obj = request.getParameter(ObjectUID);
-        List<Patient> patients = null;
-        try {
-            String key = WeasisLauncher.pacsProperties.getProperty("encrypt.key", null);
-
-            if (obj != null && isRequestIDAllowed(ObjectUID)) {
-                patients =
-                    BuildManifestDcmQR.buildFromSopInstanceUID(dicomSource, componentAET, decrypt(obj, key, ObjectUID));
-                if (!isValidateAllIDs(ObjectUID, patients, request)) {
-                    return null;
-                }
-            } else if (ser != null && isRequestIDAllowed(SeriesUID)) {
-                patients =
-                    BuildManifestDcmQR.buildFromSeriesInstanceUID(dicomSource, componentAET,
-                        decrypt(ser, key, SeriesUID));
-                if (!isValidateAllIDs(SeriesUID, patients, request)) {
-                    return null;
-                }
-            } else if (anb != null && isRequestIDAllowed(AccessionNumber)) {
-                patients =
-                    BuildManifestDcmQR.buildFromStudyAccessionNumber(dicomSource, componentAET,
-                        decrypt(anb, key, AccessionNumber));
-                if (!isValidateAllIDs(AccessionNumber, patients, request)) {
-                    return null;
-                }
-            } else if (stu != null && isRequestIDAllowed(StudyUID)) {
-                patients =
-                    BuildManifestDcmQR
-                        .buildFromStudyInstanceUID(dicomSource, componentAET, decrypt(stu, key, StudyUID));
-                if (!isValidateAllIDs(StudyUID, patients, request)) {
-                    return null;
-                }
-            } else if (pat != null && isRequestIDAllowed(PatientID)) {
-                patients =
-                    BuildManifestDcmQR.buildFromPatientID(dicomSource, componentAET, decrypt(pat, key, PatientID));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return patients;
-    }
-
-    private String decrypt(String message, String key, String level) {
-        if (key != null) {
-            String decrypt = EncryptUtils.decrypt(message, key);
-            logger.debug("Decrypt {}: {} to {}", new Object[] { level, message, decrypt });
-            return decrypt;
-        }
-        return message;
-    }
-
-    private boolean isRequestIDAllowed(String id) {
-        if (id != null) {
-            return Boolean.valueOf(WeasisLauncher.pacsProperties.getProperty(id));
-        }
-        return false;
-    }
-
-    private boolean isValidateAllIDs(String id, List<Patient> patients, HttpServletRequest request) {
-        if (id != null && patients != null && patients.size() == 1) {
-            Patient patient = patients.get(0);
-            String ids = WeasisLauncher.pacsProperties.getProperty("request." + id);
-            if (ids != null) {
-                for (String val : ids.split(",")) {
-                    if (val.trim().equals(PatientID)) {
-                        if (!patient.getPatientID().equals(request.getParameter(PatientID))) {
-                            return false;
-                        }
-                    } else if (val.trim().equals(StudyUID)) {
-                        for (Study study : patient.getStudies()) {
-                            if (!study.getStudyID().equals(request.getParameter(StudyUID))) {
-                                return false;
-                            }
-                        }
-                    } else if (val.trim().equals(AccessionNumber)) {
-                        for (Study study : patient.getStudies()) {
-                            if (!study.getAccessionNumber().equals(request.getParameter(AccessionNumber))) {
-                                return false;
-                            }
-                        }
-                    } else if (val.trim().equals(SeriesUID)) {
-                        for (Study study : patient.getStudies()) {
-                            for (Series series : study.getSeriesList()) {
-                                if (!series.getSeriesInstanceUID().equals(request.getParameter(SeriesUID))) {
-                                    return false;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return true;
-    }
 }
