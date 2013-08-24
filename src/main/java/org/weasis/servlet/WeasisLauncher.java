@@ -100,15 +100,13 @@ public class WeasisLauncher extends HttpServlet {
             if (jnlpTemplate == null) {
                 jnlpTemplate = this.getClass().getResource("/weasis-jnlp-default.xml");
                 logger.info("Default  Weasis template  : {}", jnlpTemplate);
+                if (jnlpTemplate == null) {
+                    logger.error("Cannot find the default JNLP template");
+                }
             } else {
                 logger.info("External Weasis template : {}", jnlpTemplate);
             }
-            if (jnlpTemplate == null) {
-                logger.error("Cannot find  JNLP template");
-            } else {
-                pacsProperties.put("weasis.jnlp", jnlpTemplate.toString());
-            }
-
+            pacsProperties.put("weasis.jnlp", jnlpTemplate.toString());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -160,7 +158,7 @@ public class WeasisLauncher extends HttpServlet {
 
             Properties dynamicProps = (Properties) pacsProperties.clone();
             // Perform variable substitution for system properties.
-            for (Enumeration e = pacsProperties.propertyNames(); e.hasMoreElements();) {
+            for (Enumeration<?> e = pacsProperties.propertyNames(); e.hasMoreElements();) {
                 String name = (String) e.nextElement();
                 dynamicProps.setProperty(name,
                     TagUtil.substVars(pacsProperties.getProperty(name), name, null, pacsProperties));
@@ -178,8 +176,8 @@ public class WeasisLauncher extends HttpServlet {
             boolean acceptNoImage = Boolean.valueOf(dynamicProps.getProperty("accept.noimage"));
 
             if ((patients == null || patients.size() < 1) && !acceptNoImage) {
-                logger.warn("No data has been found!");
-                response.sendError(HttpServletResponse.SC_NO_CONTENT, "No data has been found!");
+                logger.warn("No image has been found!");
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, "No image has been found for this request!");
                 return;
             }
             try {
@@ -205,8 +203,6 @@ public class WeasisLauncher extends HttpServlet {
                 }
                 WadoQuery wadoQuery =
                     new WadoQuery(patients, wado, dynamicProps.getProperty("pacs.db.encoding", "utf-8"), acceptNoImage);
-                // ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-                // WadoQuery.gzipCompress(new ByteArrayInputStream(wadoQuery.toString().getBytes()), outStream);
                 wadoQueryFile = Base64.encodeBytes(wadoQuery.toString().getBytes(), Base64.GZIP);
 
             } catch (WadoQueryException e) {
