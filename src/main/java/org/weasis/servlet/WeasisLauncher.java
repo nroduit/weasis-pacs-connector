@@ -152,6 +152,7 @@ public class WeasisLauncher extends HttpServlet {
         try {
             logRequestInfo(request);
             response.setContentType(JNLP_MIME_TYPE);
+            response.setCharacterEncoding("UTF-8");
 
             String baseURL = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
             System.setProperty("server.base.url", baseURL);
@@ -213,7 +214,17 @@ public class WeasisLauncher extends HttpServlet {
 
             InputStream is = null;
             try {
-                URL jnlpTemplate = new URL((String) dynamicProps.get("weasis.jnlp"));
+                URL jnlpTemplate = null;
+                String template = request.getParameter("jnlp");
+                if (template != null && !"".equals(template)) {
+                    jnlpTemplate = this.getClass().getResource("/" + template);
+                }
+                if (jnlpTemplate == null) {
+                    jnlpTemplate = new URL((String) dynamicProps.get("weasis.jnlp"));
+                } else {
+                    logger.info("External Weasis template : {}", jnlpTemplate);
+                }
+
                 is = jnlpTemplate.openStream();
                 BufferedReader dis = new BufferedReader(new InputStreamReader(is));
                 // response.setContentLength(launcherStr.length());
