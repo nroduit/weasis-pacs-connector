@@ -5,7 +5,7 @@
 	<artifactId>weasis-pacs-connector</artifactId>
 	<packaging>war</packaging>
 	<name>Weasis PACS Connector</name>
-	<version>4.0.0-SNAPSHOT</version>
+	<version>4.0.0</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -66,7 +66,7 @@
 		<dependency>
 			<groupId>org.weasis</groupId>
 			<artifactId>weasis-dicom-operations</artifactId>
-			<version>0.7.4-SNAPSHOT</version>
+			<version>0.7.4</version>
 			<classifier>lite</classifier>
 			<exclusions>
 				<exclusion>
