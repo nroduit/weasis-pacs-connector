@@ -15,11 +15,6 @@
 		<icon href="images/logo-button.png" kind="default" />
 		<icon href="images/about.png" kind="splash" />
 
-		<shortcut online="false">
-			<desktop />
-			<menu submenu="Weasis" />
-		</shortcut>
-
 	</information>
 
 	<security>
