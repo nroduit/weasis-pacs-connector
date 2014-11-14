@@ -1,13 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2010 Weasis Team.
+ * Copyright (c) 2014 Weasis Team.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- ******************************************************************************/
+ *******************************************************************************/
 
 package org.weasis.servlet;
 
@@ -27,18 +27,18 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.DicomNode;
-import org.weasis.launcher.wado.Patient;
-import org.weasis.launcher.wado.WadoParameters;
-import org.weasis.launcher.wado.WadoQuery;
-import org.weasis.launcher.wado.WadoQueryException;
-import org.weasis.launcher.wado.xml.Base64;
-import org.weasis.launcher.wado.xml.TagUtil;
+import org.weasis.dicom.data.Patient;
+import org.weasis.dicom.data.xml.Base64;
+import org.weasis.dicom.data.xml.TagUtil;
+import org.weasis.dicom.param.DicomNode;
+import org.weasis.dicom.wado.DicomQueryParams;
+import org.weasis.dicom.wado.WadoParameters;
+import org.weasis.dicom.wado.WadoQuery;
+import org.weasis.dicom.wado.WadoQueryException;
 
 public class BuildManifest extends HttpServlet {
-    /**
-     * Logger for this class
-     */
+
+    private static final long serialVersionUID = -2412821048846006210L;
     private static final Logger logger = LoggerFactory.getLogger(BuildManifest.class);
 
     static final String PatientID = "patientID";
@@ -47,9 +47,6 @@ public class BuildManifest extends HttpServlet {
     static final String SeriesUID = "seriesUID";
     static final String ObjectUID = "objectUID";
 
-    /**
-     * Constructor of the object.
-     */
     public BuildManifest() {
         super();
     }
@@ -104,14 +101,18 @@ public class BuildManifest extends HttpServlet {
         }
 
         try {
-            logRequestInfo(request);
+            logger.debug("logRequestInfo(HttpServletRequest) - getRequestQueryURL : {}{}", request.getRequestURL()
+                .toString(), request.getQueryString() != null ? ("?" + request.getQueryString().trim()) : "");
+            logger.debug("logRequestInfo(HttpServletRequest) - getContextPath : {}", request.getContextPath());
+            logger.debug("logRequestInfo(HttpServletRequest) - getRequestURI : {}", request.getRequestURI());
+            logger.debug("logRequestInfo(HttpServletRequest) - getServletPath : {}", request.getServletPath());
 
             String baseURL = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
             System.setProperty("server.base.url", baseURL);
 
             Properties dynamicProps = (Properties) pacsProperties.clone();
             // Perform variable substitution for system properties.
-            for (Enumeration e = pacsProperties.propertyNames(); e.hasMoreElements();) {
+            for (Enumeration<?> e = pacsProperties.propertyNames(); e.hasMoreElements();) {
                 String name = (String) e.nextElement();
                 dynamicProps.setProperty(name,
                     TagUtil.substVars(pacsProperties.getProperty(name), name, null, pacsProperties));
@@ -121,10 +122,12 @@ public class BuildManifest extends HttpServlet {
             String pacsAET = dynamicProps.getProperty("pacs.aet", "DCM4CHEE");
             String pacsHost = dynamicProps.getProperty("pacs.host", "localhost");
             int pacsPort = Integer.parseInt(dynamicProps.getProperty("pacs.port", "11112"));
-            DicomNode dicomSource = new DicomNode(pacsAET, pacsHost, pacsPort);
-            String componentAET = dynamicProps.getProperty("aet", "WEASIS");
             boolean acceptNoImage = Boolean.valueOf(dynamicProps.getProperty("accept.noimage"));
-            List<Patient> patients = WeasisLauncher.getPatientList(request, dicomSource, componentAET);
+            DicomNode calledNode = new DicomNode(pacsAET, pacsHost, pacsPort);
+            final DicomQueryParams params =
+                new DicomQueryParams(new DicomNode(dynamicProps.getProperty("aet", "WEASIS")), calledNode, null);
+
+            List<Patient> patients = WeasisLauncher.getPatientList(request, params);
 
             if ((patients == null || patients.size() < 1) && !acceptNoImage) {
                 logger.warn("No data has been found!");
@@ -214,25 +217,6 @@ public class BuildManifest extends HttpServlet {
             logger.error("doHead(HttpServletRequest, HttpServletResponse)", e);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
-    }
-
-    /**
-     * Destruction of the servlet. <br>
-     */
-    @Override
-    public void destroy() {
-        super.destroy();
-    }
-
-    /**
-     * @param request
-     */
-    protected void logRequestInfo(HttpServletRequest request) {
-        logger.debug("logRequestInfo(HttpServletRequest) - getRequestQueryURL : {}{}", request.getRequestURL()
-            .toString(), request.getQueryString() != null ? ("?" + request.getQueryString().trim()) : "");
-        logger.debug("logRequestInfo(HttpServletRequest) - getContextPath : {}", request.getContextPath());
-        logger.debug("logRequestInfo(HttpServletRequest) - getRequestURI : {}", request.getRequestURI());
-        logger.debug("logRequestInfo(HttpServletRequest) - getServletPath : {}", request.getServletPath());
     }
 
 }
