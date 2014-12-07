@@ -26,41 +26,48 @@ import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.Patient;
 import org.weasis.dicom.data.xml.TagUtil;
 import org.weasis.dicom.util.FileUtil;
+import org.weasis.dicom.util.StringUtil;
 
 public class WadoQuery {
 
-    private static final Logger logger = LoggerFactory.getLogger(WadoQuery.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(WadoQuery.class);
 
     public static final String FILE_PREFIX = "wado_query";
     public static final String FILE_EXTENSION = ".xml.gz";
 
-    private StringBuffer wadoQuery;
+    public static final String TAG_DOCUMENT_MSG = "Message";
+    public static final String TAG_MSG_ATTRIBUTE_TITLE = "title";
+    public static final String TAG_MSG_ATTRIBUTE_DESC = "description";
+    public static final String TAG_MSG_ATTRIBUTE_LEVEL = "severity";
+
+    private final StringBuilder wadoQuery = new StringBuilder();
+    private final List<Patient> patientList;
+    private final String charsetEncoding;
+    private WadoMessage wadoMessage;
 
     /**
      * Creates a wado query with the given patients list.
      * 
      * @param patients
      *            a list of patients
+     * @param wadoParameters
+     *            the wado parameters
+     * @param charsetEncoding
+     *            the encoding of the response
      * @param acceptNoImage
+     *            if true the manifest will be created with no data
      * @throws WadoQueryException
-     *             if an error occurs
      */
-    public WadoQuery(List<Patient> patients, WadoParameters wadoParameters, String dbCharset, boolean acceptNoImage)
-        throws WadoQueryException {
+    public WadoQuery(List<Patient> patients, WadoParameters wadoParameters, String charsetEncoding,
+        boolean acceptNoImage) throws WadoQueryException {
         if ((patients == null || patients.size() == 0) && !acceptNoImage) {
             throw new WadoQueryException(WadoQueryException.NO_PATIENTS_LIST);
+        } else if (wadoParameters == null || !StringUtil.hasText(charsetEncoding)) {
+                throw new IllegalArgumentException();
         } else {
-            if (patients != null) {
-                Collections.sort(patients, new Comparator<Patient>() {
-
-                    @Override
-                    public int compare(Patient o1, Patient o2) {
-                        return o1.getPatientName().compareTo(o2.getPatientName());
-                    }
-                });
-            }
-            wadoQuery = new StringBuffer();
-            wadoQuery.append("<?xml version=\"1.0\" encoding=\"" + dbCharset + "\" ?>");
+            this.patientList = patients;
+            this.charsetEncoding = charsetEncoding;
+            wadoQuery.append("<?xml version=\"1.0\" encoding=\"" + charsetEncoding + "\" ?>");
             wadoQuery.append("\n<");
             wadoQuery.append(WadoParameters.TAG_DOCUMENT_ROOT);
             wadoQuery.append(WadoParameters.TAG_SCHEMA);
@@ -85,17 +92,6 @@ public class WadoQuery {
                     wadoQuery.append("\" />");
                 }
             }
-            logger.debug("Xml header [{}]", wadoQuery.toString());
-
-            if (patients != null) {
-                for (int i = 0; i < patients.size(); i++) {
-                    wadoQuery.append(patients.get(i).toXml());
-                }
-            }
-
-            wadoQuery.append("\n</");
-            wadoQuery.append(WadoParameters.TAG_DOCUMENT_ROOT);
-            wadoQuery.append(">");
         }
     }
 
@@ -106,7 +102,46 @@ public class WadoQuery {
      */
     @Override
     public String toString() {
+        if (wadoMessage != null) {
+            wadoQuery.append("\n<");
+            wadoQuery.append(TAG_DOCUMENT_MSG);
+            wadoQuery.append(" ");
+            TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_TITLE, wadoMessage.title, wadoQuery);
+            TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_DESC, wadoMessage.message, wadoQuery);
+            TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_LEVEL, wadoMessage.level.name(), wadoQuery);
+            wadoQuery.append("/>");
+        }
+
+        if (patientList != null) {
+            Collections.sort(patientList, new Comparator<Patient>() {
+
+                @Override
+                public int compare(Patient o1, Patient o2) {
+                    return o1.getPatientName().compareTo(o2.getPatientName());
+                }
+            });
+
+            for (Patient patient : patientList) {
+                wadoQuery.append(patient.toXml());
+            }
+        }
+
+        wadoQuery.append("\n</");
+        wadoQuery.append(WadoParameters.TAG_DOCUMENT_ROOT);
+        wadoQuery.append(">");
         return wadoQuery.toString();
+    }
+
+    public String getCharsetEncoding() {
+        return charsetEncoding;
+    }
+
+    public WadoMessage getWadoMessage() {
+        return wadoMessage;
+    }
+
+    public void setWadoMessage(WadoMessage wadoMessage) {
+        this.wadoMessage = wadoMessage;
     }
 
     /**
@@ -125,18 +160,18 @@ public class WadoQuery {
             File folderTemp = new File(path);
             if (!folderTemp.exists()) {
                 if (!folderTemp.mkdirs()) {
-                    logger.error("Cannot make folder : " + folderTemp);
+                    LOGGER.error("Cannot make folder : " + folderTemp);
                     throw new WadoQueryException(WadoQueryException.CANNOT_CREATE_TEMP_FILE);
                 }
             }
             tmpFile = File.createTempFile(FILE_PREFIX, FILE_EXTENSION, folderTemp);
         } catch (IOException e) {
-            logger.error(e.getMessage());
+            LOGGER.error(e.getMessage());
             throw new WadoQueryException(WadoQueryException.CANNOT_CREATE_TEMP_FILE);
         }
 
-        gzipCompress(new ByteArrayInputStream(wadoQuery.toString().getBytes()), tmpFile);
-        logger.info("Wado Query saved to temporary file: {}" + tmpFile);
+        gzipCompress(new ByteArrayInputStream(toString().getBytes()), tmpFile);
+        LOGGER.info("Wado Query saved to temporary file: {}" + tmpFile);
         return tmpFile.getName();
     }
 
@@ -153,7 +188,7 @@ public class WadoQuery {
             gzipOut.finish();
             return true;
         } catch (IOException e) {
-            logger.error(e.getMessage());
+            LOGGER.error(e.getMessage());
             throw new WadoQueryException(WadoQueryException.CANNOT_WRITE_TO_TEMP_FILE);
         } finally {
             FileUtil.safeClose(in);
@@ -174,11 +209,39 @@ public class WadoQuery {
             gzipOut.finish();
             return true;
         } catch (IOException e) {
-            logger.error(e.getMessage());
+            LOGGER.error(e.getMessage());
             throw new WadoQueryException(WadoQueryException.CANNOT_WRITE_TO_TEMP_FILE);
         } finally {
             FileUtil.safeClose(in);
             FileUtil.safeClose(gzipOut);
+        }
+    }
+
+    public static class WadoMessage {
+        public enum eLevel {
+            INFO, WARN, ERROR;
+        }
+
+        private final String message;
+        private final String title;
+        private final eLevel level;
+
+        public WadoMessage(String title, String message, eLevel level) {
+            this.title = title;
+            this.message = message;
+            this.level = level;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public eLevel getLevel() {
+            return level;
         }
     }
 }

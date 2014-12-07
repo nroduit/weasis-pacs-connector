@@ -97,7 +97,7 @@ public class Study implements XmlDescription {
 
     @Override
     public String toXml() {
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         if (studyInstanceUID != null) {
             result.append("\n<" + TagW.DICOM_LEVEL.Study.name() + " ");
             TagUtil.addXmlAttribute(TagW.StudyInstanceUID, studyInstanceUID, result);

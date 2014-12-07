@@ -10,6 +10,10 @@
  *******************************************************************************/
 package org.weasis.dicom.wado;
 
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 import org.dcm4che3.data.Attributes;
@@ -24,15 +28,19 @@ import org.weasis.dicom.data.Study;
 import org.weasis.dicom.op.CFind;
 import org.weasis.dicom.param.DicomParam;
 import org.weasis.dicom.param.DicomState;
+import org.weasis.dicom.util.DateUtil;
 import org.weasis.dicom.util.StringUtil;
+import org.weasis.dicom.wado.WadoQuery.WadoMessage;
 
 public class BuildManifestDcmQR {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildManifestDcmQR.class);
 
-    public static List<Patient> buildFromPatientID(DicomQueryParams params, String patientID) throws Exception {
+    public static WadoMessage buildFromPatientID(DicomQueryParams params, String patientID) throws Exception {
         if (!StringUtil.hasText(patientID) && params == null) {
-            return null;
+            String message = "No Series found with SeriesInstanceUIDs ";
+
+            return new WadoMessage("Missing PatientID", message, WadoMessage.eLevel.WARN);
         }
 
         int beginIndex = patientID.indexOf("^^^");
@@ -50,13 +58,121 @@ public class BuildManifestDcmQR {
                 new DicomParam(Tag.PatientID, beginIndex < 0 ? patientID : patientID.substring(0, beginIndex)),
                 // Return Keys, IssuerOfPatientID is a return key except when passed as a extension of PatientID
                 new DicomParam(Tag.IssuerOfPatientID, beginIndex < 0 ? null : patientID.substring(beginIndex + offset)),
-                CFind.PatientName, CFind.PatientBirthDate, CFind.PatientSex, CFind.ReferringPhysicianName,
-                CFind.StudyDescription, CFind.StudyDate, CFind.StudyTime, CFind.AccessionNumber,
-                CFind.StudyInstanceUID, CFind.StudyID };
+                new DicomParam(Tag.PatientName, params.getPatientName()),
+                new DicomParam(Tag.PatientBirthDate, params.getPatientBirthDate()), CFind.PatientSex,
+                CFind.ReferringPhysicianName, CFind.StudyDescription, CFind.StudyDate, CFind.StudyTime,
+                CFind.AccessionNumber, CFind.StudyInstanceUID, CFind.StudyID, new DicomParam(Tag.ModalitiesInStudy) };
 
-        fillStudy(params, keysStudies);
+        DicomState state =
+            CFind.process(params.getAdvancedParams(), params.getCallingNode(), params.getCalledNode(), 0,
+                QueryRetrieveLevel.STUDY, keysStudies);
 
-        return params.getPatients();
+        List<Attributes> studies = state.getDicomRSP();
+        if (studies != null) {
+            Collections.sort(studies, new Comparator<Attributes>() {
+
+                @Override
+                public int compare(Attributes o1, Attributes o2) {
+                    Date date1 = o1.getDate(Tag.StudyDate);
+                    Date date2 = o2.getDate(Tag.StudyDate);
+                    if (date1 != null && date2 != null) {
+                        // inverse time
+                        int rep = date2.compareTo(date1);
+                        if (rep == 0) {
+                            Date time1 = o1.getDate(Tag.StudyTime);
+                            Date time2 = o2.getDate(Tag.StudyTime);
+                            if (time1 != null && time2 != null) {
+                                // inverse time
+                                return time2.compareTo(time1);
+                            }
+                        } else {
+                            return rep;
+                        }
+                    } else {
+                        if (date1 == null) {
+                            return 1;
+                        }
+                        if (date2 == null) {
+                            return -1;
+                        }
+                    }
+                    return 0;
+                }
+            });
+
+            if (StringUtil.hasText(params.getLowerDateTime())) {
+                Date lowerDateTime = null;
+                try {
+                    lowerDateTime = javax.xml.bind.DatatypeConverter.parseDateTime(params.getLowerDateTime()).getTime();
+                } catch (Exception e) {
+                    LOGGER.error("Cannot parse date: {}", params.getLowerDateTime());
+                }
+                if (lowerDateTime != null) {
+                    for (int i = studies.size() - 1; i >= 0; i--) {
+                        Attributes s = studies.get(i);
+                        Date date = DateUtil.dateTime(s.getDate(Tag.StudyDate), s.getDate(Tag.StudyTime));
+                        int rep = date.compareTo(lowerDateTime);
+                        if (rep > 0) {
+                            studies.remove(i);
+                        }
+                    }
+                }
+            }
+
+            if (StringUtil.hasText(params.getUpperDateTime())) {
+                Date upperDateTime = null;
+                try {
+                    upperDateTime = javax.xml.bind.DatatypeConverter.parseDateTime(params.getUpperDateTime()).getTime();
+                } catch (Exception e) {
+                    LOGGER.error("Cannot parse date: {}", params.getUpperDateTime());
+                }
+                if (upperDateTime != null) {
+                    for (int i = studies.size() - 1; i >= 0; i--) {
+                        Attributes s = studies.get(i);
+                        Date date = DateUtil.dateTime(s.getDate(Tag.StudyDate), s.getDate(Tag.StudyTime));
+                        int rep = date.compareTo(upperDateTime);
+                        if (rep < 0) {
+                            studies.remove(i);
+                        }
+                    }
+                }
+            }
+
+            if (StringUtil.hasText(params.getMostRecentResults())) {
+                int recent = StringUtil.getInteger(params.getMostRecentResults());
+                if (recent > 0) {
+                    for (int i = studies.size() - 1; i >= recent; i--) {
+                        studies.remove(i);
+                    }
+                }
+            }
+
+            if (StringUtil.hasText(params.getModalitiesInStudy())) {
+                for (int i = studies.size() - 1; i >= 0; i--) {
+                    Attributes s = studies.get(i);
+                    String m = s.getString(Tag.ModalitiesInStudy);
+                    if (StringUtil.hasText(m)) {
+                        boolean remove = true;
+                        for (String mod : params.getModalitiesInStudy().split(",")) {
+                            if (m.indexOf(mod) != -1) {
+                                remove = false;
+                                break;
+                            }
+                        }
+
+                        if (remove) {
+                            studies.remove(i);
+                        }
+                    }
+                }
+
+            }
+
+            for (Attributes studyDataSet : studies) {
+                fillSeries(params, studyDataSet);
+            }
+        }
+        return null;
     }
 
     public static List<Patient> buildFromStudyInstanceUID(DicomQueryParams params, String studyInstanceUID)
@@ -168,7 +284,7 @@ public class BuildManifestDcmQR {
         return params.getPatients();
     }
 
-    private static void fillStudy(DicomQueryParams params, DicomParam[] keysStudies) throws Exception {
+    private static WadoMessage fillStudy(DicomQueryParams params, DicomParam[] keysStudies) throws Exception {
         DicomState state =
             CFind.process(params.getAdvancedParams(), params.getCallingNode(), params.getCalledNode(), 0,
                 QueryRetrieveLevel.STUDY, keysStudies);
@@ -179,6 +295,7 @@ public class BuildManifestDcmQR {
                 fillSeries(params, studyDataSet);
             }
         }
+        return null;
     }
 
     private static void fillSeries(DicomQueryParams params, Attributes studyDataSet) throws Exception {

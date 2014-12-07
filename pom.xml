@@ -50,7 +50,8 @@
 				<artifactId>maven-war-plugin</artifactId>
 				<version>2.1.1</version>
 				<configuration>
-					<packagingExcludes>WEB-INF/lib/dcm4che-dict-*,WEB-INF/lib/log4j*,WEB-INF/lib/slf4j*</packagingExcludes>
+					<packagingExcludes>WEB-INF/lib/dcm4che-dict-*</packagingExcludes>
+					<!-- <packagingExcludes>WEB-INF/lib/dcm4che-dict-*,WEB-INF/lib/log4j*,WEB-INF/lib/slf4j*</packagingExcludes> -->
 					<warName>weasis-pacs-connector</warName>
 				</configuration>
 			</plugin>
@@ -91,7 +92,7 @@
 			</activation>
 		</profile>
 	</profiles>
-	
+
 	<dependencies>
 		<dependency>
 			<groupId>javax.servlet</groupId>
@@ -114,7 +115,8 @@
 					<groupId>junit</groupId>
 					<artifactId>junit</artifactId>
 				</exclusion>
-				<!-- Only required by storeSCU for uncompressing data not supported by the destination, not used in this package -->
+				<!-- Only required by storeSCU for uncompressing data not supported by 
+					the destination, not used in this package -->
 				<exclusion>
 					<groupId>org.dcm4che</groupId>
 					<artifactId>dcm4che-imageio</artifactId>

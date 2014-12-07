@@ -11,14 +11,9 @@
 
 package org.weasis.servlet;
 
-import java.io.Closeable;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.Properties;
-import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -27,19 +22,13 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.data.Patient;
-import org.weasis.dicom.data.xml.Base64;
 import org.weasis.dicom.data.xml.TagUtil;
-import org.weasis.dicom.param.DicomNode;
-import org.weasis.dicom.wado.DicomQueryParams;
-import org.weasis.dicom.wado.WadoParameters;
-import org.weasis.dicom.wado.WadoQuery;
-import org.weasis.dicom.wado.WadoQueryException;
+import org.weasis.dicom.wado.thread.ManifestBuilder;
 
 public class BuildManifest extends HttpServlet {
 
     private static final long serialVersionUID = -2412821048846006210L;
-    private static final Logger logger = LoggerFactory.getLogger(BuildManifest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BuildManifest.class);
 
     static final String PatientID = "patientID";
     static final String StudyUID = "studyUID";
@@ -61,162 +50,68 @@ public class BuildManifest extends HttpServlet {
     public void init() throws ServletException {
     }
 
-    /**
-     * The doGet method of the servlet. <br>
-     * 
-     * This method is called when a form has its tag value method equals to get.
-     * 
-     * @param request
-     *            the request send by the client to the server
-     * @param response
-     *            the response send by the server to the client
-     * @throws ServletErrorException
-     * @throws IOException
-     * @throws ServletException
-     * @throws ServletException
-     *             if an error occurred
-     * @throws IOException
-     *             if an error occurred
-     */
-
-    @Override
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        Properties pacsProperties = WeasisLauncher.pacsProperties;
-        // Test if this client is allowed
-        String hosts = pacsProperties.getProperty("hosts.allow");
-        if (hosts != null && !hosts.trim().equals("")) {
-            String clientHost = request.getRemoteHost();
-            String clientIP = request.getRemoteAddr();
-            boolean accept = false;
-            for (String host : hosts.split(",")) {
-                if (host.equals(clientHost) || host.equals(clientIP)) {
-                    accept = true;
-                    break;
-                }
-            }
-            if (!accept) {
-                logger.warn("The request from {} is not allowed.", clientHost);
-                return;
-            }
-        }
-
-        try {
-            logger.debug("logRequestInfo(HttpServletRequest) - getRequestQueryURL : {}{}", request.getRequestURL()
-                .toString(), request.getQueryString() != null ? ("?" + request.getQueryString().trim()) : "");
-            logger.debug("logRequestInfo(HttpServletRequest) - getContextPath : {}", request.getContextPath());
-            logger.debug("logRequestInfo(HttpServletRequest) - getRequestURI : {}", request.getRequestURI());
-            logger.debug("logRequestInfo(HttpServletRequest) - getServletPath : {}", request.getServletPath());
-
-            String baseURL = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
-            System.setProperty("server.base.url", baseURL);
-
-            Properties dynamicProps = (Properties) pacsProperties.clone();
-            // Perform variable substitution for system properties.
-            for (Enumeration<?> e = pacsProperties.propertyNames(); e.hasMoreElements();) {
-                String name = (String) e.nextElement();
-                dynamicProps.setProperty(name,
-                    TagUtil.substVars(pacsProperties.getProperty(name), name, null, pacsProperties));
-            }
-
-            String wadoQueriesURL = dynamicProps.getProperty("pacs.wado.url", "http://localhost:8080/wado");
-            String pacsAET = dynamicProps.getProperty("pacs.aet", "DCM4CHEE");
-            String pacsHost = dynamicProps.getProperty("pacs.host", "localhost");
-            int pacsPort = Integer.parseInt(dynamicProps.getProperty("pacs.port", "11112"));
-            boolean acceptNoImage = Boolean.valueOf(dynamicProps.getProperty("accept.noimage"));
-            DicomNode calledNode = new DicomNode(pacsAET, pacsHost, pacsPort);
-            final DicomQueryParams params =
-                new DicomQueryParams(new DicomNode(dynamicProps.getProperty("aet", "WEASIS")), calledNode, null);
-
-            List<Patient> patients = WeasisLauncher.getPatientList(request, params);
-
-            if ((patients == null || patients.size() < 1) && !acceptNoImage) {
-                logger.warn("No data has been found!");
-                response.sendError(HttpServletResponse.SC_NO_CONTENT, "No data has been found!");
-                return;
-            }
-
-            // If the web server requires an authentication (pacs.web.login=user:pwd)
-            String webLogin = dynamicProps.getProperty("pacs.web.login", null);
-            if (webLogin != null) {
-                webLogin = Base64.encodeBytes(webLogin.trim().getBytes());
-            }
-            boolean onlysopuid = Boolean.valueOf(dynamicProps.getProperty("wado.onlysopuid"));
-            String addparams = dynamicProps.getProperty("wado.addparams", "");
-            String overrideTags = dynamicProps.getProperty("wado.override.tags", null);
-            String httpTags = dynamicProps.getProperty("wado.httpTags", null);
-
-            WadoParameters wado = new WadoParameters(wadoQueriesURL, onlysopuid, addparams, overrideTags, webLogin);
-            if (httpTags != null && !httpTags.trim().equals("")) {
-                for (String tag : httpTags.split(",")) {
-                    String[] val = tag.split(":");
-                    if (val.length == 2) {
-                        wado.addHttpTag(val[0].trim(), val[1].trim());
-                    }
-                }
-            }
-            WadoQuery wadoQuery =
-                new WadoQuery(patients, wado, dynamicProps.getProperty("pacs.db.encoding", "utf-8"), acceptNoImage);
-
-            if (request.getParameter("gzip") != null) {
-                response.setContentType("application/x-gzip");
-                Closeable stream = null;
-                GZIPOutputStream gz = null;
-                try {
-                    stream = response.getOutputStream();
-                    gz = new GZIPOutputStream((OutputStream) stream);
-                    gz.write(wadoQuery.toString().getBytes());
-                } finally {
-                    if (gz != null) {
-                        gz.close();
-                    }
-                    if (stream != null) {
-                        stream.close();
-                    }
-                }
-            } else {
-                response.setContentType("text/xml");
-                PrintWriter outWriter = response.getWriter();
-                outWriter.print(wadoQuery.toString());
-                outWriter.close();
-            }
-
-        } catch (Exception e) {
-            logger.error("doGet(HttpServletRequest, HttpServletResponse)", e);
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        } catch (WadoQueryException e) {
-            logger.error("doGet(HttpServletRequest, HttpServletResponse)", e);
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * The doPost method of the servlet. <br>
-     * 
-     * This method is called when a form has its tag value method equals to post.
-     * 
-     * @param request
-     *            the request send by the client to the server
-     * @param response
-     *            the response send by the server to the client
-     * @throws ServletException
-     *             if an error occurred
-     * @throws IOException
-     *             if an error occurred
-     */
-    @Override
-    public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        doGet(request, response);
-    }
-
     @Override
     protected void doHead(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
             response.setContentType("text/xml");
 
         } catch (Exception e) {
-            logger.error("doHead(HttpServletRequest, HttpServletResponse)", e);
+            LOGGER.error("doHead(HttpServletRequest, HttpServletResponse)", e);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
 
+    @Override
+    public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        doGet(request, response);
+    }
+
+    @Override
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        Properties pacsProperties = (Properties) this.getServletContext().getAttribute("componentProperties");
+        // Check if the source of this request is allowed
+        ServletUtil.isRequestAllowed(request, pacsProperties, LOGGER);
+
+        Properties extProps = new Properties();
+        extProps.put(
+            "server.base.url",
+            ServletUtil.getBaseURL(request,
+                ServletUtil.getNULLtoFalse(pacsProperties.getProperty("server.canonical.hostname.mode"))));
+
+        Properties dynamicProps = (Properties) pacsProperties.clone();
+
+        // Perform variable substitution for system properties.
+        for (Enumeration<?> e = pacsProperties.propertyNames(); e.hasMoreElements();) {
+            String name = (String) e.nextElement();
+            dynamicProps.setProperty(name,
+                TagUtil.substVars(pacsProperties.getProperty(name), name, null, pacsProperties, extProps));
+        }
+
+        dynamicProps.putAll(extProps);
+
+        buildManifest(request, response, dynamicProps);
+    }
+
+    private void buildManifest(HttpServletRequest request, HttpServletResponse response, Properties props)
+        throws IOException {
+
+        try {
+            if (LOGGER.isDebugEnabled()) {
+                ServletUtil.logInfo(request, LOGGER);
+            }
+     
+            boolean gzip = request.getParameter("gzip") != null;
+
+            ManifestBuilder builder = ServletUtil.buildManifest(request, props);
+            String wadoQueryUrl = ServletUtil.buildManifestURL(request, builder, props, gzip);
+            wadoQueryUrl = response.encodeRedirectURL(wadoQueryUrl);
+
+            response.setStatus(HttpServletResponse.SC_OK);
+            response.sendRedirect(wadoQueryUrl);
+
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+    }
 }

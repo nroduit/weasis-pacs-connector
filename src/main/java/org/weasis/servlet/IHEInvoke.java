@@ -8,8 +8,11 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  *******************************************************************************/
-
 package org.weasis.servlet;
+
+import static org.weasis.dicom.wado.DicomQueryParams.AccessionNumber;
+import static org.weasis.dicom.wado.DicomQueryParams.PatientID;
+import static org.weasis.dicom.wado.DicomQueryParams.StudyUID;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -29,13 +32,17 @@ import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.xml.TagUtil;
 import org.weasis.dicom.util.FileUtil;
 import org.weasis.dicom.util.StringUtil;
+import org.weasis.dicom.wado.BuildManifestDcmQR;
+import org.weasis.dicom.wado.DicomQueryParams;
+import org.weasis.dicom.wado.WadoQuery.WadoMessage;
 import org.weasis.dicom.wado.thread.ManifestBuilder;
 
-public class WeasisLauncher extends HttpServlet {
-    private static final long serialVersionUID = 8946852726380985736L;
-    private static final Logger LOGGER = LoggerFactory.getLogger(WeasisLauncher.class);
+public class IHEInvoke extends HttpServlet {
 
-    public WeasisLauncher() {
+    private static final long serialVersionUID = -8426435270216254245L;
+    private static final Logger LOGGER = LoggerFactory.getLogger(IHEInvoke.class);
+
+    public IHEInvoke() {
         super();
     }
 
@@ -146,4 +153,5 @@ public class WeasisLauncher extends HttpServlet {
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
+
 }

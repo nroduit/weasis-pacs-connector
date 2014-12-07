@@ -4,9 +4,13 @@
 	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee   http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
 
 	<servlet>
+		<servlet-name>ManifestManager</servlet-name>
+		<servlet-class>org.weasis.servlet.ManifestManager</servlet-class>
+		<load-on-startup>0</load-on-startup>
+	</servlet>
+	<servlet>
 		<servlet-name>WeasisLauncher</servlet-name>
 		<servlet-class>org.weasis.servlet.WeasisLauncher</servlet-class>
-		<load-on-startup>0</load-on-startup>
 	</servlet>
 	<servlet>
 		<servlet-name>BuildManifest</servlet-name>
@@ -14,7 +18,11 @@
 	</servlet>
 	<servlet>
 		<servlet-name>IHEInvokeImageDisplay</servlet-name>
-		<servlet-class>org.weasis.servlet.IHEInvokeImageDisplay</servlet-class>
+		<servlet-class>org.weasis.servlet.IHEInvoke</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>RequestManifest</servlet-name>
+		<servlet-class>org.weasis.servlet.RequestManifest</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>WeasisLauncher</servlet-name>
@@ -23,6 +31,10 @@
 	<servlet-mapping>
 		<servlet-name>BuildManifest</servlet-name>
 		<url-pattern>/manifest</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>RequestManifest</servlet-name>
+		<url-pattern>/RequestManifest</url-pattern>
 	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>IHEInvokeImageDisplay</servlet-name>

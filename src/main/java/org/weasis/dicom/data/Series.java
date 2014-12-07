@@ -128,7 +128,7 @@ public class Series implements XmlDescription {
 
     @Override
     public String toXml() {
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         if (seriesInstanceUID != null) {
             result.append("\n<" + TagW.DICOM_LEVEL.Series.name() + " ");
             TagUtil.addXmlAttribute(TagW.SeriesInstanceUID, seriesInstanceUID, result);

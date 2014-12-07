@@ -15,9 +15,7 @@ package org.weasis.dicom.wado;
  * 
  * @author jlrz
  */
-public class WadoQueryException extends Throwable {
-
-    private static final long serialVersionUID = 1L;
+public class WadoQueryException extends Exception {
 
     // Instance attribute
     private String message = "";

@@ -21,7 +21,7 @@ public class TagUtil {
     private static final String DELIM_START = "${";
     private static final String DELIM_STOP = "}";
 
-    public static String substVars(String val, String currentKey, Map<String, String> cycleMap, Properties configProps)
+    public static String substVars(String val, String currentKey, Map<String, String> cycleMap, Properties configProps, Properties extProps)
         throws IllegalArgumentException {
         if (cycleMap == null) {
             cycleMap = new HashMap<String, String>();
@@ -55,18 +55,21 @@ public class TagUtil {
         if (cycleMap.get(variable) != null) {
             throw new IllegalArgumentException("recursive variable reference: " + variable);
         }
-        String substValue = (configProps != null) ? configProps.getProperty(variable, null) : null;
-        if (substValue == null) {
-            substValue = System.getProperty(variable, "");
+        String substValue = System.getProperty(variable);
+        if (substValue == null) {            
+             substValue = configProps == null ?null : configProps.getProperty(variable, null);
+             if (substValue == null) {            
+                 substValue = extProps == null ? null : extProps.getProperty(variable, null);
+             }
         }
 
         cycleMap.remove(variable);
         val = val.substring(0, startDelim) + substValue + val.substring(stopDelim + DELIM_STOP.length(), val.length());
-        val = substVars(val, currentKey, cycleMap, configProps);
+        val = substVars(val, currentKey, cycleMap, configProps,extProps);
         return val;
     }
 
-    public static void addXmlAttribute(TagW tag, String value, StringBuffer result) {
+    public static void addXmlAttribute(TagW tag, String value, StringBuilder result) {
         if (tag != null && value != null) {
             result.append(tag.getTagName());
             result.append("=\"");
@@ -75,7 +78,7 @@ public class TagUtil {
         }
     }
 
-    public static void addXmlAttribute(String tag, String value, StringBuffer result) {
+    public static void addXmlAttribute(String tag, String value, StringBuilder result) {
         if (tag != null && value != null) {
             result.append(tag);
             result.append("=\"");
@@ -84,7 +87,7 @@ public class TagUtil {
         }
     }
 
-    public static void addXmlAttribute(String tag, Boolean value, StringBuffer result) {
+    public static void addXmlAttribute(String tag, Boolean value, StringBuilder result) {
         if (tag != null && value != null) {
             result.append(tag);
             result.append("=\"");
@@ -93,7 +96,7 @@ public class TagUtil {
         }
     }
 
-    public static void addXmlAttribute(String tag, List<String> value, StringBuffer result) {
+    public static void addXmlAttribute(String tag, List<String> value, StringBuilder result) {
         if (tag != null && value != null) {
             result.append(tag);
             result.append("=\"");

@@ -19,13 +19,13 @@ import java.util.Locale;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.data.xml.DateUtil;
 import org.weasis.dicom.data.xml.TagUtil;
 import org.weasis.dicom.data.xml.XmlDescription;
+import org.weasis.dicom.util.DateUtil;
 
 public class Patient implements XmlDescription {
 
-    private static Logger logger = LoggerFactory.getLogger(Patient.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(Patient.class);
 
     private final String patientID;
     private String issuerOfPatientID = null;
@@ -123,7 +123,7 @@ public class Patient implements XmlDescription {
      */
     @Override
     public String toXml() {
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         if (patientID != null && patientName != null) {
             result.append("\n<" + TagW.DICOM_LEVEL.Patient.name() + " ");
 
@@ -173,8 +173,10 @@ public class Patient implements XmlDescription {
             }
             result.append("\n</Patient>");
         }
-        logger.debug("Patient toXml [{}]", result.toString());
-        return result.toString();
+
+        String ptXml = result.toString();
+        LOGGER.debug("Patient toXml [{}]", ptXml);
+        return ptXml;
     }
 
     public Study getStudy(String uid) {
