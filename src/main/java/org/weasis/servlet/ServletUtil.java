@@ -24,7 +24,9 @@ import org.weasis.dicom.data.Patient;
 import org.weasis.dicom.data.Series;
 import org.weasis.dicom.data.Study;
 import org.weasis.dicom.data.xml.Base64;
+import org.weasis.dicom.param.AdvancedParams;
 import org.weasis.dicom.param.DicomNode;
+import org.weasis.dicom.param.TlsOptions;
 import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.util.StringUtil.Suffix;
 import org.weasis.dicom.wado.BuildManifestDcmQR;
@@ -37,20 +39,7 @@ import org.weasis.util.EncryptUtils;
 public class ServletUtil {
     private static Logger LOGGER = LoggerFactory.getLogger(ServletUtil.class);
 
-    static final String JNLP_MIME_TYPE = "application/x-java-jnlp-file";
-
     private ServletUtil() {
-    }
-
-    public static boolean getNULLtoFalse(Object val) {
-        return Boolean.TRUE.equals(val);
-    }
-
-    public static boolean getNULLtoTrue(Object val) {
-        if (val instanceof Boolean) {
-            return ((Boolean) val).booleanValue();
-        }
-        return true;
     }
 
     public static int getIntProperty(Properties prop, String key, int def) {
@@ -79,7 +68,7 @@ public class ServletUtil {
         return result;
     }
 
-    public static void isRequestAllowed(HttpServletRequest request, Properties pacsProperties, Logger logger)
+    public static boolean isRequestAllowed(HttpServletRequest request, Properties pacsProperties, Logger logger)
         throws IOException {
 
         // Test if this client is allowed
@@ -96,17 +85,17 @@ public class ServletUtil {
             }
             if (!accept) {
                 logger.warn("The request from {} is not allowed.", clientHost);
-                return;
+                return false;
             }
         }
+        return true;
     }
 
     public static void logInfo(HttpServletRequest request, Logger logger) {
-        logger.debug("logRequestInfo(HttpServletRequest) - getRequestQueryURL: {}{}", request.getRequestURL()
-            .toString(), request.getQueryString() != null ? ("?" + request.getQueryString().trim()) : "");
-        logger.debug("logRequestInfo(HttpServletRequest) - getContextPath: {}", request.getContextPath());
-        logger.debug("logRequestInfo(HttpServletRequest) - getRequestURI: {}", request.getRequestURI());
-        logger.debug("logRequestInfo(HttpServletRequest) - getServletPath: {}", request.getServletPath());
+        logger.debug("logRequestInfo() - getRequestQueryURL: {}{}", request.getRequestURL().toString(),
+            request.getQueryString() != null ? ("?" + request.getQueryString().trim()) : "");
+        logger.debug("logRequestInfo() - getContextPath: {}", request.getContextPath());
+        logger.debug("logRequestInfo() - getServletPath: {}", request.getServletPath());
     }
 
     public static String getFilename(List<Patient> patients) {
@@ -313,7 +302,7 @@ public class ServletUtil {
         DicomNode calledNode = new DicomNode(pacsAET, pacsHost, pacsPort);
 
         String wadoQueriesURL = props.getProperty("pacs.wado.url", props.getProperty("server.base.url") + "/wado");
-        boolean onlysopuid = Boolean.valueOf(props.getProperty("wado.onlysopuid"));
+        boolean onlysopuid = StringUtil.getNULLtoFalse(props.getProperty("wado.onlysopuid"));
         String addparams = props.getProperty("wado.addparams", "");
         String overrideTags = props.getProperty("wado.override.tags", null);
         // If the web server requires an authentication (pacs.web.login=user:pwd)
@@ -333,16 +322,34 @@ public class ServletUtil {
             }
         }
 
-        return new DicomQueryParams(new DicomNode(props.getProperty("aet", "WEASIS")), calledNode, request, wado,
-            props.getProperty("pacs.db.encoding", "utf-8"), getNULLtoFalse(props.getProperty("accept.noimage")), null,
-            props);
+        boolean tls = StringUtil.getNULLtoFalse(props.getProperty("pacs.tls.mode"));
+        AdvancedParams params = null;
+        if (tls) {
+            try {
+                TlsOptions tlsOptions =
+                    new TlsOptions(StringUtil.getNULLtoFalse(props.getProperty("pacs.tlsNeedClientAuth")),
+                        props.getProperty("pacs.keystoreURL"), props.getProperty("pacs.keystoreType", "JKS"),
+                        props.getProperty("pacs.keystorePass"), props.getProperty("pacs.keyPass", props.getProperty("pacs.keystorePass")),
+                        props.getProperty("pacs.truststoreURL"), props.getProperty("pacs.truststoreType", "JKS"),
+                        props.getProperty("pacs.truststorePass"));
+                params = new AdvancedParams();
+                params.setTlsOptions(tlsOptions);
+            } catch (Exception e) {
+                StringUtil.logError(LOGGER, e, "Cannot set TLS configuration");
+            }
+
+        }
+
+        return new DicomQueryParams(new DicomNode(props.getProperty("aet", "PACS-CONNECTOR")), calledNode, request, wado,
+            props.getProperty("pacs.db.encoding", "utf-8"), StringUtil.getNULLtoFalse(props
+                .getProperty("accept.noimage")), params, props);
 
     }
 
     public static ManifestBuilder buildManifest(HttpServletRequest request, Properties props) throws Exception {
         final DicomQueryParams params = ServletUtil.buildDicomQueryParams(request, props);
         final ManifestBuilder builder = new ManifestBuilder(params);
-        
+
         ServletContext ctx = request.getSession().getServletContext();
         final ConcurrentHashMap<Integer, ManifestBuilder> builderMap =
             (ConcurrentHashMap<Integer, ManifestBuilder>) ctx.getAttribute("manifestBuilderMap");

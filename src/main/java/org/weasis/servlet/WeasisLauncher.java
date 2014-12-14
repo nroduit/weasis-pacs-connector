@@ -11,15 +11,11 @@
 
 package org.weasis.servlet;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.URL;
 import java.util.Enumeration;
 import java.util.Properties;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -27,7 +23,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.xml.TagUtil;
-import org.weasis.dicom.util.FileUtil;
 import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.wado.thread.ManifestBuilder;
 
@@ -42,10 +37,10 @@ public class WeasisLauncher extends HttpServlet {
     @Override
     protected void doHead(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
-            response.setContentType(ServletUtil.JNLP_MIME_TYPE);
-
+            RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/jnlpBuilder");
+            dispatcher.forward(request, response);
         } catch (Exception e) {
-            StringUtil.logError(LOGGER, e, "doHead()");
+            StringUtil.logError(LOGGER, e, "jnlpBuilder request");
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
@@ -59,13 +54,15 @@ public class WeasisLauncher extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         Properties pacsProperties = (Properties) this.getServletContext().getAttribute("componentProperties");
         // Check if the source of this request is allowed
-        ServletUtil.isRequestAllowed(request, pacsProperties, LOGGER);
+        if (!ServletUtil.isRequestAllowed(request, pacsProperties, LOGGER)) {
+            return;
+        }
 
         Properties extProps = new Properties();
         extProps.put(
             "server.base.url",
             ServletUtil.getBaseURL(request,
-                ServletUtil.getNULLtoFalse(pacsProperties.getProperty("server.canonical.hostname.mode"))));
+                StringUtil.getNULLtoFalse(pacsProperties.getProperty("server.canonical.hostname.mode"))));
 
         Properties dynamicProps = (Properties) pacsProperties.clone();
 
@@ -89,58 +86,38 @@ public class WeasisLauncher extends HttpServlet {
                 ServletUtil.logInfo(request, LOGGER);
             }
 
-            response.setCharacterEncoding("UTF-8");
-            response.setContentType(ServletUtil.JNLP_MIME_TYPE);
-
             String wadoQueryUrl = "";
 
             try {
                 ManifestBuilder builder = ServletUtil.buildManifest(request, props);
                 wadoQueryUrl = ServletUtil.buildManifestURL(request, builder, props, true);
-
-                response.setHeader("Content-Disposition", "filename=\"weasis.jnlp\";");
-
             } catch (Exception e) {
                 LOGGER.error(e.getMessage());
                 response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 return;
             }
 
-            InputStream is = null;
-            try {
-                URL jnlpTemplate = null;
-                String template = request.getParameter("jnlp");
-                if (template != null && !"".equals(template)) {
-                    jnlpTemplate = WeasisLauncher.class.getResource("/" + template);
-                }
-                if (jnlpTemplate == null) {
-                    jnlpTemplate = new URL((String) props.get("weasis.jnlp"));
-                } else {
-                    LOGGER.info("External Weasis template : {}", jnlpTemplate);
-                }
+            StringBuilder buf = new StringBuilder("/");
 
-                is = jnlpTemplate.openStream();
-                BufferedReader dis = new BufferedReader(new InputStreamReader(is));
-                // response.setContentLength(launcherStr.length());
-                String weasisBaseURL = props.getProperty("weasis.base.url", props.getProperty("server.base.url"));
-
-                PrintWriter outWriter = response.getWriter();
-                String s;
-                while ((s = dis.readLine()) != null) {
-                    if (s.trim().equals("</application-desc>")) {
-                        outWriter.print("\t\t<argument>$dicom:get -w ");
-                        outWriter.print(wadoQueryUrl);
-                        outWriter.println("</argument>");
-                        outWriter.println(s);
-                    } else {
-                        s = s.replace("${weasis.base.url}", weasisBaseURL);
-                        outWriter.println(s);
-                    }
-                }
-                outWriter.close();
-            } finally {
-                FileUtil.safeClose(is);
+            String queryCodeBasePath = request.getParameter(SLwebstart_launcher.PARAM_CODEBASE);
+            if (queryCodeBasePath == null) {
+                // If weasis codebase is not in the request, set the url from the weasis-pacs-connector properties.
+                String weasisBaseURL = props.getProperty("weasis.base.url", props.getProperty("server.base.url") + "/weasis");
+                buf.append("?");
+                buf.append(SLwebstart_launcher.PARAM_CODEBASE);
+                buf.append("=");
+                buf.append(weasisBaseURL);
             }
+
+            buf.append(buf.length() > 1 ? "&" : "?");
+            buf.append(SLwebstart_launcher.PARAM_ARGUMENT);
+            buf.append("=$dicom:get -w ");
+            buf.append(wadoQueryUrl);
+
+            RequestDispatcher dispatcher =
+                request.getSession().getServletContext().getRequestDispatcher(buf.toString());
+            dispatcher.forward(request, response);
+
         } catch (Exception e) {
             LOGGER.error("doGet(HttpServletRequest, HttpServletResponse)", e);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

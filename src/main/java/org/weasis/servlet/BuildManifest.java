@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.xml.TagUtil;
+import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.wado.thread.ManifestBuilder;
 
 public class BuildManifest extends HttpServlet {
@@ -70,13 +71,15 @@ public class BuildManifest extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
         Properties pacsProperties = (Properties) this.getServletContext().getAttribute("componentProperties");
         // Check if the source of this request is allowed
-        ServletUtil.isRequestAllowed(request, pacsProperties, LOGGER);
+        if (!ServletUtil.isRequestAllowed(request, pacsProperties, LOGGER)) {
+            return;
+        }
 
         Properties extProps = new Properties();
         extProps.put(
             "server.base.url",
             ServletUtil.getBaseURL(request,
-                ServletUtil.getNULLtoFalse(pacsProperties.getProperty("server.canonical.hostname.mode"))));
+                StringUtil.getNULLtoFalse(pacsProperties.getProperty("server.canonical.hostname.mode"))));
 
         Properties dynamicProps = (Properties) pacsProperties.clone();
 
@@ -99,7 +102,7 @@ public class BuildManifest extends HttpServlet {
             if (LOGGER.isDebugEnabled()) {
                 ServletUtil.logInfo(request, LOGGER);
             }
-     
+
             boolean gzip = request.getParameter("gzip") != null;
 
             ManifestBuilder builder = ServletUtil.buildManifest(request, props);
