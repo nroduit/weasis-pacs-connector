@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2014 Weasis Team.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.servlet;
 
 import static org.weasis.dicom.wado.DicomQueryParams.AccessionNumber;
@@ -40,6 +50,27 @@ public class ServletUtil {
     private static Logger LOGGER = LoggerFactory.getLogger(ServletUtil.class);
 
     private ServletUtil() {
+    }
+
+    public static String getFirstParameter(Object val) {
+        if (val instanceof String[]) {
+            String[] params = (String[]) val;
+            if (params.length > 0) {
+                return params[0];
+            }
+        } else if (val != null) {
+            return val.toString();
+        }
+        return null;
+    }
+
+    public static String[] getParameters(Object val) {
+        if (val instanceof String[]) {
+            return (String[]) val;
+        } else if (val != null) {
+            return new String[] { val.toString() };
+        }
+        return null;
     }
 
     public static int getIntProperty(Properties prop, String key, int def) {
@@ -329,9 +360,9 @@ public class ServletUtil {
                 TlsOptions tlsOptions =
                     new TlsOptions(StringUtil.getNULLtoFalse(props.getProperty("pacs.tlsNeedClientAuth")),
                         props.getProperty("pacs.keystoreURL"), props.getProperty("pacs.keystoreType", "JKS"),
-                        props.getProperty("pacs.keystorePass"), props.getProperty("pacs.keyPass", props.getProperty("pacs.keystorePass")),
-                        props.getProperty("pacs.truststoreURL"), props.getProperty("pacs.truststoreType", "JKS"),
-                        props.getProperty("pacs.truststorePass"));
+                        props.getProperty("pacs.keystorePass"), props.getProperty("pacs.keyPass",
+                            props.getProperty("pacs.keystorePass")), props.getProperty("pacs.truststoreURL"),
+                        props.getProperty("pacs.truststoreType", "JKS"), props.getProperty("pacs.truststorePass"));
                 params = new AdvancedParams();
                 params.setTlsOptions(tlsOptions);
             } catch (Exception e) {
@@ -340,8 +371,8 @@ public class ServletUtil {
 
         }
 
-        return new DicomQueryParams(new DicomNode(props.getProperty("aet", "PACS-CONNECTOR")), calledNode, request, wado,
-            props.getProperty("pacs.db.encoding", "utf-8"), StringUtil.getNULLtoFalse(props
+        return new DicomQueryParams(new DicomNode(props.getProperty("aet", "PACS-CONNECTOR")), calledNode, request,
+            wado, props.getProperty("pacs.db.encoding", "utf-8"), StringUtil.getNULLtoFalse(props
                 .getProperty("accept.noimage")), params, props);
 
     }

@@ -27,7 +27,8 @@ import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.wado.thread.ManifestBuilder;
 
 public class WeasisLauncher extends HttpServlet {
-    private static final long serialVersionUID = 8946852726380985736L;
+
+    private static final long serialVersionUID = 7933047406409849509L;
     private static final Logger LOGGER = LoggerFactory.getLogger(WeasisLauncher.class);
 
     public WeasisLauncher() {
@@ -100,18 +101,17 @@ public class WeasisLauncher extends HttpServlet {
             StringBuilder buf = new StringBuilder("/");
 
             String queryCodeBasePath = request.getParameter(SLwebstart_launcher.PARAM_CODEBASE);
-            if (queryCodeBasePath == null) {
-                // If weasis codebase is not in the request, set the url from the weasis-pacs-connector properties.
-                String weasisBaseURL = props.getProperty("weasis.base.url", props.getProperty("server.base.url") + "/weasis");
-                buf.append("?");
-                buf.append(SLwebstart_launcher.PARAM_CODEBASE);
-                buf.append("=");
-                buf.append(weasisBaseURL);
-            }
+            buf.append("?");
+            buf.append(SLwebstart_launcher.PARAM_CODEBASE);
+            buf.append("=");
+            // If weasis codebase is not in the request, set the url from the weasis-pacs-connector properties.
+            buf.append(queryCodeBasePath == null ? props.getProperty("weasis.base.url",
+                props.getProperty("server.base.url") + "/weasis") : queryCodeBasePath);
 
-            buf.append(buf.length() > 1 ? "&" : "?");
+            buf.append("&");
             buf.append(SLwebstart_launcher.PARAM_ARGUMENT);
-            buf.append("=$dicom:get -w ");
+            buf.append("=");
+            buf.append("$dicom:get -w ");
             buf.append(wadoQueryUrl);
 
             RequestDispatcher dispatcher =

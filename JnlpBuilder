@@ -58,52 +58,54 @@ JNLP Builder Readme
 			Idem for "${ihs}" and ${mhs} for setting Initial Heap Size and Maximum Heap Size
 															 
 	---------------------------------------------------------------------------------------------------------------------------
-	EX : http://localhost:8080/webstart_launcher/
+	EX : http://localhost:8080/weasis-pacs-connector/
 
-  	Servlet will build JNLP from "ServerURL/ContextPath/launcher.jnlp"
-	Codebase injected will be "ServerURL/ContextPath"
-
-	---------------------------------------------------------------------------------------------------------------------------
-	EX : http://localhost:8080/webstart_launcher/application1/
-
-  	Servlet will build JNLP from "ServerURL/ContextPath/application1/launcher.jnlp"
-	Codebase injected will be "ServerURL/ContextPath/application1"
+  	Servlet will build JNLP from "http://localhost:8080/weasis-pacs-connector/weasis.jnlp"
+	Codebase injected will be "http://localhost:8080/weasis-pacs-connector"
 
 	---------------------------------------------------------------------------------------------------------------------------
-	EX : http://localhost:8080/webstart_launcher/application2/test.jnlp
+	EX : http://localhost:8080/weasis-pacs-connector/application1/
 
-  	Servlet will build JNLP from "ServerURL/ContextPath/application2/test.jnlp"
-	Codebase injected will be "ServerURL/ContextPath/application2"
+  	Servlet will build JNLP from "http://localhost:8080/weasis-pacs-connector/application1/weasis.jnlp"
+	Codebase injected will be "http://localhost:8080/weasis-pacs-connector/application1"
 
 	---------------------------------------------------------------------------------------------------------------------------
-	EX : http://localhost:8080/webstart_launcher/?src=/newWebContext/application1/&arg=1erArgument
+	EX : http://localhost:8080/weasis-pacs-connector/application2/test.jnlp
 
-  	Servlet will build JNLP from "ServerURL/newWebContext/application1/launcher.jnlp"
-	Codebase injected will be "ServerURL/newWebContext/application1"
+  	Servlet will build JNLP from "http://localhost:8080/weasis-pacs-connector/application2/test.jnlp"
+	Codebase injected will be "http://localhost:8080/weasis-pacs-connector/application2"
+
+	---------------------------------------------------------------------------------------------------------------------------
+	EX : http://localhost:8080/weasis-pacs-connector/?src=/newWebContext/application1/&arg=1erArgument
+
+  	Servlet will build JNLP from "http://localhost:8080/newWebContext/application1/weasis.jnlp"
+	Codebase injected will be "http://localhost:8080/newWebContext/application1"
 	Argument added value is "1erArgument"
 
 	---------------------------------------------------------------------------------------------------------------------------
-	EX : http://localhost:8080/webstart_launcher/?src=http://znwilde.hcuge.ch:30541/photobox/test.jnlp
+	EX : http://localhost:8080/weasis-pacs-connector/?src=http://serveur.com:30541/photobox/test.jnlp
 
-  	Servlet will build JNLP from "http://znwilde.hcuge.ch:30541/photobox/test.jnlp"
-	Codebase injected will be "http://znwilde.hcuge.ch:30541/photobox"
-
-	---------------------------------------------------------------------------------------------------------------------------
-	EX : http://localhost:8080/webstart_launcher/?src=file://///cih-1012/webroot/&cdb=/applicationCode
-
-  	Servlet will build JNLP from "file://///cih-1012/webroot/launcher.jnlp"
-	Codebase injected will be "file://///cih-1012/webroot/applicationCode"
+  	Servlet will build JNLP from "http://serveur.com:30541/photobox/test.jnlp"
+	Codebase injected will be "http://serveur.com:30541/photobox"
 
 	---------------------------------------------------------------------------------------------------------------------------
-	EX : http://localhost:8080/webstart_launcher/?cdb=/newWebContext/application1&pro=testConfig+file://///cih-1012/webroot/config.properties
+	EX : http://localhost:8080/weasis-pacs-connector/?src=file://///hostname/webroot/&cdb=/applicationCode
 
-  	Servlet will build JNLP from "ServerURL/ContextPath/launcher.jnlp"
-	Codebase injected will be "ServerURL/newWebContext/application1"
-	Property added is name=testConfig value=file://///cih-1012/webroot/config.properties 
+  	Servlet will build JNLP from "file://///hostname/webroot/weasis.jnlp"
+	Codebase injected will be "file://///hostname/webroot/applicationCode"
 
 	---------------------------------------------------------------------------------------------------------------------------
-	EX : http://localhost:8080/webstart_launcher/newConfigLauncher.jnlp?cdb=/newWebContext/application2&pro=testConfig+${cdb}/conf/config.properties
+	EX : http://localhost:8080/weasis-pacs-connector/?cdb=/newWebContext/application1&pro=testConfig+file://///hostname/webroot/config.properties
 
-  	Servlet will build JNLP from "ServerURL/ContextPath/newConfigLauncher.jnlp"
-	Codebase injected will be "ServerURL/newWebContext/application2"
-	Property added is name=testConfig value=ServerURL/newWebContext/application2/conf/config.properties
+  	Servlet will build JNLP from "http://localhost:8080/weasis-pacs-connector/weasis.jnlp"
+	Codebase injected will be "http://localhost:8080/newWebContext/application1"
+	Property added is name=testConfig value=file://///hostname/webroot/config.properties 
+
+	---------------------------------------------------------------------------------------------------------------------------
+	EX : http://localhost:8080/weasis-pacs-connector/newConfigLauncher.jnlp?cdb=/newWebContext/application2&pro=testConfig+${cdb}/conf/config.properties&arg=1erArgument&pro=jnlp.weasis.weasis.help.url+${svr}/weasis-doc/
+
+  	Servlet will build JNLP from "http://localhost:8080/weasis-pacs-connector/newConfigLauncher.jnlp"
+	Codebase injected will be "http://localhost:8080/newWebContext/application2"
+	Property added is name=testConfig value=http://localhost:8080/newWebContext/application2/conf/config.properties
+    Argument added value is "1erArgument"
+	Property added is name=jnlp.weasis.weasis.help.url value=http://localhost:8080/weasis-doc/

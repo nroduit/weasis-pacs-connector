@@ -17,8 +17,9 @@ public class TagW {
     };
 
     public enum TagType {
-        String, Text, URI, Sequence, Date, DateTime, Time, Boolean, Integer, IntegerArray, Float, FloatArray, Double,
-        DoubleArray, Color;
+        // Period is 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
+        String, StringArray, URI, Sequence, Date, DateTime, Time, Period, Boolean, ByteArray, Integer, IntegerArray,
+        Float, FloatArray, Double, DoubleArray, Color, Thumbnail, List, Object
 
     };
 
@@ -54,7 +55,7 @@ public class TagW {
     public static final TagW ReferringPhysicianName = new TagW(0x00080090, "Referring Physician Name", TagType.String);
     public static final TagW StudyDescription = new TagW(0x00081030, "Study Description", TagType.String);
 
-    public static final TagW PixelData = new TagW(0x7FE00010, "Pixel Data", TagType.Text);
+    public static final TagW PixelData = new TagW(0x7FE00010, "Pixel Data", TagType.URI);
     public static final TagW PixelSpacing = new TagW(0x00280030, "Pixel Spacing", TagType.DoubleArray);
     public static final TagW WindowWidth = new TagW(0x00281051, "Window Width", TagType.Float);
     public static final TagW WindowCenter = new TagW(0x00281050, "Window Center", TagType.Float);
@@ -101,7 +102,7 @@ public class TagW {
     }
 
     public String getTagName() {
-        return name.replace(" ", "");
+        return name.replaceAll(" ", ""); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     public TagType getType() {

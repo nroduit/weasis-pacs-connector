@@ -12,10 +12,11 @@
 package org.weasis.servlet;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.Enumeration;
 import java.util.Properties;
 
-import javax.servlet.ServletException;
+import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -26,38 +27,22 @@ import org.weasis.dicom.data.xml.TagUtil;
 import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.wado.thread.ManifestBuilder;
 
-public class BuildManifest extends HttpServlet {
+public class WeasisAppletLauncher extends HttpServlet {
 
-    private static final long serialVersionUID = 575795035231900320L;
-    private static final Logger LOGGER = LoggerFactory.getLogger(BuildManifest.class);
+    private static final long serialVersionUID = -9044908938729820195L;
+    private static final Logger LOGGER = LoggerFactory.getLogger(WeasisAppletLauncher.class);
 
-    static final String PatientID = "patientID";
-    static final String StudyUID = "studyUID";
-    static final String AccessionNumber = "accessionNumber";
-    static final String SeriesUID = "seriesUID";
-    static final String ObjectUID = "objectUID";
-
-    public BuildManifest() {
+    public WeasisAppletLauncher() {
         super();
-    }
-
-    /**
-     * Initialization of the servlet. <br>
-     * 
-     * @throws ServletException
-     *             if an error occurs
-     */
-    @Override
-    public void init() throws ServletException {
     }
 
     @Override
     protected void doHead(HttpServletRequest request, HttpServletResponse response) throws IOException {
         try {
-            response.setContentType("text/xml");
-
+            RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/jnlpBuilder");
+            dispatcher.forward(request, response);
         } catch (Exception e) {
-            LOGGER.error("doHead(HttpServletRequest, HttpServletResponse)", e);
+            StringUtil.logError(LOGGER, e, "jnlpBuilder request");
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
@@ -92,10 +77,10 @@ public class BuildManifest extends HttpServlet {
 
         dynamicProps.putAll(extProps);
 
-        buildManifest(request, response, dynamicProps);
+        invokeWeasis(request, response, dynamicProps);
     }
 
-    private void buildManifest(HttpServletRequest request, HttpServletResponse response, Properties props)
+    public static void invokeWeasis(HttpServletRequest request, HttpServletResponse response, Properties props)
         throws IOException {
 
         try {
@@ -103,17 +88,50 @@ public class BuildManifest extends HttpServlet {
                 ServletUtil.logInfo(request, LOGGER);
             }
 
-            boolean gzip = request.getParameter("gzip") != null;
+            String wadoQueryUrl = "";
 
-            ManifestBuilder builder = ServletUtil.buildManifest(request, props);
-            String wadoQueryUrl = ServletUtil.buildManifestURL(request, builder, props, gzip);
-            wadoQueryUrl = response.encodeRedirectURL(wadoQueryUrl);
+            try {
+                ManifestBuilder builder = ServletUtil.buildManifest(request, props);
+                wadoQueryUrl = ServletUtil.buildManifestURL(request, builder, props, true);
+            } catch (Exception e) {
+                LOGGER.error(e.getMessage());
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                return;
+            }
 
-            response.setStatus(HttpServletResponse.SC_OK);
-            response.sendRedirect(wadoQueryUrl);
+            String serverPath = props.getProperty("server.base.url");
+
+            StringBuilder buf = new StringBuilder(serverPath);
+            buf.append(request.getContextPath());
+            // TODO servlet parameter
+            buf.append("/weasisApplet.jnlp");
+            
+            String queryCodeBasePath = request.getParameter(SLwebstart_launcher.PARAM_CODEBASE);
+            buf.append("?");
+            buf.append(SLwebstart_launcher.PARAM_CODEBASE);
+            buf.append("=");
+            // If weasis codebase is not in the request, set the url from the weasis-pacs-connector properties.
+            buf.append(queryCodeBasePath == null ? props.getProperty("weasis.base.url", props.getProperty("server.base.url") + "/weasis")
+                : queryCodeBasePath);
+            
+            // TODO should transmit codebase ext, props and args
+
+            /*
+             * Issue when setting directly in the jnlp building url into jnlp_href. It seems some characters must be
+             * escaped.
+             */
+            // buf.append("&#38;");
+            // buf.append(SLwebstart_launcher.PARAM_ARGUMENT);
+            // buf.append("=commands=$dicom:get -w ");
+            // buf.append(wadoQueryUrl);
+
+            RequestDispatcher dispatcher =
+                request.getRequestDispatcher("/applet.jsp?jnlp=" + URLEncoder.encode(buf.toString(), "UTF-8")
+                    + "&commands=$dicom:get -w " + wadoQueryUrl);
+            dispatcher.forward(request, response);
 
         } catch (Exception e) {
-            LOGGER.error(e.getMessage());
+            LOGGER.error("doGet(HttpServletRequest, HttpServletResponse)", e);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<jnlp spec="1.6+" version="" codebase="" href="">
-
+<jnlp spec="1.6+" version="" codebase="">
 	<information>
 		<title>Weasis</title>
 		<vendor>Weasis Team</vendor>
@@ -26,47 +25,43 @@
 		<jar href="${cdb}/weasis-launcher.jar" main="true" />
 		<jar href="${cdb}/felix.jar" />
 
-
 		<!-- Optional library (Substance Look and feel, only since version 1.0.8). Requires the new Java Plug-in introduced in 
 			the Java SE 6 update 10 release.For previous JRE 6, substance.jnlp needs a static codebase URL -->
 		<extension href="${cdb}/substance.jnlp" />
 
-		<!-- Allows to get files in pack200 compression, only available from Weasis 1.1.2 -->
+		<!-- Allows to get files in pack200 compression, only since Weasis 1.1.2 -->
 		<property name="jnlp.packEnabled" value="true" />
-	</resources>
 
-
-	<application-desc main-class="org.weasis.launcher.WebstartLauncher">
-
-		<!-- ======================================================================================================= Workaround 
-			for Java security restriction which only allow to put property in resources when starting with "java." or "jnlp.". So property 
-			is passed here as argument with prefix "-VMP": <argument>-VMPpropertyname="value"</argument>. This workaround allows to have 
-			a fully trusted application with dynamic jnlp (only since weasis 1.1.2, for previous version see revision=16573), http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6653241 -->
+		<!-- ================================================================================================================= -->
+		<!-- Security Workaround. Add prefix "jnlp.weasis" for having a fully trusted application without signing jnlp (only since 
+			weasis 1.2.9), http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6653241 -->
 
 		<!-- Required parameter. Define the location of config.properties (the OSGI configuration and the list of plug-ins to install/start) -->
-		<argument>-VMPfelix.config.properties="${cdb}/conf/config.properties"</argument>
+		<property name="jnlp.weasis.felix.config.properties" value="${cdb}/conf/config.properties" />
 
 		<!-- Optional parameter. Define the location of ext-config.properties (extend/override config.properties) -->
-		<argument>-VMPfelix.extended.config.properties="${cdb-ext}/conf/ext-config.properties"</argument>
+		<property name="jnlp.weasis.felix.extended.config.properties" value="${cdb-ext}/conf/ext-config.properties" />
 
 		<!-- Required parameter. Define the code base of Weasis for the JNLP -->
-		<argument>-VMPweasis.codebase.url="${cdb}"</argument>
+		<property name="jnlp.weasis.weasis.codebase.url" value="${cdb}" />
 
 		<!-- Optional parameter. Define the code base ext of Weasis for the JNLP -->
-		<argument>-VMPweasis.codebase.ext.url="${cdb-ext}"</argument>
+		<property name="jnlp.weasis.weasis.codebase.ext.url" value="${cdb-ext}" />
 
-		<!-- Required parameter. Start local OSGI console on the port 17179 -->
-		<argument>-VMPgosh.args="-sc telnetd -p 17179 start"</argument>
+		<!-- Required parameter. OSGI console parameter -->
+		<property name="jnlp.weasis.gosh.args" value="-sc telnetd -p 17179 start" />
 
 		<!-- Optional parameter. Allows to have the Weasis menu bar in the top bar on Mac OS X (works only with the native Aqua 
 			look and feel) -->
-		<argument>-VMPapple.laf.useScreenMenuBar="true"</argument>
+		<property name="jnlp.weasis.apple.laf.useScreenMenuBar" value="true" />
 
 		<!-- Optional parameter. Allows to get plug-ins translations -->
-		<argument>-VMPweasis.i18n="${cdb}/../weasis-i18n"</argument>
+		<property name="jnlp.weasis.weasis.i18n" value="${cdb}/../weasis-i18n" />
 
-		<!-- Optional Weasis Documentation <argument>-VMPweasis.help.url="${cdb}/../weasis-doc"</argument> -->
+		<!-- Optional Weasis Documentation -->
+		<!-- <property name="jnlp.weasis.weasis.help.url" value="${cdb}/../weasis-doc" /> -->
+	</resources>
 
+	<application-desc main-class="org.weasis.launcher.WebstartLauncher">
 	</application-desc>
-
 </jnlp>

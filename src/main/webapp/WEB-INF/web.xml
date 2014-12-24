@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee   http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
 	<display-name>${project.name} - ${project.version}</display-name>
 	<description>${project.description}</description>
@@ -19,6 +18,10 @@
 		<servlet-class>org.weasis.servlet.WeasisLauncher</servlet-class>
 	</servlet>
 	<servlet>
+		<servlet-name>WeasisAppletLauncher</servlet-name>
+		<servlet-class>org.weasis.servlet.WeasisAppletLauncher</servlet-class>
+	</servlet>
+	<servlet>
 		<servlet-name>BuildManifest</servlet-name>
 		<servlet-class>org.weasis.servlet.BuildManifest</servlet-class>
 	</servlet>
@@ -32,12 +35,16 @@
 	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>WeasisLauncher</servlet-name>
-		<url-pattern>/viewer.jnlp</url-pattern>
+		<url-pattern>/viewer</url-pattern>
 	</servlet-mapping>
-		<servlet-mapping>
+	<servlet-mapping>
 		<servlet-name>WeasisLauncher</servlet-name>
 		<url-pattern>/IHEInvokeImageDisplay</url-pattern>
-	</servlet-mapping>	
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>WeasisAppletLauncher</servlet-name>
+		<url-pattern>/viewer-applet</url-pattern>
+	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>BuildManifest</servlet-name>
 		<url-pattern>/manifest</url-pattern>

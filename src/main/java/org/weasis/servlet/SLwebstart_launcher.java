@@ -1,20 +1,17 @@
 /*******************************************************************************
- * Copyright (c) 2010 Weasis Team.
+ * Copyright (c) 2014 Weasis Team.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
- *     Benoit Jacquemoud - initial API and implementation
- *     Nicolas Roduit
- ******************************************************************************/
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 
 package org.weasis.servlet;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -44,12 +41,10 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.dicom.util.FileUtil;
 
 public class SLwebstart_launcher extends HttpServlet {
-    private static final long serialVersionUID = 8946852726380985736L;
-    /**
-     * Logger for this class
-     */
+    private static final long serialVersionUID = 5979263846495591025L;
     private static final Logger logger = LoggerFactory.getLogger(SLwebstart_launcher.class);
 
     public static final String DEFAULT_JNLP_TEMPLATE_NAME = "weasis.jnlp";
@@ -81,6 +76,9 @@ public class SLwebstart_launcher extends HttpServlet {
 
     protected static final String JNLP_TAG_ELT_APPLICATION_DESC = "application-desc";
     protected static final String JNLP_TAG_ELT_ARGUMENT = "argument";
+
+    protected static final String JNLP_TAG_ELT_APPLET_DESC = "applet-desc";
+    protected static final String JNLP_TAG_ELT_PARAM = "param";
 
     protected RequestDispatcher defaultRequestDispatcher;
 
@@ -127,8 +125,28 @@ public class SLwebstart_launcher extends HttpServlet {
 
             response.setStatus(HttpServletResponse.SC_ACCEPTED);
 
+            // Store jnlp templates jdom structure in hashMap, avoid to always read the same jnlp file
+            Element rootJnlp = null;
             JnlpTemplate launcher = createLauncherTemplate(request);
-            parseLauncherTemplate(launcher);
+            final Map<URL, Element> jnlpTemplates =
+                (Map<URL, Element>) this.getServletContext().getAttribute("jnlpTemplates");
+            if (jnlpTemplates != null) {
+                Element element = jnlpTemplates.get(launcher.realPathURL);
+                if (element != null) {
+                    rootJnlp = element.clone();
+                }
+            }
+            if (rootJnlp == null) {
+                parseLauncherTemplate(launcher);
+                rootJnlp = launcher.rootElt;
+                if (jnlpTemplates != null && rootJnlp !=null) {
+                    jnlpTemplates.put(launcher.realPathURL, rootJnlp.clone());
+                }
+            }
+            else {
+                launcher.rootElt = rootJnlp; 
+            }
+
             String launcherStr = buildJnlpResponse(launcher);
 
             logger.debug("doGet() - launcherStr = [\n{}\n]", launcherStr);
@@ -177,14 +195,14 @@ public class SLwebstart_launcher extends HttpServlet {
 
     protected JnlpTemplate createLauncherTemplate(HttpServletRequest request) throws ServletErrorException {
 
-        String serverPath = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+        String serverPath = ServletUtil.getBaseURL(request, false);
 
         String templatePath = null;
         String templateFileName = null;
         URL templateURL = null;
         String codeBasePath = null;
         String codeBaseExtPath = null;
-        Map<String, String> queryParameterMap = null;
+        Map<String, Object> queryParameterMap = null;
 
         try {
             // GET LAUNCHER TEMPLATE FILE NAME, PATH AND URL
@@ -280,7 +298,7 @@ public class SLwebstart_launcher extends HttpServlet {
             logger.debug("locateLauncherTemplate(HttpServletRequest) - String codeBaseExtPath = {}", codeBaseExtPath);
 
             // GET OTHER PARAMETERS
-            queryParameterMap = new HashMap<String, String>(request.getParameterMap());
+            queryParameterMap = new HashMap<String, Object>(request.getParameterMap());
 
             String initialHeapSize = request.getParameter(PARM_JVM_INITIAL_HEAP_SIZE);
             if (initialHeapSize == null) {
@@ -352,10 +370,7 @@ public class SLwebstart_launcher extends HttpServlet {
         } catch (JDOMException e) {
             throw new ServletErrorException(HttpServletResponse.SC_NOT_ACCEPTABLE, "Can't parse launcher template", e);
         } finally {
-            if (reader != null) {
-                reader.close();
-            }
-            reader = null;
+            FileUtil.safeClose(reader);
         }
 
         if (!rootElt.getName().equals(JNLP_TAG_ELT_ROOT)) {
@@ -367,7 +382,8 @@ public class SLwebstart_launcher extends HttpServlet {
 
     protected String buildJnlpResponse(JnlpTemplate launcher) throws ServletErrorException {
 
-        launcher.rootElt.setAttribute(JNLP_TAG_ATT_CODEBASE, launcher.parameterMap.get(PARAM_CODEBASE));
+        launcher.rootElt.setAttribute(JNLP_TAG_ATT_CODEBASE,
+            ServletUtil.getFirstParameter(launcher.parameterMap.get(PARAM_CODEBASE)));
         launcher.rootElt.removeAttribute(JNLP_TAG_ATT_HREF); // this tag has not to be used inside dynamic JNLP
 
         handleRequestPropertyParameter(launcher);
@@ -389,39 +405,56 @@ public class SLwebstart_launcher extends HttpServlet {
     }
 
     protected void handleRequestArgumentParameter(JnlpTemplate launcher) throws ServletErrorException {
+        String[] argValues = ServletUtil.getParameters(launcher.parameterMap.remove(PARAM_ARGUMENT));
 
-        Object paramValues = launcher.parameterMap.remove(PARAM_ARGUMENT);
-        String[] strValues = (paramValues instanceof String[]) ? (String[]) paramValues : null;
-
-        if (launcher != null && launcher.rootElt != null && strValues != null) {
+        if (launcher != null && launcher.rootElt != null && argValues != null) {
             try {
                 Element applicationDescElt = launcher.rootElt.getChild(JNLP_TAG_ELT_APPLICATION_DESC);
-
                 if (applicationDescElt == null) {
-                    throw new Exception("JNLP TAG : <" + JNLP_TAG_ELT_APPLICATION_DESC + "> is not found");
-                }
+                    applicationDescElt = launcher.rootElt.getChild(JNLP_TAG_ELT_APPLET_DESC);
+                    if (applicationDescElt == null) {
+                        throw new Exception("JNLP TAG : <application-desc> or <applet-desc> is not found");
+                    } else {
+                        for (String newContent : argValues) {
+                            // split any whitespace character: [ \t\n\x0B\f\r ]
+                            String[] property = Pattern.compile("\\s").split(newContent, 2);
 
-                for (String newContent : strValues) {
+                            String propertyName = property != null && property.length > 0 ? property[0] : null;
+                            String propertyValue = property != null && property.length > 1 ? property[1] : null;
 
-                    boolean contentReplaced = false;
-                    // Removes previously added Weasis Property as application argument
-                    if (newContent.startsWith("-VMP")) {
-
-                        String newContentPrefix = newContent.substring(0, newContent.indexOf("="));
-
-                        Iterator<Element> itr = applicationDescElt.getChildren(JNLP_TAG_ELT_ARGUMENT).iterator();
-                        while (itr.hasNext()) {
-                            Element elt = itr.next();
-                            if (elt.getText().trim().startsWith(newContentPrefix)) {
-                                elt.setText(newContent);
-                                contentReplaced = true;
-                                break;
+                            if (propertyName != null && propertyValue != null) {
+                                Element paramElt = new Element(JNLP_TAG_ELT_PARAM);
+                                paramElt.setAttribute(JNLP_TAG_ATT_NAME, propertyName);
+                                paramElt.setAttribute(JNLP_TAG_ATT_VALUE, propertyValue);
+                                applicationDescElt.addContent(paramElt);
+                            } else {
+                                throw new Exception("Query Parameter {property} is invalid : " + argValues.toString());
                             }
                         }
                     }
+                } else {
+                    for (String newContent : argValues) {
 
-                    if (!contentReplaced) {
-                        applicationDescElt.addContent(new Element(JNLP_TAG_ELT_ARGUMENT).addContent(newContent));
+                        boolean contentReplaced = false;
+                        // Removes previously added Weasis Property as application argument
+                        if (newContent.startsWith("-VMP")) {
+
+                            String newContentPrefix = newContent.substring(0, newContent.indexOf("="));
+
+                            Iterator<Element> itr = applicationDescElt.getChildren(JNLP_TAG_ELT_ARGUMENT).iterator();
+                            while (itr.hasNext()) {
+                                Element elt = itr.next();
+                                if (elt.getText().trim().startsWith(newContentPrefix)) {
+                                    elt.setText(newContent);
+                                    contentReplaced = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!contentReplaced) {
+                            applicationDescElt.addContent(new Element(JNLP_TAG_ELT_ARGUMENT).addContent(newContent));
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -432,11 +465,9 @@ public class SLwebstart_launcher extends HttpServlet {
     }
 
     protected void handleRequestPropertyParameter(JnlpTemplate launcher) throws ServletErrorException {
+        String[] propValues = ServletUtil.getParameters(launcher.parameterMap.remove(PARAM_PROPERTY));
 
-        Object paramValues = launcher.parameterMap.remove(PARAM_PROPERTY);
-        String[] strValues = (paramValues instanceof String[]) ? (String[]) paramValues : null;
-
-        if (launcher != null && launcher.rootElt != null && strValues != null) {
+        if (launcher != null && launcher.rootElt != null && propValues != null) {
             try {
                 Element resourcesElt = launcher.rootElt.getChild(JNLP_TAG_ELT_RESOURCES);
 
@@ -444,9 +475,9 @@ public class SLwebstart_launcher extends HttpServlet {
                     throw new Exception("JNLP TAG : <" + JNLP_TAG_ELT_RESOURCES + "> is not found");
                 }
 
-                for (int i = 0; i < strValues.length; i++) {
+                for (int i = 0; i < propValues.length; i++) {
                     // split any whitespace character: [ \t\n\x0B\f\r ]
-                    String[] property = Pattern.compile("\\s").split(strValues[i], 2);
+                    String[] property = Pattern.compile("\\s").split(propValues[i], 2);
 
                     String propertyName = property != null && property.length > 0 ? property[0] : null;
                     String propertyValue = property != null && property.length > 1 ? property[1] : null;
@@ -458,7 +489,7 @@ public class SLwebstart_launcher extends HttpServlet {
 
                         resourcesElt.addContent(propertyElt);
                     } else {
-                        throw new Exception("Query Parameter {property} is invalid : " + strValues.toString());
+                        throw new Exception("Query Parameter {property} is invalid : " + propValues.toString());
                     }
                 }
             } catch (Exception e) {
@@ -481,10 +512,15 @@ public class SLwebstart_launcher extends HttpServlet {
 
                 Element applicationElt = launcher.rootElt.getChild(JNLP_TAG_ELT_APPLICATION_DESC);
                 if (applicationElt == null) {
-                    throw new Exception("JNLP TAG : <" + JNLP_TAG_ELT_APPLICATION_DESC + "> is not found");
+                    applicationElt = launcher.rootElt.getChild(JNLP_TAG_ELT_APPLET_DESC);
+                    if (applicationElt == null) {
+                        throw new Exception("JNLP TAG : <application-desc> or <applet-desc> is not found");
+                    } else {
+                        filterMarkerInElement(applicationElt.getChildren(JNLP_TAG_ELT_PARAM), launcher.parameterMap);
+                    }
+                } else {
+                    filterMarkerInElement(applicationElt.getChildren(JNLP_TAG_ELT_ARGUMENT), launcher.parameterMap);
                 }
-
-                filterMarkerInElement(applicationElt.getChildren(JNLP_TAG_ELT_ARGUMENT), launcher.parameterMap);
 
             } catch (Exception e) {
                 throw new ServletErrorException(HttpServletResponse.SC_NOT_ACCEPTABLE,
@@ -493,7 +529,7 @@ public class SLwebstart_launcher extends HttpServlet {
         }
     }
 
-    static void filterMarkerInAttribute(List<Element> eltList, Map<String, String> parameterMap) {
+    static void filterMarkerInAttribute(List<Element> eltList, Map<String, Object> parameterMap) {
 
         final Pattern patternMarker = Pattern.compile("\\$\\{([^}]+)\\}"); // matching pattern is ${..}
 
@@ -509,9 +545,7 @@ public class SLwebstart_launcher extends HttpServlet {
                 while (matcher.find()) {
                     String marker = matcher.group(0); // full pattern matched ${..}
                     String markerName = matcher.group(1); // get only text between curly braces
-                    Object param = parameterMap.get(markerName);
-                    String parameterValue = (param instanceof String[]) ? ((String[]) param)[0] : (String) param;
-
+                    String parameterValue = ServletUtil.getFirstParameter(parameterMap.get(markerName));
                     if (parameterValue != null) {
                         attributeValue = attributeValue.replace(marker, parameterValue);
                         attribute.setValue(attributeValue);
@@ -524,7 +558,7 @@ public class SLwebstart_launcher extends HttpServlet {
         }
     }
 
-    static void filterMarkerInElement(List<Element> eltList, Map<String, String> parameterMap) {
+    static void filterMarkerInElement(List<Element> eltList, Map<String, Object> parameterMap) {
         final Pattern patternMarker = Pattern.compile("\\$\\{([^}]+)\\}"); // matching pattern is ${..}
 
         for (Element elt : eltList) {
@@ -538,12 +572,12 @@ public class SLwebstart_launcher extends HttpServlet {
             while (matcher.find()) {
                 String marker = matcher.group(0); // full pattern matched ${..}
                 String markerName = matcher.group(1); // get only text between curly braces
-                Object param = parameterMap.get(markerName);
-                String parameterValue = (param instanceof String[]) ? ((String[]) param)[0] : (String) param;
+                String parameterValue = ServletUtil.getFirstParameter(parameterMap.get(markerName));
 
                 if (parameterValue != null) {
                     elementValue = elementValue.replace(marker, parameterValue);
                     elt.setText(elementValue);
+
                 } else {
                     logger.warn("Found marker \"" + marker + "\" with NO matching parameter in Element <"
                         + elt.getName() + ">");
@@ -556,14 +590,14 @@ public class SLwebstart_launcher extends HttpServlet {
 
         final String templateFileName;
         final URL realPathURL;
-        final Map<String, String> parameterMap;
+        final Map<String, Object> parameterMap;
 
         Element rootElt;
 
-        public JnlpTemplate(String templateFileName, URL realPathURL, Map<String, String> parameterMap) {
+        public JnlpTemplate(String templateFileName, URL realPathURL, Map<String, Object> queryParameterMap) {
             this.templateFileName = templateFileName;
             this.realPathURL = realPathURL;
-            this.parameterMap = parameterMap;
+            this.parameterMap = queryParameterMap;
         }
     }
 }

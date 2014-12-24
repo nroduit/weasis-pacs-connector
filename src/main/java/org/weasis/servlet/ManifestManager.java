@@ -1,6 +1,18 @@
+/*******************************************************************************
+ * Copyright (c) 2014 Weasis Team.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.servlet;
 
 import java.net.URL;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -8,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServlet;
 
+import org.jdom2.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.util.StringUtil;
@@ -16,6 +29,7 @@ import org.weasis.dicom.wado.thread.ManifestManagerThread;
 
 public class ManifestManager extends HttpServlet {
 
+    private static final long serialVersionUID = -3980526826815714220L;
     private static final Logger LOGGER = LoggerFactory.getLogger(ManifestManager.class);
 
     private final Properties properties = new Properties();
@@ -23,6 +37,7 @@ public class ManifestManager extends HttpServlet {
         new ConcurrentHashMap<Integer, ManifestBuilder>();
 
     private final ManifestManagerThread manifestManagerThread = new ManifestManagerThread(manifestBuilderMap);
+    private final Map<URL, Element> jnlpTemplates = ManifestManager.<URL, Element>createLRUMap(20);
 
     @Override
     public void init() {
@@ -56,22 +71,12 @@ public class ManifestManager extends HttpServlet {
                 } else {
                     LOGGER.error("Cannot find  a configuration file for weasis-pacs-connector");
                 }
-
-                URL jnlpTemplate = this.getClass().getResource("/weasis-jnlp.xml");
-                if (jnlpTemplate == null) {
-                    jnlpTemplate = this.getClass().getResource("/weasis-jnlp-default.xml");
-                    LOGGER.info("Default Weasis template: {}", jnlpTemplate);
-                    if (jnlpTemplate == null) {
-                        LOGGER.error("Cannot find the default JNLP template");
-                    }
-                } else {
-                    LOGGER.info("External Weasis template: {}", jnlpTemplate);
-                }
-                properties.put("weasis.jnlp", jnlpTemplate.toString());
             } catch (Exception e) {
                 StringUtil.logError(LOGGER, e, "Error on initialization");
             }
-            this.getServletContext().setAttribute("componentProperties", properties);
+            this.getServletContext().setAttribute("componentProperties", properties);            
+            this.getServletContext().setAttribute("jnlpTemplates", jnlpTemplates);
+            
 
             manifestManagerThread.setCleanFrequency(ServletUtil.getLongProperty(properties, "thread.clean.frequency",
                 ManifestManagerThread.CLEAN_FREQUENCY));
@@ -94,4 +99,17 @@ public class ManifestManager extends HttpServlet {
 
         manifestManagerThread.interrupt();
     }
+
+    
+    // Get map where the oldest entry when the limit size is reached
+    public static <K, V> Map<K, V> createLRUMap(final int maxEntries) {
+        return new LinkedHashMap<K, V>(maxEntries*3/2, 0.7f, true) {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+                return size() > maxEntries;
+            }
+        };
+    }
+    
+
 }
