@@ -99,12 +99,14 @@ For [dcm4chee-arc](https://github.com/dcm4che/dcm4chee-arc):
 * in JBoss WildFly 8.x place the file named weasis-pacs-connector.properties into _/modules/org/weasis/weasis-pacs-connector/main_
 * create a file _module.xml_ and place it in the same directory. The content of this file is:
 
+```xml
     <?xml version="1.0" encoding="UTF-8"?>
     <module xmlns="urn:jboss:module:1.1" name="org.weasis.weasis-pacs-connector">
         <resources>
             <resource-root path="."/>
         </resources>
     </module>
+```
 
 ## Architecture of weasis-pacs-connector ##
 
