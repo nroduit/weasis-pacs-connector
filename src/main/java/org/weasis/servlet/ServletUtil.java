@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,6 +42,7 @@ import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.util.StringUtil.Suffix;
 import org.weasis.dicom.wado.BuildManifestDcmQR;
 import org.weasis.dicom.wado.DicomQueryParams;
+import org.weasis.dicom.wado.UploadXml;
 import org.weasis.dicom.wado.WadoParameters;
 import org.weasis.dicom.wado.WadoQuery.WadoMessage;
 import org.weasis.dicom.wado.thread.ManifestBuilder;
@@ -71,6 +73,18 @@ public class ServletUtil {
             return new String[] { val.toString() };
         }
         return null;
+    }
+    
+    public static Object addParameter(Object val, String arg) {
+        if (val instanceof String[]) {
+            String[] array = (String[]) val;
+            String[] arr = Arrays.copyOf(array, array.length + 1);
+            arr[array.length] = arg;
+            return  arr;
+        } else if (val != null) {
+            return new String[] { val.toString() ,arg };
+        }
+        return arg;
     }
 
     public static int getIntProperty(Properties prop, String key, int def) {
@@ -377,10 +391,13 @@ public class ServletUtil {
 
     }
 
+  
     public static ManifestBuilder buildManifest(HttpServletRequest request, Properties props) throws Exception {
         final DicomQueryParams params = ServletUtil.buildDicomQueryParams(request, props);
-        final ManifestBuilder builder = new ManifestBuilder(params);
-
+        return buildManifest(request, new ManifestBuilder(params));
+    }
+    
+    public static ManifestBuilder buildManifest(HttpServletRequest request, ManifestBuilder builder) throws Exception {
         ServletContext ctx = request.getSession().getServletContext();
         final ConcurrentHashMap<Integer, ManifestBuilder> builderMap =
             (ConcurrentHashMap<Integer, ManifestBuilder>) ctx.getAttribute("manifestBuilderMap");

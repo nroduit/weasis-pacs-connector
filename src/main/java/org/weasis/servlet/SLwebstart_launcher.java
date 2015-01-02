@@ -41,7 +41,9 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.dicom.data.xml.Base64;
 import org.weasis.dicom.util.FileUtil;
+import org.weasis.dicom.util.StringUtil;
 
 public class SLwebstart_launcher extends HttpServlet {
     private static final long serialVersionUID = 5979263846495591025L;
@@ -57,9 +59,12 @@ public class SLwebstart_launcher extends HttpServlet {
     protected static final String PARAM_ARGUMENT = "arg";
     protected static final String PARAM_PROPERTY = "pro";
 
+    protected static final String PARAM_UPLOAD = "upload";
     protected static final String PARAM_CODEBASE = "cdb";
     protected static final String PARAM_CODEBASE_EXT = "cdb-ext";
     protected static final String PARAM_SOURCE = "src";
+
+    protected static final String ATTRIBUTE_UPLOADED_ARGUMENT = "org.weasis.uploaded.arg";
 
     protected static final String PARM_SERVER_PATH = "svr";
     protected static final String PARM_JVM_INITIAL_HEAP_SIZE = "ihs";
@@ -109,11 +114,30 @@ public class SLwebstart_launcher extends HttpServlet {
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        doGet(request, response);
+
+        String uploadParam = request.getParameter(SLwebstart_launcher.PARAM_UPLOAD);
+
+        if (StringUtil.hasText(uploadParam)) {
+            StringBuilder buf = new StringBuilder();
+            String line = null;
+            BufferedReader reader = request.getReader();
+            while ((line = reader.readLine()) != null) {
+                buf.append(line);
+            }
+            if (buf.length() > 0) {
+                request.setAttribute(ATTRIBUTE_UPLOADED_ARGUMENT, buf.toString());
+            }
+        }
+
+        buildJNLP(request, response);
     }
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        buildJNLP(request, response);
+    }
+
+    protected void buildJNLP(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         try {
             if (logger.isDebugEnabled()) {
@@ -122,8 +146,6 @@ public class SLwebstart_launcher extends HttpServlet {
             if (handleRequestAndRedirect(request, response)) {
                 return;
             }
-
-            response.setStatus(HttpServletResponse.SC_ACCEPTED);
 
             // Store jnlp templates jdom structure in hashMap, avoid to always read the same jnlp file
             Element rootJnlp = null;
@@ -139,14 +161,20 @@ public class SLwebstart_launcher extends HttpServlet {
             if (rootJnlp == null) {
                 parseLauncherTemplate(launcher);
                 rootJnlp = launcher.rootElt;
-                if (jnlpTemplates != null && rootJnlp !=null) {
+                if (jnlpTemplates != null && rootJnlp != null) {
                     jnlpTemplates.put(launcher.realPathURL, rootJnlp.clone());
                 }
-            }
-            else {
-                launcher.rootElt = rootJnlp; 
+            } else {
+                launcher.rootElt = rootJnlp;
             }
 
+            Object uploadedArg = request.getAttribute(ATTRIBUTE_UPLOADED_ARGUMENT);
+
+            if (uploadedArg instanceof String) {
+                Object argValues =
+                    ServletUtil.addParameter(launcher.parameterMap.get(PARAM_ARGUMENT), (String) uploadedArg);
+                launcher.parameterMap.put(PARAM_ARGUMENT, argValues);
+            }
             String launcherStr = buildJnlpResponse(launcher);
 
             logger.debug("doGet() - launcherStr = [\n{}\n]", launcherStr);
@@ -154,8 +182,9 @@ public class SLwebstart_launcher extends HttpServlet {
             response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1
             response.setHeader("Pragma", "no-cache"); // HTTP 1.0
             response.setDateHeader("Expires", -1); // Proxies
-            response.setHeader("Content-Disposition", "filename=\"" + launcher.templateFileName + "\";");
             response.setContentType(JNLP_MIME_TYPE);
+            response.setHeader("Content-Disposition",
+                String.format("inline; filename=\"%s\"", launcher.templateFileName));
             response.setContentLength(launcherStr.length());
 
             PrintWriter outWriter = response.getWriter();

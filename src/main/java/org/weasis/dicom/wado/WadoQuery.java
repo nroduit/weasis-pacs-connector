@@ -28,7 +28,7 @@ import org.weasis.dicom.data.xml.TagUtil;
 import org.weasis.dicom.util.FileUtil;
 import org.weasis.dicom.util.StringUtil;
 
-public class WadoQuery {
+public class WadoQuery implements XmlManifest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WadoQuery.class);
 
@@ -63,7 +63,7 @@ public class WadoQuery {
         if ((patients == null || patients.size() == 0) && !acceptNoImage) {
             throw new WadoQueryException(WadoQueryException.NO_PATIENTS_LIST);
         } else if (wadoParameters == null || !StringUtil.hasText(charsetEncoding)) {
-                throw new IllegalArgumentException();
+            throw new IllegalArgumentException();
         } else {
             this.patientList = patients;
             this.charsetEncoding = charsetEncoding;
@@ -95,13 +95,7 @@ public class WadoQuery {
         }
     }
 
-    /**
-     * Returns current wado query in a string
-     * 
-     * @return current wado query in a string
-     */
-    @Override
-    public String toString() {
+    public String xmlManifest() {
         if (wadoMessage != null) {
             wadoQuery.append("\n<");
             wadoQuery.append(TAG_DOCUMENT_MSG);

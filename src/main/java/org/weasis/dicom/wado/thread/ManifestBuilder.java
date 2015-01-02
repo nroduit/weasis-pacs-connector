@@ -20,9 +20,10 @@ import org.slf4j.LoggerFactory;
 import org.weasis.dicom.wado.DicomQueryParams;
 import org.weasis.dicom.wado.WadoQuery;
 import org.weasis.dicom.wado.WadoQuery.WadoMessage;
+import org.weasis.dicom.wado.XmlManifest;
 import org.weasis.servlet.ServletUtil;
 
-public class ManifestBuilder implements Callable<WadoQuery> {
+public class ManifestBuilder implements Callable<XmlManifest> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ManifestBuilder.class);
 
@@ -31,10 +32,19 @@ public class ManifestBuilder implements Callable<WadoQuery> {
     private final int requestId;
     private final long startTimeMillis;
     private final DicomQueryParams params;
-    private volatile Future<WadoQuery> future;
+    private final XmlManifest xml;
+    private volatile Future<XmlManifest> future;
 
     public ManifestBuilder(DicomQueryParams params) {
         this.params = params;
+        this.xml = null;
+        this.requestId = COUNTER.incrementAndGet();
+        this.startTimeMillis = System.currentTimeMillis();
+    }
+
+    public ManifestBuilder(XmlManifest xml) {
+        this.params = null;
+        this.xml = xml;
         this.requestId = COUNTER.incrementAndGet();
         this.startTimeMillis = System.currentTimeMillis();
     }
@@ -51,23 +61,26 @@ public class ManifestBuilder implements Callable<WadoQuery> {
         future = executor.submit(this);
     }
 
-    public Future<WadoQuery> getFuture() {
+    public Future<XmlManifest> getFuture() {
         return future;
     }
 
     @Override
-    public WadoQuery call() throws Exception {
-        long startTime = System.currentTimeMillis();
+    public XmlManifest call() throws Exception {
+        if (xml == null) {
+            long startTime = System.currentTimeMillis();
 
-        WadoMessage message = ServletUtil.getPatientList(params);
+            WadoMessage message = ServletUtil.getPatientList(params);
+            WadoQuery wadoQuery =
+                new WadoQuery(params.getPatients(), params.getWadoParameters(), params.getCharsetEncoding(),
+                    params.isAcceptNoImage());
+            wadoQuery.setWadoMessage(message);
 
-        WadoQuery wadoQuery =
-            new WadoQuery(params.getPatients(), params.getWadoParameters(), params.getCharsetEncoding(),
-                params.isAcceptNoImage());
-        wadoQuery.setWadoMessage(message);
-
-        LOGGER.info("Build Manifest in {} ms [id={}]", (System.currentTimeMillis() - startTime), requestId);
-        return wadoQuery;
+            LOGGER.info("Build Manifest in {} ms [id={}]", (System.currentTimeMillis() - startTime), requestId);
+            return wadoQuery;
+        } else {
+            return xml;
+        }
     }
 
 }

@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.wado.WadoQuery;
+import org.weasis.dicom.wado.XmlManifest;
 
 public class ManifestManagerThread extends Thread {
 
@@ -73,7 +74,7 @@ public class ManifestManagerThread extends Thread {
                 long diff = System.currentTimeMillis() - manifestBuilder.getStartTimeMillis();
 
                 if (diff > MAX_LIFE_CYCLE) {
-                    Future<WadoQuery> future = manifestBuilder.getFuture();
+                    Future<XmlManifest> future = manifestBuilder.getFuture();
                     if (future != null && !future.isDone()) {
                         // If the builder process is still running after 5 minutes, kill it.
                         future.cancel(true);

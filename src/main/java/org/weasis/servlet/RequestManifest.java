@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.wado.WadoQuery;
+import org.weasis.dicom.wado.XmlManifest;
 import org.weasis.dicom.wado.thread.ManifestBuilder;
 import org.weasis.dicom.wado.thread.ManifestManagerThread;
 
@@ -83,12 +84,12 @@ public class RequestManifest extends HttpServlet {
             return;
         }
 
-        WadoQuery wadoQuery = null;
+        XmlManifest xml = null;
 
         try {
-            Future<WadoQuery> future = buidler.getFuture();
+            Future<XmlManifest> future = buidler.getFuture();
             if (future != null) {
-                wadoQuery = future.get(ManifestManagerThread.MAX_LIFE_CYCLE, TimeUnit.MILLISECONDS);
+                xml = future.get(ManifestManagerThread.MAX_LIFE_CYCLE, TimeUnit.MILLISECONDS);
             }
         } catch (Exception e1) {
             LOGGER.error("Building Manifest Exception [id={}] - {}", id, e1.toString());
@@ -97,17 +98,17 @@ public class RequestManifest extends HttpServlet {
         threadsMap.remove(id);
         LOGGER.info("Consume ManifestBuilder with key={}", id);
 
-        if (wadoQuery == null) {
+        if (xml == null) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Cannot build Manifest [id=" + id + "]");
             return;
         }
 
-        response.setCharacterEncoding(wadoQuery.getCharsetEncoding());
-        String wadoXmlGenerated = wadoQuery.toString();
+        response.setCharacterEncoding(xml.getCharsetEncoding());
+        String wadoXmlGenerated = xml.xmlManifest();
 
         Boolean gzip = request.getParameter(PARAM_NO_GZIP) == null;
 
-        if (gzip && wadoQuery.getWadoMessage() == null) {
+        if (gzip && xml.getWadoMessage() == null) {
             OutputStream outputStream = null;
             try {
                 outputStream = response.getOutputStream();

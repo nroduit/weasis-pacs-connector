@@ -14,7 +14,7 @@ This component gathers different services:
 
 * Used [weasis-dicom-tools](https://github.com/nroduit/weasis-dicom-tools) (based on dcm4che3) for building the manifest
 * Starting Weasis and building manifest are executed in parallel (improve the time to get the images)
-* The manifest is not embedded any more in the jnlp, only an url with an id can be called once within 5 min. That means clicking on a jnlp a second time won't show any images (this behavior is desirable for security reasons as most browsers downloads jnlp)
+* The manifest is not embedded any more by default in the jnlp, only an url with an id can be called once within 5 min. That means clicking on a jnlp a second time won't show any images (this behavior is desirable for security reasons as most browsers downloads jnlp)
 * Configure the maximum number of manifests treated simultaneous and the maximum life time of a building manifest process (5 min by default)
 * Error messages (when building the manifest) are transmitted to the viewer via the manifest
 * New context (_/IHEInvokeImageDisplay_) compliant to the [IHE IID profile](http://www.ihe.net/Technical_Framework/upload/IHE_RAD_Suppl_IID.pdf)
@@ -23,6 +23,8 @@ This component gathers different services:
 * Major improvement of the JNLP builder servlet (allows dynamic injection of arguments, properties and templates)
 * Option for DICOM query in TLS mode
 * Launching Weasis as an Applet in web page
+* Uploading the manifest by http POST
+* Option to embed the manifest into the jnlp
 
 ## Build weasis-pacs-connector ##
 
@@ -62,6 +64,10 @@ Note: with a snapshot version, it can be necessary to build first the library [w
 * http://localhost:8080/weasis-pacs-connector/viewer?objectUID=1.2.840.113704.1.111.3520.1273640118.5118
 * http://localhost:8080/weasis-pacs-connector/viewer-applet?patientID=97026728   
   => same as _/viewer_ but it can launch Weasis as Applet in a webpage.
+* http://localhost:8080/weasis-pacs-connector/viewer?upload=manifest  
+  => upload the manifest via http POST with the parameter "Content-Type: text/xml; charset=UTF-8" and the manifest in the body of the POST request
+* http://localhost:8080/weasis-pacs-connector/viewer?patientID=97026728&embedManifest   
+  => embedManifest parameter will embed the manifest into the jnlp (in this case building manifest is executed before starting Weasis and the images can be always displayed via the jnlp file)
   
 Note: It is allowed to have multiple UIDs for patient, study, series and instance. The [configuration file](src/main/resources/weasis-connector-default.properties) enables to set which ID is allowed and if a combination of UIDs is required. When using a combination of UIDs, the order is not relevant.
 
@@ -89,8 +95,8 @@ The default configurations works directly with [dcm4che-web3](http://www.dcm4che
 
 To add properties or arguments in the JNLP there are two possibilities:
 
-1. Change the [default template](src/main/webapp/weasis.jnlp) path in weasis-pacs-connector.properties (TODO)
-2. Add parameters via the URL, see the [JNLP Builder documentation](JnlpBuilder) (arg, prop, cdb...)
+1. Add parameters via the URL, see the [JNLP Builder documentation](JnlpBuilder) (arg, prop, and src)
+2. Change the [default template](src/main/webapp/weasis.jnlp), see _jnlp.default.name_ in [weasis-connector-default.properties](src/main/resources/weasis-connector-default.properties)
 
 
 For [dcm4chee-arc](https://github.com/dcm4che/dcm4chee-arc):

@@ -37,7 +37,7 @@ public class ManifestManager extends HttpServlet {
         new ConcurrentHashMap<Integer, ManifestBuilder>();
 
     private final ManifestManagerThread manifestManagerThread = new ManifestManagerThread(manifestBuilderMap);
-    private final Map<URL, Element> jnlpTemplates = ManifestManager.<URL, Element>createLRUMap(20);
+    private final Map<URL, Element> jnlpTemplates = ManifestManager.<URL, Element> createLRUMap(20);
 
     @Override
     public void init() {
@@ -55,7 +55,7 @@ public class ManifestManager extends HttpServlet {
                     config = this.getClass().getResource("/weasis-connector-default.properties");
                     LOGGER.info("Default configuration file: {}", config);
                 } else {
-                    LOGGER.info("External configuration file: {}", config);
+                    LOGGER.info("External weasis-pacs-connector configuration file: {}", config);
                 }
 
                 if (config != null) {
@@ -71,12 +71,20 @@ public class ManifestManager extends HttpServlet {
                 } else {
                     LOGGER.error("Cannot find  a configuration file for weasis-pacs-connector");
                 }
+
+                String jnlpName = properties.getProperty("jnlp.default.name", null);
+                if (jnlpName != null) {
+                    URL jnlpTemplate = this.getClass().getResource("/" + jnlpName);
+                    if (jnlpTemplate != null) {
+                        LOGGER.info("External Weasis jnlp template: {}", jnlpTemplate);
+                        properties.put("weasis.default.jnlp", jnlpTemplate.toString());
+                    }
+                }
             } catch (Exception e) {
                 StringUtil.logError(LOGGER, e, "Error on initialization");
             }
-            this.getServletContext().setAttribute("componentProperties", properties);            
+            this.getServletContext().setAttribute("componentProperties", properties);
             this.getServletContext().setAttribute("jnlpTemplates", jnlpTemplates);
-            
 
             manifestManagerThread.setCleanFrequency(ServletUtil.getLongProperty(properties, "thread.clean.frequency",
                 ManifestManagerThread.CLEAN_FREQUENCY));
@@ -100,16 +108,14 @@ public class ManifestManager extends HttpServlet {
         manifestManagerThread.interrupt();
     }
 
-    
     // Get map where the oldest entry when the limit size is reached
     public static <K, V> Map<K, V> createLRUMap(final int maxEntries) {
-        return new LinkedHashMap<K, V>(maxEntries*3/2, 0.7f, true) {
+        return new LinkedHashMap<K, V>(maxEntries * 3 / 2, 0.7f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
                 return size() > maxEntries;
             }
         };
     }
-    
 
 }
