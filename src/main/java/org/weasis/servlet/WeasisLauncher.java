@@ -162,6 +162,18 @@ public class WeasisLauncher extends HttpServlet {
             // If weasis codebase is not in the request, set the url from the weasis-pacs-connector properties.
             buf.append(queryCodeBasePath == null ? props.getProperty("weasis.base.url",
                 props.getProperty("server.base.url") + "/weasis") : queryCodeBasePath);
+            
+            String cdbExtParam = request.getParameter(SLwebstart_launcher.PARAM_CODEBASE_EXT);           
+            if(cdbExtParam == null){
+                // If not in URL parameter, try to get from the config.
+                String cdbExt = props.getProperty("weasis.ext.url", null);
+                if (cdbExt != null){
+                    buf.append("&");
+                    buf.append(SLwebstart_launcher.PARAM_CODEBASE_EXT);
+                    buf.append("=");
+                    buf.append(cdbExt);
+                }
+            }
 
             String jnlpScr = props.getProperty("weasis.default.jnlp", null);
             if(jnlpScr != null){
