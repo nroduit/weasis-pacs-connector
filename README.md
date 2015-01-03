@@ -69,7 +69,7 @@ Note: with a snapshot version, it can be necessary to build first the library [w
 * http://localhost:8080/weasis-pacs-connector/viewer?patientID=97026728&embedManifest   
   => embedManifest parameter will embed the manifest into the jnlp (in this case building manifest is executed before starting Weasis and the images can be always displayed via the jnlp file)
   
-Note: It is allowed to have multiple UIDs for patient, study, series and instance. The [configuration file](src/main/resources/weasis-connector-default.properties) enables to set which ID is allowed and if a combination of UIDs is required. When using a combination of UIDs, the order is not relevant.
+Note: It is allowed to have multiple UIDs for patient, study, series and instance but within the same level. The [configuration file](src/main/resources/weasis-connector-default.properties) enables to set which ID is allowed and if a combination of UIDs is required. When using a combination of UIDs, the order is not relevant.
 
 ### Getting the xml manifest ###
   

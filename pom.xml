@@ -85,7 +85,7 @@
 					<artifactId>junit</artifactId>
 				</exclusion>
 				<!-- Only required by storeSCU for uncompressing data not supported by 
-					the destination, not used in this package -->
+					the destination, not useful for this package -->
 				<exclusion>
 					<groupId>org.dcm4che</groupId>
 					<artifactId>dcm4che-imageio</artifactId>
@@ -99,7 +99,7 @@
 					<artifactId>dcm4che-image</artifactId>
 				</exclusion>
 			</exclusions>
-			<version>0.9.6-SNAPSHOT</version>
+			<version>0.9.6</version>
 		</dependency>
 	</dependencies>
 </project>
