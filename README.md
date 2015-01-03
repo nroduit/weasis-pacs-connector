@@ -30,7 +30,7 @@ This component gathers different services:
 
 Prerequisites: JDK 6 and Maven
 
-Execute the maven command `mvn clean package` in the root directory of the project and get the package from /target/weasis-pacs-connector.war. Official releases can be downloaded [here](http://sourceforge.net/projects/dcm4che/files/Weasis/weasis-pacs-connector/)
+Execute the maven command `mvn clean package` in the root directory of the project and get the package from /target/weasis-pacs-connector.war. Official releases can be downloaded [here](http://sourceforge.net/projects/dcm4che/files/Weasis/weasis-pacs-connector/).
 
 Note: with a snapshot version, it can be necessary to build first the library [weasis-dicom-tools](https://github.com/nroduit/weasis-dicom-tools)
 
@@ -113,6 +113,14 @@ For [dcm4chee-arc](https://github.com/dcm4che/dcm4chee-arc):
         </resources>
     </module>
 ```
+
+## Security ##
+
+There are different ways to treat the security aspects. Here are some:
+
+* Make a proxy servlet (URL forwarding) to handle authentication and authorization you want and configure weasis-pacs-connector to be called only by the proxy server (hosts.allow=serverhostname)
+* Configure weasis-pacs-connector for UIDs encryption in the URL with a paraphrase (encrypt.key=paraphraseForIDs: just uncomment and set a new key). It works by default with dcm4chee-web3. For other web interface it requires to use the same [algorithm](src/main/java/org/weasis/util/EncryptUtils.java) with the same key. 
+* Configure weasis-pacs-connector for accepting only request with a combination of several UIDs
 
 ## Architecture of weasis-pacs-connector ##
 
