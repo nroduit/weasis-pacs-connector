@@ -76,8 +76,8 @@ public class SLwebstart_launcher extends HttpServlet {
     protected static final String JNLP_TAG_ELT_RESOURCES = "resources";
     protected static final String JNLP_TAG_ATT_HREF = "href";
     protected static final String JNLP_TAG_ELT_PROPERTY = "property";
-    protected static final String JNLP_TAG_ATT_NAME = "name";
-    protected static final String JNLP_TAG_ATT_VALUE = "value";
+    protected static final String JNLP_TAG_PRO_NAME = "name";
+    protected static final String JNLP_TAG_PRO_VALUE = "value";
 
     protected static final String JNLP_TAG_ELT_APPLICATION_DESC = "application-desc";
     protected static final String JNLP_TAG_ELT_ARGUMENT = "argument";
@@ -444,6 +444,7 @@ public class SLwebstart_launcher extends HttpServlet {
                     if (applicationDescElt == null) {
                         throw new Exception("JNLP TAG : <application-desc> or <applet-desc> is not found");
                     } else {
+                        // Arguments in Applet are formatted as properties
                         for (String newContent : argValues) {
                             // split any whitespace character: [ \t\n\x0B\f\r ]
                             String[] property = Pattern.compile("\\s").split(newContent, 2);
@@ -453,37 +454,18 @@ public class SLwebstart_launcher extends HttpServlet {
 
                             if (propertyName != null && propertyValue != null) {
                                 Element paramElt = new Element(JNLP_TAG_ELT_PARAM);
-                                paramElt.setAttribute(JNLP_TAG_ATT_NAME, propertyName);
-                                paramElt.setAttribute(JNLP_TAG_ATT_VALUE, propertyValue);
+                                paramElt.setAttribute(JNLP_TAG_PRO_NAME, propertyName);
+                                paramElt.setAttribute(JNLP_TAG_PRO_VALUE, propertyValue);
                                 applicationDescElt.addContent(paramElt);
                             } else {
-                                throw new Exception("Query Parameter {property} is invalid : " + argValues.toString());
+                                throw new Exception("Applet Query Parameter {property} is invalid : "
+                                    + argValues.toString());
                             }
                         }
                     }
                 } else {
                     for (String newContent : argValues) {
-
-                        boolean contentReplaced = false;
-                        // Removes previously added Weasis Property as application argument
-                        if (newContent.startsWith("-VMP")) {
-
-                            String newContentPrefix = newContent.substring(0, newContent.indexOf("="));
-
-                            Iterator<Element> itr = applicationDescElt.getChildren(JNLP_TAG_ELT_ARGUMENT).iterator();
-                            while (itr.hasNext()) {
-                                Element elt = itr.next();
-                                if (elt.getText().trim().startsWith(newContentPrefix)) {
-                                    elt.setText(newContent);
-                                    contentReplaced = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (!contentReplaced) {
-                            applicationDescElt.addContent(new Element(JNLP_TAG_ELT_ARGUMENT).addContent(newContent));
-                        }
+                        applicationDescElt.addContent(new Element(JNLP_TAG_ELT_ARGUMENT).addContent(newContent));
                     }
                 }
             } catch (Exception e) {
@@ -512,18 +494,32 @@ public class SLwebstart_launcher extends HttpServlet {
                     String propertyValue = property != null && property.length > 1 ? property[1] : null;
 
                     if (propertyName != null && propertyValue != null) {
-                        Element propertyElt = new Element(JNLP_TAG_ELT_PROPERTY);
-                        propertyElt.setAttribute(JNLP_TAG_ATT_NAME, propertyName);
-                        propertyElt.setAttribute(JNLP_TAG_ATT_VALUE, propertyValue);
+                        boolean valueReplaced = false;
+        
+                        Iterator<Element> itr = resourcesElt.getChildren(JNLP_TAG_ELT_PROPERTY).iterator();
+                        while (itr.hasNext()) {
+                            Element elt = itr.next();
+                            Attribute name = elt.getAttribute(JNLP_TAG_PRO_NAME);
+                            if (name != null && name.getValue().equals(propertyName)) {
+                                elt.setAttribute(JNLP_TAG_PRO_VALUE, propertyValue);
+                                valueReplaced = true;
+                                break;
+                            }
+                        }
 
-                        resourcesElt.addContent(propertyElt);
+                        if (!valueReplaced){
+                            Element propertyElt = new Element(JNLP_TAG_ELT_PROPERTY);
+                            propertyElt.setAttribute(JNLP_TAG_PRO_NAME, propertyName);
+                            propertyElt.setAttribute(JNLP_TAG_PRO_VALUE, propertyValue);
+                            resourcesElt.addContent(propertyElt);
+                        }
                     } else {
                         throw new Exception("Query Parameter {property} is invalid : " + propValues.toString());
                     }
                 }
             } catch (Exception e) {
                 throw new ServletErrorException(HttpServletResponse.SC_NOT_ACCEPTABLE,
-                    "Can't add property parameter to launcher template", e);
+                    "Cannot add property parameter to launcher template", e);
             }
         }
     }

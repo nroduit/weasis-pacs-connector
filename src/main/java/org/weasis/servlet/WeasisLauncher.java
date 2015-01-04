@@ -190,6 +190,11 @@ public class WeasisLauncher extends HttpServlet {
                 buf.append("$dicom:get -w ");
                 buf.append(wadoQueryUrl);
             }
+            
+            String addparams = props.getProperty("request.addparams", null);
+            if(addparams != null){
+                buf.append(addparams);
+            }
 
             RequestDispatcher dispatcher = request.getRequestDispatcher(buf.toString());
             dispatcher.forward(request, response);

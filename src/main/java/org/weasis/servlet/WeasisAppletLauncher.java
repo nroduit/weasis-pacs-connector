@@ -167,6 +167,11 @@ public class WeasisAppletLauncher extends HttpServlet {
             // buf.append(SLwebstart_launcher.PARAM_ARGUMENT);
             // buf.append("=commands=$dicom:get -w ");
             // buf.append(wadoQueryUrl);
+            
+            String addparams = props.getProperty("request.addparams", null);
+            if(addparams != null){
+                buf.append(addparams);
+            }
 
             String manifestCmd = embeddedManifest ? "" : "&commands=$dicom:get -w " + wadoQueryUrl;
             
