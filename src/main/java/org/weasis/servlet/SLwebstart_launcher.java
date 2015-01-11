@@ -185,12 +185,8 @@ public class SLwebstart_launcher extends HttpServlet {
             response.setContentType(JNLP_MIME_TYPE);
             response.setHeader("Content-Disposition",
                 String.format("inline; filename=\"%s\"", launcher.templateFileName));
-            response.setContentLength(launcherStr.length());
 
-            PrintWriter outWriter = response.getWriter();
-            outWriter.println(launcherStr);
-            outWriter.close();
-
+            ServletUtil.write(launcherStr, response.getOutputStream());
         } catch (ServletErrorException e) {
             logger.error("doGet()", e);
             response.sendError(e.responseErrorCode);

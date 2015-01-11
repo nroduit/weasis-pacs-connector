@@ -17,8 +17,12 @@ import static org.weasis.dicom.wado.DicomQueryParams.SeriesUID;
 import static org.weasis.dicom.wado.DicomQueryParams.StudyUID;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -27,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
 import javax.servlet.ServletContext;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
@@ -74,15 +79,15 @@ public class ServletUtil {
         }
         return null;
     }
-    
+
     public static Object addParameter(Object val, String arg) {
         if (val instanceof String[]) {
             String[] array = (String[]) val;
             String[] arr = Arrays.copyOf(array, array.length + 1);
             arr[array.length] = arg;
-            return  arr;
+            return arr;
         } else if (val != null) {
-            return new String[] { val.toString() ,arg };
+            return new String[] { val.toString(), arg };
         }
         return arg;
     }
@@ -391,12 +396,11 @@ public class ServletUtil {
 
     }
 
-  
     public static ManifestBuilder buildManifest(HttpServletRequest request, Properties props) throws Exception {
         final DicomQueryParams params = ServletUtil.buildDicomQueryParams(request, props);
         return buildManifest(request, new ManifestBuilder(params));
     }
-    
+
     public static ManifestBuilder buildManifest(HttpServletRequest request, ManifestBuilder builder) throws Exception {
         ServletContext ctx = request.getSession().getServletContext();
         final ConcurrentHashMap<Integer, ManifestBuilder> builderMap =
@@ -424,6 +428,79 @@ public class ServletUtil {
         String wadoQueryUrl = buf.toString();
         LOGGER.debug("wadoQueryUrl = " + wadoQueryUrl);
         return wadoQueryUrl;
+    }
+
+    public static void write(InputStream in, OutputStream out) throws IOException {
+        try {
+            copy(in, out, 2048);
+        } catch (Exception e) {
+            handleException(e);
+        } finally {
+            try {
+                in.close();
+                out.flush();
+            } catch (IOException e) {
+                // jetty 6 throws broken pipe exception here too
+                handleException(e);
+            }
+        }
+    }
+
+    public static int copy(final InputStream in, final OutputStream out, final int bufSize) throws IOException {
+        final byte[] buffer = new byte[bufSize];
+        int bytesCopied = 0;
+        while (true) {
+            int byteCount = in.read(buffer, 0, buffer.length);
+            if (byteCount <= 0) {
+                break;
+            }
+            out.write(buffer, 0, byteCount);
+            bytesCopied += byteCount;
+        }
+        return bytesCopied;
+    }
+
+    private static void handleException(Exception e) {
+        Throwable throwable = e;
+        boolean ignoreException = false;
+        while (throwable != null) {
+            if (throwable instanceof SQLException) {
+                break; // leave false and quit loop
+            } else if (throwable instanceof SocketException) {
+                String message = throwable.getMessage();
+                ignoreException =
+                    message != null
+                        && (message.indexOf("Connection reset") != -1 || message.indexOf("Broken pipe") != -1
+                            || message.indexOf("Socket closed") != -1 || message.indexOf("connection abort") != -1);
+            } else {
+                ignoreException =
+                    throwable.getClass().getName().indexOf("ClientAbortException") >= 0
+                        || throwable.getClass().getName().indexOf("EofException") >= 0;
+            }
+            if (ignoreException) {
+                break;
+            }
+            throwable = throwable.getCause();
+        }
+        if (!ignoreException) {
+            throw new RuntimeException("Unable to write the response", e);
+        }
+    }
+
+    public static void write(String str, ServletOutputStream out) {
+        try {
+            byte[] bytes = str.getBytes();
+            out.write(bytes, 0, bytes.length);
+        } catch (Exception e) {
+            handleException(e);
+        } finally {
+            try {
+                out.flush();
+            } catch (IOException e) {
+                // jetty 6 throws broken pipe exception here too
+                handleException(e);
+            }
+        }
     }
 
 }
