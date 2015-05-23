@@ -47,7 +47,6 @@ import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.util.StringUtil.Suffix;
 import org.weasis.dicom.wado.BuildManifestDcmQR;
 import org.weasis.dicom.wado.DicomQueryParams;
-import org.weasis.dicom.wado.UploadXml;
 import org.weasis.dicom.wado.WadoParameters;
 import org.weasis.dicom.wado.WadoQuery.WadoMessage;
 import org.weasis.dicom.wado.thread.ManifestBuilder;
@@ -198,6 +197,7 @@ public class ServletUtil {
                         BuildManifestDcmQR.buildFromSopInstanceUID(params, decrypt(id, key, ObjectUID));
                     }
                     if (!isValidateAllIDs(ObjectUID, key, params, pat, stu, anb, ser)) {
+                        params.getPatients().clear();
                         return null;
                     }
                 } else if (ser != null && ser.length > 0 && isRequestIDAllowed(SeriesUID, properties)) {
@@ -205,6 +205,7 @@ public class ServletUtil {
                         BuildManifestDcmQR.buildFromSeriesInstanceUID(params, decrypt(id, key, SeriesUID));
                     }
                     if (!isValidateAllIDs(SeriesUID, key, params, pat, stu, anb, null)) {
+                        params.getPatients().clear();
                         return null;
                     }
                 } else if (anb != null && anb.length > 0 && isRequestIDAllowed(AccessionNumber, properties)) {
@@ -212,6 +213,7 @@ public class ServletUtil {
                         BuildManifestDcmQR.buildFromStudyAccessionNumber(params, decrypt(id, key, AccessionNumber));
                     }
                     if (!isValidateAllIDs(AccessionNumber, key, params, pat, null, null, null)) {
+                        params.getPatients().clear();
                         return null;
                     }
                 } else if (stu != null && stu.length > 0 && isRequestIDAllowed(StudyUID, properties)) {
@@ -219,6 +221,7 @@ public class ServletUtil {
                         BuildManifestDcmQR.buildFromStudyInstanceUID(params, decrypt(id, key, StudyUID));
                     }
                     if (!isValidateAllIDs(StudyUID, key, params, pat, null, null, null)) {
+                        params.getPatients().clear();
                         return null;
                     }
                 } else if (pat != null && pat.length > 0 && isRequestIDAllowed(PatientID, properties)) {
