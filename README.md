@@ -99,7 +99,7 @@ To add properties or arguments in the JNLP there are two possibilities:
 2. Change the [default template](src/main/webapp/weasis.jnlp), see _jnlp.default.name_ in [weasis-connector-default.properties](src/main/resources/weasis-connector-default.properties)
 
 
-For [dcm4chee-arc](https://github.com/dcm4che/dcm4chee-arc):
+For [dcm4chee-arc](https://github.com/dcm4che/dcm4chee-arc-cdi):
 
 * change the configuration of the wado server property to **pacs.wado.url=${server.base.url}/dcm4chee-arc/wado/DCM4CHEE**
 * in JBoss WildFly 8.x place the file named weasis-pacs-connector.properties into _/modules/org/weasis/weasis-pacs-connector/main_
