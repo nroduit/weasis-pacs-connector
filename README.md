@@ -38,9 +38,9 @@ Note: with a snapshot version, it can be necessary to build first the library [w
 
 * http://localhost:8080/weasis-pacs-connector/IHEInvokeImageDisplay?requestType=PATIENT&patientID=97026728&mostRecentResults=2  
   => query at patient level to get a number of the most recent studies
-* http://localhost:8080/weasis-pacs-connector/IHEInvokeImageDisplay?requestType=PATIENT&patientID=97026728&lowerDateTime=2010-01-01T12:00:00Z   
+* http://localhost:8080/weasis-pacs-connector/IHEInvokeImageDisplay?requestType=PATIENT&patientID=97026728&lowerDateTime=2010-01-01T12:00:00   
   => query at patient level to get the studies which are older than a date 
-* http://localhost:8080/weasis-pacs-connector/IHEInvokeImageDisplay?requestType=PATIENT&patientID=97026728&upperDateTime=2010-01-01T12:00:00Z   
+* http://localhost:8080/weasis-pacs-connector/IHEInvokeImageDisplay?requestType=PATIENT&patientID=97026728&upperDateTime=2010-01-01T12:00:00  
   => query at patient level to get the studies which are more recent than a date
 * http://localhost:8080/weasis-pacs-connector/IHEInvokeImageDisplay?requestType=PATIENT&patientID=97026728&modalitiesInStudy=MR,XA   
   => query at patient level to get the studies containing MR or XA 
@@ -78,7 +78,7 @@ Build an XML file containing the UIDs of the images which will be retrieved in W
 * http://localhost:8080/weasis-pacs-connector/manifest?studyUID=1.3.6.1.4.1.5962.1.2.2.20031208063649.855
 * http://localhost:8080/weasis-pacs-connector/manifest?studyUID=1.3.6.1.4.1.5962.1.2.2.20031208063649.855&gzip   
   => return a gzip-compressed XML file
-* http://localhost:8080/weasis-pacs-connector/manifest?patientID=97026728&modalitiesInStudy=MR&upperDateTime=2014-05-20T12:00:00Z  
+* http://localhost:8080/weasis-pacs-connector/manifest?patientID=97026728&modalitiesInStudy=MR&upperDateTime=2014-05-20T12:00:00  
   => only studies containing MR which are more recent than 2014-05-20 12:00:00
   
 ### JNLP Builder ###
