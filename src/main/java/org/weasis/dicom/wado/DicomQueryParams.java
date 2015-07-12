@@ -40,11 +40,16 @@ public class DicomQueryParams {
     public static final String ViewerType = "viewerType";
     public static final String DiagnosticQuality = "diagnosticQuality";
     public static final String KeyImagesOnly = "keyImagesOnly";
+    // Additional patient-based parameters
+    public static final String keywords = "containsInDescription";
+
     // HTTP Request Parameters – Study-based
     public static final String StudyUID = "studyUID";
     public static final String AccessionNumber = "accessionNumber";
     // Well-Known Values for Viewer Type Parameter
     public static final String IHE_BIR = "IHE_BIR";
+    public static final String PatientLevel = "PATIENT";
+    public static final String StudyLevel = "STUDY";
 
     private final Properties properties;
     private final List<Patient> patients;
@@ -133,6 +138,10 @@ public class DicomQueryParams {
         return getFirstParam(requestMap.get(MostRecentResults));
     }
 
+    public String getKeywords() {
+        return getFirstParam(requestMap.get(keywords));
+    }
+
     public String getModalitiesInStudy() {
         return getFirstParam(requestMap.get(ModalitiesInStudy));
     }
@@ -179,4 +188,5 @@ public class DicomQueryParams {
         }
         return null;
     }
+
 }

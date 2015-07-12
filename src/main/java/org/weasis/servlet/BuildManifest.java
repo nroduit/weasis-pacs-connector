@@ -31,12 +31,6 @@ public class BuildManifest extends HttpServlet {
     private static final long serialVersionUID = 575795035231900320L;
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildManifest.class);
 
-    static final String PatientID = "patientID";
-    static final String StudyUID = "studyUID";
-    static final String AccessionNumber = "accessionNumber";
-    static final String SeriesUID = "seriesUID";
-    static final String ObjectUID = "objectUID";
-
     public BuildManifest() {
         super();
     }
@@ -76,10 +70,8 @@ public class BuildManifest extends HttpServlet {
         }
 
         Properties extProps = new Properties();
-        extProps.put(
-            "server.base.url",
-            ServletUtil.getBaseURL(request,
-                StringUtil.getNULLtoFalse(pacsProperties.getProperty("server.canonical.hostname.mode"))));
+        extProps.put("server.base.url", ServletUtil.getBaseURL(request,
+            StringUtil.getNULLtoFalse(pacsProperties.getProperty("server.canonical.hostname.mode"))));
 
         Properties dynamicProps = (Properties) pacsProperties.clone();
 

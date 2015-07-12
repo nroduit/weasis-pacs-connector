@@ -43,8 +43,8 @@ public class ManifestManager extends HttpServlet {
     public void init() {
         LOGGER.info("Start the manifest manager servlet");
         if (this.getServletContext().getAttribute("manifestBuilderMap") != null) {
-            LOGGER
-                .error("A manifest manager thread is already running in the servlet context! The new one won't be started.");
+            LOGGER.error(
+                "A manifest manager thread is already running in the servlet context! The new one won't be started.");
         } else {
             LOGGER.debug("init() - getServletContext: {} ", getServletConfig().getServletContext());
             LOGGER.debug("init() - getRealPath: {}", getServletConfig().getServletContext().getRealPath("/"));
@@ -61,13 +61,23 @@ public class ManifestManager extends HttpServlet {
                 if (config != null) {
                     properties.load(config.openStream());
                     String requests = properties.getProperty("request.ids", null);
+                    String requestIID = properties.getProperty("request.IID.level", null);
                     if (requests == null) {
-                        LOGGER.error("No request ID is allowed!");
+                        LOGGER.error(
+                            "No request ID is allowed for the web context /viewer, /viewer-applet and /manifest!");
                     } else {
                         for (String id : requests.split(",")) {
-                            properties.put(id, "true");
+                            properties.put(id.trim(), "true");
                         }
                     }
+                    if (requestIID == null) {
+                        LOGGER.error("No request level is allowed for the web context /IHEInvokeImageDisplay!");
+                    } else {
+                        for (String id : requestIID.split(",")) {
+                            properties.put(id.trim(), "true");
+                        }
+                    }
+
                 } else {
                     LOGGER.error("Cannot find  a configuration file for weasis-pacs-connector");
                 }
@@ -88,8 +98,8 @@ public class ManifestManager extends HttpServlet {
 
             manifestManagerThread.setCleanFrequency(ServletUtil.getLongProperty(properties, "thread.clean.frequency",
                 ManifestManagerThread.CLEAN_FREQUENCY));
-            manifestManagerThread.setMaxLifeCycle(ServletUtil.getLongProperty(properties, "thread.max.life.clyle",
-                ManifestManagerThread.MAX_LIFE_CYCLE));
+            manifestManagerThread.setMaxLifeCycle(
+                ServletUtil.getLongProperty(properties, "thread.max.life.clyle", ManifestManagerThread.MAX_LIFE_CYCLE));
             LOGGER.info("ManifestManagerThread configuration (maxLifeCycle="
                 + TimeUnit.MILLISECONDS.toSeconds(manifestManagerThread.getMaxLifeCycle()) + "s, cleanFrequency="
                 + TimeUnit.MILLISECONDS.toSeconds(manifestManagerThread.getCleanFrequency()) + "s)");

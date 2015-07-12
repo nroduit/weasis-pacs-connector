@@ -13,7 +13,9 @@ package org.weasis.servlet;
 import static org.weasis.dicom.wado.DicomQueryParams.AccessionNumber;
 import static org.weasis.dicom.wado.DicomQueryParams.ObjectUID;
 import static org.weasis.dicom.wado.DicomQueryParams.PatientID;
+import static org.weasis.dicom.wado.DicomQueryParams.PatientLevel;
 import static org.weasis.dicom.wado.DicomQueryParams.SeriesUID;
+import static org.weasis.dicom.wado.DicomQueryParams.StudyLevel;
 import static org.weasis.dicom.wado.DicomQueryParams.StudyUID;
 
 import java.io.IOException;
@@ -152,8 +154,8 @@ public class ServletUtil {
 
         if (patients.size() > 0) {
             for (Patient patient : patients) {
-                buffer.append(StringUtil.hasText(patient.getPatientName()) ? patient.getPatientName() : patient
-                    .getPatientID());
+                buffer.append(
+                    StringUtil.hasText(patient.getPatientName()) ? patient.getPatientName() : patient.getPatientID());
                 buffer.append(",");
             }
             buffer.deleteCharAt(buffer.length() - 1);
@@ -168,7 +170,7 @@ public class ServletUtil {
             String key = properties.getProperty("encrypt.key", null);
             String requestType = params.getRequestType();
 
-            if ("STUDY".equals(requestType)) {
+            if (StudyLevel.equals(requestType) && isRequestIDAllowed(StudyLevel, properties)) {
                 String stuID = params.getReqStudyUID();
                 String anbID = params.getReqAccessionNumber();
                 if (StringUtil.hasText(anbID)) {
@@ -179,7 +181,7 @@ public class ServletUtil {
                 } else {
                     LOGGER.info("Not ID found for STUDY request type: {}", requestType);
                 }
-            } else if ("PATIENT".equals(requestType)) {
+            } else if (PatientLevel.equals(requestType) && isRequestIDAllowed(PatientLevel, properties)) {
                 String patID = params.getReqPatientID();
                 if (StringUtil.hasText(patID)) {
                     BuildManifestDcmQR.buildFromPatientID(params, ServletUtil.decrypt(patID, key, PatientID));
@@ -382,9 +384,10 @@ public class ServletUtil {
                 TlsOptions tlsOptions =
                     new TlsOptions(StringUtil.getNULLtoFalse(props.getProperty("pacs.tlsNeedClientAuth")),
                         props.getProperty("pacs.keystoreURL"), props.getProperty("pacs.keystoreType", "JKS"),
-                        props.getProperty("pacs.keystorePass"), props.getProperty("pacs.keyPass",
-                            props.getProperty("pacs.keystorePass")), props.getProperty("pacs.truststoreURL"),
-                        props.getProperty("pacs.truststoreType", "JKS"), props.getProperty("pacs.truststorePass"));
+                        props.getProperty("pacs.keystorePass"),
+                        props.getProperty("pacs.keyPass", props.getProperty("pacs.keystorePass")),
+                        props.getProperty("pacs.truststoreURL"), props.getProperty("pacs.truststoreType", "JKS"),
+                        props.getProperty("pacs.truststorePass"));
                 params = new AdvancedParams();
                 params.setTlsOptions(tlsOptions);
             } catch (Exception e) {
@@ -394,8 +397,8 @@ public class ServletUtil {
         }
 
         return new DicomQueryParams(new DicomNode(props.getProperty("aet", "PACS-CONNECTOR")), calledNode, request,
-            wado, props.getProperty("pacs.db.encoding", "utf-8"), StringUtil.getNULLtoFalse(props
-                .getProperty("accept.noimage")), params, props);
+            wado, props.getProperty("pacs.db.encoding", "utf-8"),
+            StringUtil.getNULLtoFalse(props.getProperty("accept.noimage")), params, props);
 
     }
 
@@ -471,14 +474,12 @@ public class ServletUtil {
                 break; // leave false and quit loop
             } else if (throwable instanceof SocketException) {
                 String message = throwable.getMessage();
-                ignoreException =
-                    message != null
-                        && (message.indexOf("Connection reset") != -1 || message.indexOf("Broken pipe") != -1
-                            || message.indexOf("Socket closed") != -1 || message.indexOf("connection abort") != -1);
+                ignoreException = message != null
+                    && (message.indexOf("Connection reset") != -1 || message.indexOf("Broken pipe") != -1
+                        || message.indexOf("Socket closed") != -1 || message.indexOf("connection abort") != -1);
             } else {
-                ignoreException =
-                    throwable.getClass().getName().indexOf("ClientAbortException") >= 0
-                        || throwable.getClass().getName().indexOf("EofException") >= 0;
+                ignoreException = throwable.getClass().getName().indexOf("ClientAbortException") >= 0
+                    || throwable.getClass().getName().indexOf("EofException") >= 0;
             }
             if (ignoreException) {
                 break;

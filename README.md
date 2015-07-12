@@ -30,7 +30,9 @@ This component gathers different services:
 
 Prerequisites: JDK 6 and Maven
 
-Execute the maven command `mvn clean package` in the root directory of the project and get the package from /target/weasis-pacs-connector.war. Official releases can be downloaded [here](http://sourceforge.net/projects/dcm4che/files/Weasis/weasis-pacs-connector/).
+* Execute the maven command `mvn clean package` in the root directory of the project and get the package from /target/weasis-pacs-connector.war. Official releases can be downloaded [here](http://sourceforge.net/projects/dcm4che/files/Weasis/weasis-pacs-connector/).
+
+* Use the loggerless profile for web application container which already embeds slf4j and log4j (like JBoss): `mvn clean package -Ploggerless`
 
 Note: with a snapshot version, it can be necessary to build first the library [weasis-dicom-tools](https://github.com/nroduit/weasis-dicom-tools)
 
@@ -44,6 +46,8 @@ Note: with a snapshot version, it can be necessary to build first the library [w
   => query at patient level to get the studies which are more recent than a date
 * http://localhost:8080/weasis-pacs-connector/IHEInvokeImageDisplay?requestType=PATIENT&patientID=97026728&modalitiesInStudy=MR,XA   
   => query at patient level to get the studies containing MR or XA 
+* http://localhost:8080/weasis-pacs-connector/IHEInvokeImageDisplay?requestType=PATIENT&patientID=97026728&containsInDescription=abdo,thorax   
+  => query at patient level to get the studies containing the string abdo or thorax (accent and case insensitive) in study description (from version 5.0.1)    
 * http://localhost:8080/weasis-pacs-connector/IHEInvokeImageDisplay?requestType=STUDY&accessionNumber=1657271  
   => query at study level with _accessionNumber_ or _studyUID_
 
@@ -56,6 +60,8 @@ Note: with a snapshot version, it can be necessary to build first the library [w
   => multiple patients
 * http://localhost:8080/weasis-pacs-connector/viewer?patientID=97026728&modalitiesInStudy=MR,XA  
   => only studies containing MR or XA 
+* http://localhost:8080/weasis-pacs-connector/viewer?patientID=97026728&containsInDescription=abdo,thorax  
+  => only studies containing the string abdo or thorax (accent and case insensitive) in study description (from version 5.0.1) 
 * http://localhost:8080/weasis-pacs-connector/viewer?patientID=97026728&modalitiesInStudy=CT&upperDateTime=2010-01-01T12:00:00Z  
   => only studies containing CT which are more recent than 2010-01-01 12:00:00  
 * http://localhost:8080/weasis-pacs-connector/viewer?studyUID=1.3.6.1.4.1.5962.1.2.2.20031208063649.855
