@@ -6,7 +6,7 @@
 	<artifactId>weasis-pacs-connector</artifactId>
 	<packaging>war</packaging>
 	<name>Weasis PACS Connector</name>
-	<version>5.0.1-SNAPSHOT</version>
+	<version>5.0.1</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -127,7 +127,7 @@
 					<artifactId>dcm4che-image</artifactId>
 				</exclusion>
 			</exclusions>
-			<version>0.9.8-SNAPSHOT</version>
+			<version>0.9.8</version>
 		</dependency>
 	</dependencies>
 </project>
