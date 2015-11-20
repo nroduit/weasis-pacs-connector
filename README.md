@@ -6,7 +6,7 @@ This component gathers different services:
 
 * **/viewer** launching Weasis with the patient ID, study UID... (can be configured to use a combination of UIDs or to hide some of them)
 * **/IHEInvokeImageDisplay** launching Weasis at Patient and Study level, compliant to the [IHE IID profile](http://www.ihe.net/Technical_Framework/upload/IHE_RAD_Suppl_IID.pdf)
-* **/viewer-applet** same as _/viewer_ but it can launch Weasis as Applet in a web page (the service returns an html page)
+* **/viewer-applet** same as _/viewer_ but it can launch Weasis as Applet in a web page (the service returns an html page). This method is not recommended as several browsers block Java plugin.
 * **/manifest** building the xml manifest (containing the necessary UIDs) consumed by Weasis to retrieve all the images by WADO requests
 * **/[name of the template]** (default template: /weasis.jnlp) building a jnlp file from a template (jnlp template path, jnlp properties and jnp arguments can be passed via URL parameters, see the [JNLP Builder documentation](JnlpBuilder))
 
