@@ -36,10 +36,9 @@ public class BuildManifestDcmQR {
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildManifestDcmQR.class);
 
     public static WadoMessage buildFromPatientID(DicomQueryParams params, String patientID) throws Exception {
-        if (!StringUtil.hasText(patientID) && params == null) {
-            String message = "No Series found with SeriesInstanceUIDs ";
-
-            return new WadoMessage("Missing PatientID", message, WadoMessage.eLevel.WARN);
+        if (!StringUtil.hasText(patientID) || params == null) {
+            //TODO handle message
+            return new WadoMessage("Missing PatientID", "No patient requested", WadoMessage.eLevel.WARN);
         }
 
         int beginIndex = patientID.indexOf("^^^");
@@ -85,6 +84,9 @@ public class BuildManifestDcmQR {
                         } else {
                             return rep;
                         }
+                    }
+                    if (date1 == null && date2 == null) {
+                        return o1.getString(Tag.StudyInstanceUID, "").compareTo(o2.getString(Tag.StudyInstanceUID, ""));
                     } else {
                         if (date1 == null) {
                             return 1;
