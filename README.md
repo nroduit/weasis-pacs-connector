@@ -91,6 +91,19 @@ Build an XML file containing the UIDs of the images which will be retrieved in W
 
 See the [JNLP Builder documentation](JnlpBuilder)
 
+### Installation ###
+
+It requires a web application container like JBoss or Tomcat.
+
+Go [here](https://sourceforge.net/projects/dcm4che/files/Weasis/) and download these Weasis files.
+* From the folder with the latest version number:  
+	- [weasis.war] Weasis Web distribution which run with Java Web Start.
+	- [weasis-ext.war] Optional package for exporting the images to build an ISO image for CD/DVD
+	- [weasis-i18n.war] Optional package for Weasis translations
+* From weasis-pacs-connector folder:  
+	- [weasis-pacs-connector.war]
+	- [dcm4chee-web-weasis.jar] Optional package for [dcm4che-web3](http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHEE)
+
 ## Configuration of weasis-pacs-connector ##
 
 The default configurations works directly with [dcm4che-web3](http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHEE). To override the configuration of weasis-pacs-connector, download [weasis-connector-default.properties](src/main/resources/weasis-connector-default.properties) and rename it weasis-pacs-connector.properties. This file named weasis-pacs-connector.properties must be placed in the classpath of the application:
@@ -130,6 +143,6 @@ There are different ways to treat the security aspects. Here are some:
 
 ## Architecture of weasis-pacs-connector ##
 
-![weasis-pacs-connector schema](http://www.dcm4che.org/confluence/download/attachments/16122034/weasis_pacs_connector5.png)
+![weasis-pacs-connector schema](https://dcm4che.atlassian.net/wiki/download/attachments/3670037/weasis_pacs_connector5.png)
 
 See [How to launch Weasis from any environments](http://www.dcm4che.org/confluence/display/WEA/How+to+launch+Weasis+from+any+environments)
