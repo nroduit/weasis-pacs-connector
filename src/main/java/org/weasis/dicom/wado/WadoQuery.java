@@ -12,10 +12,13 @@ package org.weasis.dicom.wado;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -43,12 +46,10 @@ public class WadoQuery implements XmlManifest {
     private final StringBuilder wadoQuery = new StringBuilder();
     private final List<PacsConfiguration> pacsList;
 
-    public WadoQuery(DicomQueryParams params) throws WadoQueryException {
-        if ((params == null || !params.hasPatients()) && !params.isAcceptNoImage()) {
-            throw new WadoQueryException(WadoQueryException.NO_PATIENTS_LIST);
-        } else {
-            this.pacsList = params.getPacsList();
-        }
+    public WadoQuery(List<PacsConfiguration> pacsList) {
+        if (pacsList == null)
+            throw new IllegalArgumentException();
+        this.pacsList = pacsList;
     }
 
     @Override
@@ -59,7 +60,7 @@ public class WadoQuery implements XmlManifest {
     public String xmlManifest() {
         wadoQuery.append("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
         for (PacsConfiguration pacs : pacsList) {
-            if(pacs.getPatients().isEmpty() && pacs.getWadoMessages().isEmpty()){
+            if (pacs.getPatients().isEmpty() && pacs.getWadoMessages().isEmpty()) {
                 continue;
             }
             WadoParameters wadoParameters = pacs.getWadoParameters();
@@ -88,8 +89,7 @@ public class WadoQuery implements XmlManifest {
                     wadoQuery.append("\" />");
                 }
             }
-            
-            
+
             for (WadoMessage wadoMessage : pacs.getWadoMessages()) {
                 wadoQuery.append("\n<");
                 wadoQuery.append(TAG_DOCUMENT_MSG);
@@ -101,7 +101,7 @@ public class WadoQuery implements XmlManifest {
             }
 
             List<Patient> patientList = pacs.getPatients();
-            if (patientList  != null) {
+            if (patientList != null) {
                 Collections.sort(patientList, new Comparator<Patient>() {
 
                     @Override
@@ -122,79 +122,6 @@ public class WadoQuery implements XmlManifest {
         }
 
         return wadoQuery.toString();
-    }
-
-    /**
-     * Save current Wado Query to a temporary file and returns the name of the created file.
-     * 
-     * @param path
-     *            path of the temporary file to create
-     * @return the name of the created temporary file
-     * @throws WadoQueryException
-     *             if an error occurs
-     */
-    public String saveToTmpFile(String path) throws WadoQueryException {
-        File tmpFile = null;
-
-        try {
-            File folderTemp = new File(path);
-            if (!folderTemp.exists()) {
-                if (!folderTemp.mkdirs()) {
-                    LOGGER.error("Cannot make folder : " + folderTemp);
-                    throw new WadoQueryException(WadoQueryException.CANNOT_CREATE_TEMP_FILE);
-                }
-            }
-            tmpFile = File.createTempFile(FILE_PREFIX, FILE_EXTENSION, folderTemp);
-        } catch (IOException e) {
-            LOGGER.error(e.getMessage());
-            throw new WadoQueryException(WadoQueryException.CANNOT_CREATE_TEMP_FILE);
-        }
-
-        gzipCompress(new ByteArrayInputStream(toString().getBytes()), tmpFile);
-        LOGGER.info("Wado Query saved to temporary file: {}" + tmpFile);
-        return tmpFile.getName();
-    }
-
-    public static boolean gzipCompress(InputStream in, File gzipFilename) throws WadoQueryException {
-        GZIPOutputStream gzipOut = null;
-        try {
-            gzipOut = new GZIPOutputStream(new FileOutputStream(gzipFilename));
-            byte[] buf = new byte[1024];
-            int offset;
-            while ((offset = in.read(buf)) > 0) {
-                gzipOut.write(buf, 0, offset);
-            }
-            // Finishes writing compressed data
-            gzipOut.finish();
-            return true;
-        } catch (IOException e) {
-            LOGGER.error(e.getMessage());
-            throw new WadoQueryException(WadoQueryException.CANNOT_WRITE_TO_TEMP_FILE);
-        } finally {
-            FileUtil.safeClose(in);
-            FileUtil.safeClose(gzipOut);
-        }
-    }
-
-    public static boolean gzipCompress(InputStream in, OutputStream out) throws WadoQueryException {
-        GZIPOutputStream gzipOut = null;
-        try {
-            gzipOut = new GZIPOutputStream(out);
-            byte[] buf = new byte[1024];
-            int offset;
-            while ((offset = in.read(buf)) > 0) {
-                gzipOut.write(buf, 0, offset);
-            }
-            // Finishes writing compressed data
-            gzipOut.finish();
-            return true;
-        } catch (IOException e) {
-            LOGGER.error(e.getMessage());
-            throw new WadoQueryException(WadoQueryException.CANNOT_WRITE_TO_TEMP_FILE);
-        } finally {
-            FileUtil.safeClose(in);
-            FileUtil.safeClose(gzipOut);
-        }
     }
 
     public static class WadoMessage {

@@ -19,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.wado.DicomQueryParams;
 import org.weasis.dicom.wado.WadoQuery;
-import org.weasis.dicom.wado.WadoQuery.WadoMessage;
 import org.weasis.dicom.wado.XmlManifest;
 import org.weasis.servlet.ServletUtil;
 
@@ -75,7 +74,10 @@ public class ManifestBuilder implements Callable<XmlManifest> {
             long startTime = System.currentTimeMillis();
 
             ServletUtil.fillPatientList(params);
-            WadoQuery wadoQuery = new WadoQuery(params);
+            if (!params.hasPatients() && !params.isAcceptNoImage()) {
+                throw new Exception("Empty Patient List");
+            }
+            WadoQuery wadoQuery = new WadoQuery(params.getPacsList());
 
             LOGGER.info("Build Manifest in {} ms [id={}]", (System.currentTimeMillis() - startTime), requestId);
             return wadoQuery;

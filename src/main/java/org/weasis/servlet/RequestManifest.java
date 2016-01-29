@@ -123,7 +123,7 @@ public class RequestManifest extends HttpServlet {
                 response.setContentType("application/x-gzip");
                 response.setHeader("Content-Disposition", "filename=\"manifest-" + id + ".gz\";");
 
-                gzipStream.write(wadoXmlGenerated.getBytes());
+                gzipStream.write(wadoXmlGenerated.getBytes(xml.getCharsetEncoding()));
                 gzipStream.finish();
             } catch (Exception e) {
                 String errorMsg = "Exception writing GZIP response [id=" + id + "]";

@@ -57,7 +57,7 @@ public class PacsConfiguration {
     }
 
     public String getCharsetEncoding() {
-        return properties.getProperty("pacs.db.encoding", "utf-8");
+        return properties.getProperty("pacs.db.encoding", "UTF-8");
     }
 
     public WadoParameters getWadoParameters() {
