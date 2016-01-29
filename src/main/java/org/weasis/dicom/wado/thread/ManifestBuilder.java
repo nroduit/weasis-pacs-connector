@@ -35,8 +35,9 @@ public class ManifestBuilder implements Callable<XmlManifest> {
     private volatile Future<XmlManifest> future;
 
     public ManifestBuilder(DicomQueryParams params) {
-        if (params == null)
+        if (params == null) {
             throw new IllegalArgumentException();
+        }
         this.params = params;
         this.xml = null;
         this.requestId = COUNTER.incrementAndGet();
@@ -44,8 +45,9 @@ public class ManifestBuilder implements Callable<XmlManifest> {
     }
 
     public ManifestBuilder(XmlManifest xml) {
-        if (xml == null)
+        if (xml == null) {
             throw new IllegalArgumentException();
+        }
         this.params = null;
         this.xml = xml;
         this.requestId = COUNTER.incrementAndGet();

@@ -31,9 +31,9 @@ public class ConnectorProperties extends Properties {
     public List<Properties> getPacsPropertiesList() {
         return Collections.unmodifiableList(list);
     }
-    
+
     @Override
-    public synchronized Object clone() { 
+    public synchronized Object clone() {
         ConnectorProperties newObject = new ConnectorProperties();
         newObject.putAll(this);
         for (Properties properties : list) {
@@ -41,7 +41,6 @@ public class ConnectorProperties extends Properties {
         }
         return newObject;
     }
-
 
     public ConnectorProperties getResolveConnectorProperties(HttpServletRequest request) {
         Properties extProps = new Properties();
@@ -57,7 +56,6 @@ public class ConnectorProperties extends Properties {
         }
 
         dynamicProps.putAll(extProps);
-
 
         for (Properties dynProps : dynamicProps.list) {
             // Perform variable substitution for system properties.

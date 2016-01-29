@@ -75,7 +75,6 @@ public class WadoParameters {
         return overrideDicomTagsList;
     }
 
-
     static class HttpTag {
         private final String key;
         private final String value;

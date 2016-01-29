@@ -20,11 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.data.Patient;
-import org.weasis.dicom.data.xml.Base64;
-import org.weasis.dicom.param.AdvancedParams;
 import org.weasis.dicom.param.DicomNode;
-import org.weasis.dicom.param.TlsOptions;
 import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.wado.WadoQuery.WadoMessage;
 import org.weasis.servlet.ConnectorProperties;
@@ -93,16 +89,16 @@ public class DicomQueryParams {
     public List<PacsConfiguration> getPacsList() {
         return pacsList;
     }
-    
+
     public void addGeneralWadoMessage(WadoMessage wadoMessage) {
-        if(!pacsList.isEmpty()){
+        if (!pacsList.isEmpty()) {
             pacsList.get(0).getWadoMessages().add(wadoMessage);
         }
     }
-    
+
     public boolean hasPatients() {
         for (PacsConfiguration pacsConfiguration : pacsList) {
-            if(!pacsConfiguration.getPatients().isEmpty()){
+            if (!pacsConfiguration.getPatients().isEmpty()) {
                 return true;
             }
         }
@@ -126,13 +122,13 @@ public class DicomQueryParams {
             pacsConfiguration.removeStudyUid(studyUidList);
         }
     }
-    
+
     public void removeAccessionNumber(List<String> accessionNumberList) {
         for (PacsConfiguration pacsConfiguration : pacsList) {
             pacsConfiguration.removeAccessionNumber(accessionNumberList);
         }
     }
-    
+
     public void removeSeriesUid(List<String> seriesUidList) {
         for (PacsConfiguration pacsConfiguration : pacsList) {
             pacsConfiguration.removeSeriesUid(seriesUidList);

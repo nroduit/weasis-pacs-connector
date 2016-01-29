@@ -68,8 +68,8 @@ public class TagW {
         new TagW(0x00280121, "Pixel Padding Range Limit", TagType.Integer);
     public static final TagW SamplesPerPixel = new TagW(0x00280107, "Samples Per Pixel", TagType.Integer);
     public static final TagW MonoChrome = new TagW("MonoChrome", TagType.Boolean);
-    public static final TagW PhotometricInterpretation = new TagW(0x00280004, "Photometric Interpretation",
-        TagType.String);
+    public static final TagW PhotometricInterpretation =
+        new TagW(0x00280004, "Photometric Interpretation", TagType.String);
 
     protected final int id;
     protected final String name;

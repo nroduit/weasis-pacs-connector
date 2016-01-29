@@ -130,7 +130,7 @@ public class PacsConfiguration {
                     for (int k = series.size() - 1; k >= 0; k--) {
                         if (!seriesUidList.contains(series.get(k).getSeriesInstanceUID())) {
                             series.remove(k);
-                            if(series.isEmpty()){
+                            if (series.isEmpty()) {
                                 studies.remove(i);
                             }
                         }

@@ -21,8 +21,8 @@ public class TagUtil {
     private static final String DELIM_START = "${";
     private static final String DELIM_STOP = "}";
 
-    public static String substVars(String val, String currentKey, Map<String, String> cycleMap, Properties configProps, Properties extProps)
-        throws IllegalArgumentException {
+    public static String substVars(String val, String currentKey, Map<String, String> cycleMap, Properties configProps,
+        Properties extProps) throws IllegalArgumentException {
         if (cycleMap == null) {
             cycleMap = new HashMap<String, String>();
         }
@@ -56,16 +56,16 @@ public class TagUtil {
             throw new IllegalArgumentException("recursive variable reference: " + variable);
         }
         String substValue = System.getProperty(variable);
-        if (substValue == null) {            
-             substValue = configProps == null ?null : configProps.getProperty(variable, null);
-             if (substValue == null) {            
-                 substValue = extProps == null ? null : extProps.getProperty(variable, null);
-             }
+        if (substValue == null) {
+            substValue = configProps == null ? null : configProps.getProperty(variable, null);
+            if (substValue == null) {
+                substValue = extProps == null ? null : extProps.getProperty(variable, null);
+            }
         }
 
         cycleMap.remove(variable);
         val = val.substring(0, startDelim) + substValue + val.substring(stopDelim + DELIM_STOP.length(), val.length());
-        val = substVars(val, currentKey, cycleMap, configProps,extProps);
+        val = substVars(val, currentKey, cycleMap, configProps, extProps);
         return val;
     }
 

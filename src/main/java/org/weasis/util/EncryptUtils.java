@@ -56,8 +56,8 @@ public class EncryptUtils {
             throw new IllegalArgumentException("Cannot encode empty message!");
         }
         if (kChars.length < KEY_MIN_SIZE || kChars.length > KEY_MAX_SIZE) {
-            throw new IllegalArgumentException("key size must be >= " + KEY_MIN_SIZE + " and <= " + KEY_MAX_SIZE
-                + " characters");
+            throw new IllegalArgumentException(
+                "key size must be >= " + KEY_MIN_SIZE + " and <= " + KEY_MAX_SIZE + " characters");
         }
 
         int kl = kChars.length;

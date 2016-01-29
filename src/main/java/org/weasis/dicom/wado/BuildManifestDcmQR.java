@@ -35,14 +35,15 @@ import org.weasis.dicom.wado.WadoQuery.WadoMessage;
 public class BuildManifestDcmQR {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildManifestDcmQR.class);
-    
+
     private BuildManifestDcmQR() {
         // Static class
     }
 
     public static void buildFromPatientID(DicomQueryParams params, String patientID) throws Exception {
         if (!StringUtil.hasText(patientID)) {
-            params.addGeneralWadoMessage(new WadoMessage("Missing PatientID", "No patient requested", WadoMessage.eLevel.WARN));
+            params.addGeneralWadoMessage(
+                new WadoMessage("Missing PatientID", "No patient requested", WadoMessage.eLevel.WARN));
             return;
         }
 
@@ -66,8 +67,8 @@ public class BuildManifestDcmQR {
             CFind.AccessionNumber, CFind.StudyInstanceUID, CFind.StudyID, new DicomParam(Tag.ModalitiesInStudy) };
 
         for (PacsConfiguration pacs : params.getPacsList()) {
-            DicomState state = CFind.process(pacs.getAdvancedParams(), params.getCallingNode(),
-                pacs.getCalledNode(), 0, QueryRetrieveLevel.STUDY, keysStudies);
+            DicomState state = CFind.process(pacs.getAdvancedParams(), params.getCallingNode(), pacs.getCalledNode(), 0,
+                QueryRetrieveLevel.STUDY, keysStudies);
 
             List<Attributes> studies = state.getDicomRSP();
             if (studies != null && !studies.isEmpty()) {

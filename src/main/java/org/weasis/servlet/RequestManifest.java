@@ -26,7 +26,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.util.StringUtil;
-import org.weasis.dicom.wado.WadoQuery;
 import org.weasis.dicom.wado.XmlManifest;
 import org.weasis.dicom.wado.thread.ManifestBuilder;
 import org.weasis.dicom.wado.thread.ManifestManagerThread;

@@ -12,6 +12,6 @@ package org.weasis.dicom.data.xml;
 
 public interface XmlDescription {
 
-     String toXml();
+    String toXml();
 
 }

@@ -15,7 +15,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -41,7 +40,6 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.data.xml.Base64;
 import org.weasis.dicom.util.FileUtil;
 import org.weasis.dicom.util.StringUtil;
 
@@ -383,9 +381,8 @@ public class SLwebstart_launcher extends HttpServlet {
 
         try {
             // Assume the template has UTF-8 encoding
-            reader =
-                new BufferedReader(new InputStreamReader(launcher.realPathURL.openConnection().getInputStream(),
-                    "UTF-8"));
+            reader = new BufferedReader(
+                new InputStreamReader(launcher.realPathURL.openConnection().getInputStream(), "UTF-8"));
 
             rootElt = new SAXBuilder(XMLReaders.NONVALIDATING, null, null).build(reader).getRootElement();
 
@@ -454,8 +451,8 @@ public class SLwebstart_launcher extends HttpServlet {
                                 paramElt.setAttribute(JNLP_TAG_PRO_VALUE, propertyValue);
                                 applicationDescElt.addContent(paramElt);
                             } else {
-                                throw new Exception("Applet Query Parameter {property} is invalid : "
-                                    + argValues.toString());
+                                throw new Exception(
+                                    "Applet Query Parameter {property} is invalid : " + argValues.toString());
                             }
                         }
                     }
@@ -491,7 +488,7 @@ public class SLwebstart_launcher extends HttpServlet {
 
                     if (propertyName != null && propertyValue != null) {
                         boolean valueReplaced = false;
-        
+
                         Iterator<Element> itr = resourcesElt.getChildren(JNLP_TAG_ELT_PROPERTY).iterator();
                         while (itr.hasNext()) {
                             Element elt = itr.next();
@@ -503,7 +500,7 @@ public class SLwebstart_launcher extends HttpServlet {
                             }
                         }
 
-                        if (!valueReplaced){
+                        if (!valueReplaced) {
                             Element propertyElt = new Element(JNLP_TAG_ELT_PROPERTY);
                             propertyElt.setAttribute(JNLP_TAG_PRO_NAME, propertyName);
                             propertyElt.setAttribute(JNLP_TAG_PRO_VALUE, propertyValue);

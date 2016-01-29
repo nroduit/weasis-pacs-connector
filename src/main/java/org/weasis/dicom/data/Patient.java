@@ -118,7 +118,7 @@ public class Patient implements XmlDescription {
     }
 
     /**
-     * 
+     *
      * @return
      */
     @Override

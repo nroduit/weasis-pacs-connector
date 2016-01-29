@@ -139,8 +139,8 @@ public class Series implements XmlDescription {
             TagUtil.addXmlAttribute(TagW.TransferSyntaxUID, transferSyntaxUID, result);
             TagUtil.addXmlAttribute(TagW.DirectDownloadThumbnail, thumbnail, result);
             TagUtil.addXmlAttribute(TagW.WadoTransferSyntaxUID, wadoTransferSyntaxUID, result);
-            TagUtil
-                .addXmlAttribute(TagW.WadoCompressionRate, wadoCompression < 1 ? null : "" + wadoCompression, result);
+            TagUtil.addXmlAttribute(TagW.WadoCompressionRate, wadoCompression < 1 ? null : "" + wadoCompression,
+                result);
             result.append(">");
             sortByInstanceNumber();
             for (SOPInstance s : sopInstancesList) {

@@ -27,7 +27,6 @@ import java.net.UnknownHostException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,18 +39,11 @@ import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.Patient;
-import org.weasis.dicom.data.Series;
-import org.weasis.dicom.data.Study;
-import org.weasis.dicom.data.xml.Base64;
-import org.weasis.dicom.param.AdvancedParams;
-import org.weasis.dicom.param.DicomNode;
-import org.weasis.dicom.param.TlsOptions;
 import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.util.StringUtil.Suffix;
 import org.weasis.dicom.wado.BuildManifestDcmQR;
 import org.weasis.dicom.wado.DicomQueryParams;
 import org.weasis.dicom.wado.PacsConfiguration;
-import org.weasis.dicom.wado.WadoParameters;
 import org.weasis.dicom.wado.WadoQuery.WadoMessage;
 import org.weasis.dicom.wado.thread.ManifestBuilder;
 import org.weasis.util.EncryptUtils;
@@ -181,7 +173,8 @@ public class ServletUtil {
                     BuildManifestDcmQR.buildFromStudyInstanceUID(params, ServletUtil.decrypt(stuID, key, StudyUID));
                 } else {
                     LOGGER.error("Not ID found for STUDY request type: {}", requestType);
-                    params.addGeneralWadoMessage(new WadoMessage("Missing Study ID", "No study requested", WadoMessage.eLevel.WARN));
+                    params.addGeneralWadoMessage(
+                        new WadoMessage("Missing Study ID", "No study requested", WadoMessage.eLevel.WARN));
                 }
             } else if (PatientLevel.equals(requestType) && isRequestIDAllowed(PatientLevel, properties)) {
                 String patID = params.getReqPatientID();
@@ -190,7 +183,8 @@ public class ServletUtil {
                 }
             } else if (requestType != null) {
                 LOGGER.error("Not supported IID request type: {}", requestType);
-                params.addGeneralWadoMessage(new WadoMessage("Unexpected Request", "IID request type: " + requestType, WadoMessage.eLevel.WARN));
+                params.addGeneralWadoMessage(
+                    new WadoMessage("Unexpected Request", "IID request type: " + requestType, WadoMessage.eLevel.WARN));
             } else {
                 String[] pat = params.getReqPatientIDs();
                 String[] stu = params.getReqStudyUIDs();
@@ -225,13 +219,14 @@ public class ServletUtil {
             }
         } catch (Exception e) {
             StringUtil.logError(LOGGER, e, "Error when building the patient list");
-            params.addGeneralWadoMessage(new WadoMessage("Unexpected Error", "Unexpected Error when building the manifest", WadoMessage.eLevel.WARN));
+            params.addGeneralWadoMessage(new WadoMessage("Unexpected Error",
+                "Unexpected Error when building the manifest", WadoMessage.eLevel.WARN));
         }
     }
 
     private static void validateRequiredIDs(String id, String key, DicomQueryParams params, String[] pat, String[] stu,
         String[] anb, String[] ser) {
-        
+
         if (id != null) {
             String ids = params.getProperties().getProperty("request." + id);
             if (ids != null) {
@@ -278,7 +273,7 @@ public class ServletUtil {
                         params.removeSeriesUid(list);
                     }
                 }
-                
+
                 // Remove Patient without study
                 for (PacsConfiguration pacsConfiguration : params.getPacsList()) {
                     List<Patient> patients = pacsConfiguration.getPatients();

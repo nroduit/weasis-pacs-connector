@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.wado.WadoQuery;
 import org.weasis.dicom.wado.XmlManifest;
 
 public class ManifestManagerThread extends Thread {

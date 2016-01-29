@@ -14,7 +14,6 @@ package org.weasis.servlet;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -77,19 +76,17 @@ public class WeasisAppletLauncher extends HttpServlet {
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        invokeWeasis(request, response,  null);
+        invokeWeasis(request, response, null);
     }
 
-
-
-    protected static void invokeWeasis(HttpServletRequest request, HttpServletResponse response,
-        XmlManifest manifest) throws IOException {
+    protected static void invokeWeasis(HttpServletRequest request, HttpServletResponse response, XmlManifest manifest)
+        throws IOException {
 
         try {
             if (LOGGER.isDebugEnabled()) {
                 ServletUtil.logInfo(request, LOGGER);
             }
-            
+
             ServletContext ctx = request.getSession().getServletContext();
             ConnectorProperties connectorProperties = (ConnectorProperties) ctx.getAttribute("componentProperties");
             // Check if the source of this request is allowed
@@ -98,7 +95,7 @@ public class WeasisAppletLauncher extends HttpServlet {
             }
 
             ConnectorProperties props = connectorProperties.getResolveConnectorProperties(request);
-            
+
             boolean embeddedManifest = request.getParameterMap().containsKey(WeasisLauncher.PARAM_EMBED);
             String wadoQueryUrl = "";
 
@@ -135,20 +132,21 @@ public class WeasisAppletLauncher extends HttpServlet {
             buf.append(request.getContextPath());
             // TODO servlet parameter
             buf.append("/weasisApplet.jnlp");
-            
+
             String queryCodeBasePath = request.getParameter(SLwebstart_launcher.PARAM_CODEBASE);
             buf.append("?");
             buf.append(SLwebstart_launcher.PARAM_CODEBASE);
             buf.append("=");
             // If weasis codebase is not in the request, set the url from the weasis-pacs-connector properties.
-            buf.append(queryCodeBasePath == null ? props.getProperty("weasis.base.url", props.getProperty("server.base.url") + "/weasis")
+            buf.append(queryCodeBasePath == null
+                ? props.getProperty("weasis.base.url", props.getProperty("server.base.url") + "/weasis")
                 : queryCodeBasePath);
-            
-            String cdbExtParam = request.getParameter(SLwebstart_launcher.PARAM_CODEBASE_EXT);           
-            if(cdbExtParam == null){
+
+            String cdbExtParam = request.getParameter(SLwebstart_launcher.PARAM_CODEBASE_EXT);
+            if (cdbExtParam == null) {
                 // If not in URL parameter, try to get from the config.
                 String cdbExt = props.getProperty("weasis.ext.url", null);
-                if (cdbExt != null){
+                if (cdbExt != null) {
                     buf.append("&");
                     buf.append(SLwebstart_launcher.PARAM_CODEBASE_EXT);
                     buf.append("=");
@@ -157,13 +155,13 @@ public class WeasisAppletLauncher extends HttpServlet {
             }
 
             String jnlpScr = props.getProperty("weasis.default.jnlp", null);
-            if(jnlpScr != null){
+            if (jnlpScr != null) {
                 buf.append("&");
                 buf.append(SLwebstart_launcher.PARAM_SOURCE);
                 buf.append("=");
                 buf.append(jnlpScr);
             }
-            
+
             // TODO should transmit codebase ext, props and args
 
             /*
@@ -174,17 +172,16 @@ public class WeasisAppletLauncher extends HttpServlet {
             // buf.append(SLwebstart_launcher.PARAM_ARGUMENT);
             // buf.append("=commands=$dicom:get -w ");
             // buf.append(wadoQueryUrl);
-            
+
             String addparams = props.getProperty("request.addparams", null);
-            if(addparams != null){
+            if (addparams != null) {
                 buf.append(addparams);
             }
 
             String manifestCmd = embeddedManifest ? "" : "&commands=$dicom:get -w " + wadoQueryUrl;
-            
-            RequestDispatcher dispatcher =
-                request.getRequestDispatcher("/applet.jsp?jnlp=" + URLEncoder.encode(buf.toString(), "UTF-8")
-                    + manifestCmd);
+
+            RequestDispatcher dispatcher = request
+                .getRequestDispatcher("/applet.jsp?jnlp=" + URLEncoder.encode(buf.toString(), "UTF-8") + manifestCmd);
             dispatcher.forward(request, response);
 
         } catch (Exception e) {

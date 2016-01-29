@@ -11,16 +11,11 @@
 
 package org.weasis.servlet;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Enumeration;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
@@ -31,7 +26,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.xml.Base64;
-import org.weasis.dicom.data.xml.TagUtil;
 import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.wado.UploadXml;
 import org.weasis.dicom.wado.XmlManifest;

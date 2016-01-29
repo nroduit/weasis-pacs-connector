@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 
 /**
  * Convenience methods for escaping special characters related to HTML, XML, and regular expressions.
- * 
+ *
  */
 public final class EscapeChars {
 
@@ -28,7 +28,7 @@ public final class EscapeChars {
 
     /**
      * Escape characters for text appearing in HTML markup.
-     * 
+     *
      * <P>
      * The following characters are replaced with corresponding HTML character entities :
      * <table border='1' cellpadding='3' cellspacing='0'>
@@ -169,9 +169,9 @@ public final class EscapeChars {
      * <td>&#126;</td>
      * </tr>
      * </table>
-     * 
+     *
      * <P>
-     * Note that JSTL's {@code <c:out>} escapes <em>only the first 
+     * Note that JSTL's {@code <c:out>} escapes <em>only the first
      * five</em> of the above characters.
      */
     public static String forHTML(String aText) {
@@ -257,16 +257,15 @@ public final class EscapeChars {
 
     /**
      * Escape all ampersand characters in a URL.
-     * 
+     *
      * <P>
      * Replaces all <tt>'&'</tt> characters with <tt>'&amp;'</tt>.
-     * 
+     *
      * <P>
      * An ampersand character may appear in the query string of a URL. The ampersand character is indeed valid in a URL.
-     * <em>However, URLs usually appear as an <tt>HREF</tt> attribute, and 
-     * such attributes have the additional constraint that ampersands 
-     * must be escaped.</em>
-     * 
+     * <em>However, URLs usually appear as an <tt>HREF</tt> attribute, and such attributes have the additional
+     * constraint that ampersands must be escaped.</em>
+     *
      * <P>
      * The JSTL <c:url> tag does indeed perform proper URL encoding of query parameters. But it does not, in general,
      * produce text which is valid as an <tt>HREF</tt> attribute, simply because it does not escape the ampersand
@@ -279,10 +278,10 @@ public final class EscapeChars {
 
     /**
      * Synonym for <tt>URLEncoder.encode(String, "UTF-8")</tt>.
-     * 
+     *
      * <P>
      * Used to ensure that HTTP query strings are in proper form, by escaping special characters such as spaces.
-     * 
+     *
      * <P>
      * It is important to note that if a query string appears in an <tt>HREF</tt> attribute, then there are two issues -
      * ensuring the query string is valid HTTP (it is URL-encoded), and ensuring it is valid HTML (ensuring the
@@ -300,7 +299,7 @@ public final class EscapeChars {
 
     /**
      * Escape characters for text appearing as XML data, between tags.
-     * 
+     *
      * <P>
      * The following characters are replaced with corresponding character entities :
      * <table border='1' cellpadding='3' cellspacing='0'>
@@ -329,7 +328,7 @@ public final class EscapeChars {
      * <td>&#039;</td>
      * </tr>
      * </table>
-     * 
+     *
      * <P>
      */
     public static String forXML(String aText) {
@@ -368,10 +367,9 @@ public final class EscapeChars {
         return result.toString();
     }
 
-/**
-  * Return <tt>aText</tt> with all <tt>'<'</tt> and <tt>'>'</tt> characters
-  * replaced by their escaped equivalents.
-  */
+    /**
+     * Return <tt>aText</tt> with all <tt>'<'</tt> and <tt>'>'</tt> characters replaced by their escaped equivalents.
+     */
     public static String toDisableTags(String aText) {
         final StringBuilder result = new StringBuilder();
         final StringCharacterIterator iterator = new StringCharacterIterator(aText);
@@ -394,7 +392,7 @@ public final class EscapeChars {
     /**
      * Replace characters having special meaning in regular expressions with their escaped equivalents, preceded by a
      * '\' character.
-     * 
+     *
      * <P>
      * The escaped characters include :
      * <ul>
@@ -460,10 +458,10 @@ public final class EscapeChars {
 
     /**
      * Escape <tt>'$'</tt> and <tt>'\'</tt> characters in replacement strings.
-     * 
+     *
      * <P>
      * Synonym for <tt>Matcher.quoteReplacement(String)</tt>.
-     * 
+     *
      * <P>
      * The following methods use replacement strings which treat <tt>'$'</tt> and <tt>'\'</tt> as special characters:
      * <ul>
@@ -471,7 +469,7 @@ public final class EscapeChars {
      * <li><tt>String.replaceFirst(String, String)</tt>
      * <li><tt>Matcher.appendReplacement(StringBuffer, String)</tt>
      * </ul>
-     * 
+     *
      * <P>
      * If replacement text can contain arbitrary characters, then you will usually need to escape that text, to ensure
      * special characters are interpreted literally.
@@ -482,7 +480,7 @@ public final class EscapeChars {
 
     /**
      * Disable all <tt><SCRIPT></tt> tags in <tt>aText</tt>.
-     * 
+     *
      * <P>
      * Insensitive to case.
      */

@@ -10,26 +10,14 @@
  *******************************************************************************/
 package org.weasis.dicom.wado;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.zip.GZIPOutputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.Patient;
 import org.weasis.dicom.data.xml.TagUtil;
-import org.weasis.dicom.util.FileUtil;
-import org.weasis.dicom.util.StringUtil;
 
 public class WadoQuery implements XmlManifest {
 
@@ -47,8 +35,9 @@ public class WadoQuery implements XmlManifest {
     private final List<PacsConfiguration> pacsList;
 
     public WadoQuery(List<PacsConfiguration> pacsList) {
-        if (pacsList == null)
+        if (pacsList == null) {
             throw new IllegalArgumentException();
+        }
         this.pacsList = pacsList;
     }
 
@@ -57,6 +46,7 @@ public class WadoQuery implements XmlManifest {
         return "UTF-8";
     }
 
+    @Override
     public String xmlManifest() {
         wadoQuery.append("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
         for (PacsConfiguration pacs : pacsList) {
@@ -126,7 +116,7 @@ public class WadoQuery implements XmlManifest {
 
     public static class WadoMessage {
         public enum eLevel {
-                            INFO, WARN, ERROR;
+            INFO, WARN, ERROR;
         }
 
         private final String message;

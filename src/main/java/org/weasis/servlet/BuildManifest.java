@@ -12,10 +12,6 @@
 package org.weasis.servlet;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Properties;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -24,8 +20,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.data.xml.TagUtil;
-import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.wado.thread.ManifestBuilder;
 
 public class BuildManifest extends HttpServlet {
@@ -39,7 +33,7 @@ public class BuildManifest extends HttpServlet {
 
     /**
      * Initialization of the servlet. <br>
-     * 
+     *
      * @throws ServletException
      *             if an error occurs
      */
@@ -65,7 +59,8 @@ public class BuildManifest extends HttpServlet {
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        ConnectorProperties connectorProperties = (ConnectorProperties) this.getServletContext().getAttribute("componentProperties");
+        ConnectorProperties connectorProperties =
+            (ConnectorProperties) this.getServletContext().getAttribute("componentProperties");
         // Check if the source of this request is allowed
         if (!ServletUtil.isRequestAllowed(request, connectorProperties, LOGGER)) {
             return;
