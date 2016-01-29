@@ -41,37 +41,33 @@ public class WadoQuery implements XmlManifest {
     public static final String TAG_MSG_ATTRIBUTE_LEVEL = "severity";
 
     private final StringBuilder wadoQuery = new StringBuilder();
-    private final List<Patient> patientList;
-    private final String charsetEncoding;
-    private WadoMessage wadoMessage;
+    private final List<PacsConfiguration> pacsList;
 
-    /**
-     * Creates a wado query with the given patients list.
-     * 
-     * @param patients
-     *            a list of patients
-     * @param wadoParameters
-     *            the wado parameters
-     * @param charsetEncoding
-     *            the encoding of the response
-     * @param acceptNoImage
-     *            if true the manifest will be created with no data
-     * @throws WadoQueryException
-     */
-    public WadoQuery(List<Patient> patients, WadoParameters wadoParameters, String charsetEncoding,
-        boolean acceptNoImage) throws WadoQueryException {
-        if ((patients == null || patients.size() == 0) && !acceptNoImage) {
+    public WadoQuery(DicomQueryParams params) throws WadoQueryException {
+        if ((params == null || !params.hasPatients()) && !params.isAcceptNoImage()) {
             throw new WadoQueryException(WadoQueryException.NO_PATIENTS_LIST);
-        } else if (wadoParameters == null || !StringUtil.hasText(charsetEncoding)) {
-            throw new IllegalArgumentException();
         } else {
-            this.patientList = patients;
-            this.charsetEncoding = charsetEncoding;
-            wadoQuery.append("<?xml version=\"1.0\" encoding=\"" + charsetEncoding + "\" ?>");
+            this.pacsList = params.getPacsList();
+        }
+    }
+
+    @Override
+    public String getCharsetEncoding() {
+        return "UTF-8";
+    }
+
+    public String xmlManifest() {
+        wadoQuery.append("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
+        for (PacsConfiguration pacs : pacsList) {
+            if(pacs.getPatients().isEmpty() && pacs.getWadoMessages().isEmpty()){
+                continue;
+            }
+            WadoParameters wadoParameters = pacs.getWadoParameters();
             wadoQuery.append("\n<");
             wadoQuery.append(WadoParameters.TAG_DOCUMENT_ROOT);
             wadoQuery.append(WadoParameters.TAG_SCHEMA);
             wadoQuery.append(" ");
+
             TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_URL, wadoParameters.getWadoURL(), wadoQuery);
             TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_WEB_LOGIN, wadoParameters.getWebLogin(), wadoQuery);
             TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_ONLY_SOP_UID, wadoParameters.isRequireOnlySOPInstanceUID(),
@@ -92,50 +88,40 @@ public class WadoQuery implements XmlManifest {
                     wadoQuery.append("\" />");
                 }
             }
-        }
-    }
-
-    public String xmlManifest() {
-        if (wadoMessage != null) {
-            wadoQuery.append("\n<");
-            wadoQuery.append(TAG_DOCUMENT_MSG);
-            wadoQuery.append(" ");
-            TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_TITLE, wadoMessage.title, wadoQuery);
-            TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_DESC, wadoMessage.message, wadoQuery);
-            TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_LEVEL, wadoMessage.level.name(), wadoQuery);
-            wadoQuery.append("/>");
-        }
-
-        if (patientList != null) {
-            Collections.sort(patientList, new Comparator<Patient>() {
-
-                @Override
-                public int compare(Patient o1, Patient o2) {
-                    return o1.getPatientName().compareTo(o2.getPatientName());
-                }
-            });
-
-            for (Patient patient : patientList) {
-                wadoQuery.append(patient.toXml());
+            
+            
+            for (WadoMessage wadoMessage : pacs.getWadoMessages()) {
+                wadoQuery.append("\n<");
+                wadoQuery.append(TAG_DOCUMENT_MSG);
+                wadoQuery.append(" ");
+                TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_TITLE, wadoMessage.title, wadoQuery);
+                TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_DESC, wadoMessage.message, wadoQuery);
+                TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_LEVEL, wadoMessage.level.name(), wadoQuery);
+                wadoQuery.append("/>");
             }
+
+            List<Patient> patientList = pacs.getPatients();
+            if (patientList  != null) {
+                Collections.sort(patientList, new Comparator<Patient>() {
+
+                    @Override
+                    public int compare(Patient o1, Patient o2) {
+                        return o1.getPatientName().compareTo(o2.getPatientName());
+                    }
+                });
+
+                for (Patient patient : patientList) {
+                    wadoQuery.append(patient.toXml());
+                }
+            }
+
+            wadoQuery.append("\n</");
+            wadoQuery.append(WadoParameters.TAG_DOCUMENT_ROOT);
+            wadoQuery.append(">");
+
         }
 
-        wadoQuery.append("\n</");
-        wadoQuery.append(WadoParameters.TAG_DOCUMENT_ROOT);
-        wadoQuery.append(">");
         return wadoQuery.toString();
-    }
-
-    public String getCharsetEncoding() {
-        return charsetEncoding;
-    }
-
-    public WadoMessage getWadoMessage() {
-        return wadoMessage;
-    }
-
-    public void setWadoMessage(WadoMessage wadoMessage) {
-        this.wadoMessage = wadoMessage;
     }
 
     /**
@@ -213,7 +199,7 @@ public class WadoQuery implements XmlManifest {
 
     public static class WadoMessage {
         public enum eLevel {
-            INFO, WARN, ERROR;
+                            INFO, WARN, ERROR;
         }
 
         private final String message;
@@ -238,4 +224,5 @@ public class WadoQuery implements XmlManifest {
             return level;
         }
     }
+
 }

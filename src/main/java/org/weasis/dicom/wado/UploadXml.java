@@ -16,11 +16,6 @@ public class UploadXml implements XmlManifest {
     }
 
     @Override
-    public Object getWadoMessage() {
-        return null;
-    }
-
-    @Override
     public String getCharsetEncoding() {
         return charsetEncoding;
     }

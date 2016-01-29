@@ -18,11 +18,19 @@ import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.Patient;
+import org.weasis.dicom.data.xml.Base64;
 import org.weasis.dicom.param.AdvancedParams;
 import org.weasis.dicom.param.DicomNode;
+import org.weasis.dicom.param.TlsOptions;
+import org.weasis.dicom.util.StringUtil;
+import org.weasis.dicom.wado.WadoQuery.WadoMessage;
+import org.weasis.servlet.ConnectorProperties;
 
 public class DicomQueryParams {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DicomQueryParams.class);
 
     public static final String SeriesUID = "seriesUID";
     public static final String ObjectUID = "objectUID";
@@ -51,63 +59,84 @@ public class DicomQueryParams {
     public static final String PatientLevel = "PATIENT";
     public static final String StudyLevel = "STUDY";
 
-    private final Properties properties;
-    private final List<Patient> patients;
+    private final ConnectorProperties properties;
     private final DicomNode callingNode;
-    private final DicomNode calledNode;
-    private final AdvancedParams advancedParams;
-    private final WadoParameters wadoParameters;
-    private final String charsetEncoding;
-    private final boolean acceptNoImage;
+    private final List<PacsConfiguration> pacsList;
     private final Map<String, String[]> requestMap;
 
-    public DicomQueryParams(DicomNode callingNode, DicomNode calledNode, HttpServletRequest request,
-        WadoParameters wadoParameters, String charsetEncoding, boolean acceptNoImage, AdvancedParams params,
-        Properties properties) {
-        if (callingNode == null || calledNode == null) {
+    public DicomQueryParams(HttpServletRequest request, ConnectorProperties properties) {
+        if (properties == null) {
             throw new IllegalArgumentException("callingNode or calledNode cannot be null!");
         }
-        this.properties = properties == null ? new Properties() : properties;
-        this.patients = new ArrayList<Patient>();
-        this.callingNode = callingNode;
-        this.calledNode = calledNode;
-        this.wadoParameters = wadoParameters;
-        this.charsetEncoding = charsetEncoding;
-        this.acceptNoImage = acceptNoImage;
-        this.advancedParams = params;
+        this.properties = properties;
+        this.pacsList = new ArrayList<PacsConfiguration>();
+        this.pacsList.add(new PacsConfiguration(properties));
+        for (Properties p : properties.getPacsPropertiesList()) {
+            this.pacsList.add(new PacsConfiguration(p));
+        }
+        this.callingNode = new DicomNode(properties.getProperty("aet", "PACS-CONNECTOR"));
         this.requestMap = new HashMap<String, String[]>(request.getParameterMap());
-    }
-
-    public List<Patient> getPatients() {
-        return patients;
     }
 
     public DicomNode getCallingNode() {
         return callingNode;
     }
 
-    public DicomNode getCalledNode() {
-        return calledNode;
-    }
-
-    public WadoParameters getWadoParameters() {
-        return wadoParameters;
-    }
-
-    public String getCharsetEncoding() {
-        return charsetEncoding;
-    }
-
     public boolean isAcceptNoImage() {
-        return acceptNoImage;
+        return StringUtil.getNULLtoFalse(properties.getProperty("accept.noimage"));
     }
 
-    public AdvancedParams getAdvancedParams() {
-        return advancedParams;
-    }
-
-    public Properties getProperties() {
+    public ConnectorProperties getProperties() {
         return properties;
+    }
+
+    public List<PacsConfiguration> getPacsList() {
+        return pacsList;
+    }
+    
+    public void addGeneralWadoMessage(WadoMessage wadoMessage) {
+        if(!pacsList.isEmpty()){
+            pacsList.get(0).getWadoMessages().add(wadoMessage);
+        }
+    }
+    
+    public boolean hasPatients() {
+        for (PacsConfiguration pacsConfiguration : pacsList) {
+            if(!pacsConfiguration.getPatients().isEmpty()){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void clearAllPatients() {
+        for (PacsConfiguration pacsConfiguration : pacsList) {
+            pacsConfiguration.getPatients().clear();
+        }
+    }
+
+    public void removePatientId(List<String> patientIdList) {
+        for (PacsConfiguration pacsConfiguration : pacsList) {
+            pacsConfiguration.removePatientId(patientIdList);
+        }
+    }
+
+    public void removeStudyUid(List<String> studyUidList) {
+        for (PacsConfiguration pacsConfiguration : pacsList) {
+            pacsConfiguration.removeStudyUid(studyUidList);
+        }
+    }
+    
+    public void removeAccessionNumber(List<String> accessionNumberList) {
+        for (PacsConfiguration pacsConfiguration : pacsList) {
+            pacsConfiguration.removeAccessionNumber(accessionNumberList);
+        }
+    }
+    
+    public void removeSeriesUid(List<String> seriesUidList) {
+        for (PacsConfiguration pacsConfiguration : pacsList) {
+            pacsConfiguration.removeSeriesUid(seriesUidList);
+        }
     }
 
     public String getRequestType() {

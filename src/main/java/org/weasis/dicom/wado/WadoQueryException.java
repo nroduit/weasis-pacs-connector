@@ -13,35 +13,19 @@ package org.weasis.dicom.wado;
 /**
  * This class implements exceptions raised by the WadoQuery class
  * 
- * @author jlrz
+ * @author jlrz, nirt
  */
 public class WadoQueryException extends Exception {
 
-    // Instance attribute
-    private String message = "";
-    private int exception = NO_EXCEPTION;
-
     // Predefined exceptions codes
-    public static int NO_EXCEPTION = 0;
-    public static int NO_PATIENTS_LIST = 1;
-    public static int BAD_PATH = 2;
-    public static int CANNOT_CREATE_TEMP_FILE = 3;
-    public static int CANNOT_WRITE_TO_TEMP_FILE = 4;
+    public static int NO_PATIENTS_LIST = 0;
+    public static int CANNOT_CREATE_TEMP_FILE = 1;
+    public static int CANNOT_WRITE_TO_TEMP_FILE = 2;
 
-    // Predefined exceptions messages
-    private static String exceptions[] = { "No Exception", "No Patients List", "Bad URL Path",
-        "Cannot Create Temporary File", "Cannot Write To Temporary File" };
+    private static String exceptions[] =
+        { "Empty Patient List", "Cannot Create Temporary File", "Cannot Write To Temporary File" };
 
-    // Constructors
-    /**
-     * Constructs a new exception with the specified detail message.
-     * 
-     * @param msg
-     *            a detail message
-     */
-    public WadoQueryException(String msg) {
-        message = msg;
-    }
+    private int exception = 0;
 
     /**
      * Constructs a new exception with a predefined exception
@@ -51,7 +35,6 @@ public class WadoQueryException extends Exception {
      */
     public WadoQueryException(int code) {
         exception = code;
-        message = exceptions[code];
     }
 
     // Methods
@@ -62,7 +45,7 @@ public class WadoQueryException extends Exception {
      */
     @Override
     public String toString() {
-        return new String("WadoQueryException: " + message);
+        return "WadoQueryException: " + exceptions[exception];
     }
 
     /**
@@ -72,7 +55,7 @@ public class WadoQueryException extends Exception {
      */
     @Override
     public String getMessage() {
-        return message;
+        return exceptions[exception];
     }
 
     /**

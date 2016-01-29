@@ -12,7 +12,9 @@
 package org.weasis.servlet;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Properties;
 
 import javax.servlet.ServletException;
@@ -63,31 +65,16 @@ public class BuildManifest extends HttpServlet {
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        Properties pacsProperties = (Properties) this.getServletContext().getAttribute("componentProperties");
+        ConnectorProperties connectorProperties = (ConnectorProperties) this.getServletContext().getAttribute("componentProperties");
         // Check if the source of this request is allowed
-        if (!ServletUtil.isRequestAllowed(request, pacsProperties, LOGGER)) {
+        if (!ServletUtil.isRequestAllowed(request, connectorProperties, LOGGER)) {
             return;
         }
 
-        Properties extProps = new Properties();
-        extProps.put("server.base.url", ServletUtil.getBaseURL(request,
-            StringUtil.getNULLtoFalse(pacsProperties.getProperty("server.canonical.hostname.mode"))));
-
-        Properties dynamicProps = (Properties) pacsProperties.clone();
-
-        // Perform variable substitution for system properties.
-        for (Enumeration<?> e = pacsProperties.propertyNames(); e.hasMoreElements();) {
-            String name = (String) e.nextElement();
-            dynamicProps.setProperty(name,
-                TagUtil.substVars(pacsProperties.getProperty(name), name, null, pacsProperties, extProps));
-        }
-
-        dynamicProps.putAll(extProps);
-
-        buildManifest(request, response, dynamicProps);
+        buildManifest(request, response, connectorProperties.getResolveConnectorProperties(request));
     }
 
-    private void buildManifest(HttpServletRequest request, HttpServletResponse response, Properties props)
+    private void buildManifest(HttpServletRequest request, HttpServletResponse response, ConnectorProperties props)
         throws IOException {
 
         try {

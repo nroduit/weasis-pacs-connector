@@ -11,6 +11,7 @@
 package org.weasis.servlet;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -32,7 +33,7 @@ public class ManifestManager extends HttpServlet {
     private static final long serialVersionUID = -3980526826815714220L;
     private static final Logger LOGGER = LoggerFactory.getLogger(ManifestManager.class);
 
-    private final Properties properties = new Properties();
+    private final ConnectorProperties properties = new ConnectorProperties();
     private final ConcurrentHashMap<Integer, ManifestBuilder> manifestBuilderMap =
         new ConcurrentHashMap<Integer, ManifestBuilder>();
 
@@ -75,6 +76,20 @@ public class ManifestManager extends HttpServlet {
                     } else {
                         for (String id : requestIID.split(",")) {
                             properties.put(id.trim(), "true");
+                        }
+                    }
+                    
+                    String pacsConfigList = properties.getProperty("pacs.config.list", null);
+                    if (pacsConfigList != null) {
+                        
+                        for (String pacs : pacsConfigList.split(",")) {
+                            URL pacsConfigFile = this.getClass().getResource("/" + pacs.trim());
+                            if (pacsConfigFile != null) {
+                                Properties pacsProps = new Properties();
+                                LOGGER.info("Additionnal PACS configuration: {}", pacsConfigFile);
+                                pacsProps.load(pacsConfigFile.openStream());
+                                properties.addPacsProperties(pacsProps);
+                            }
                         }
                     }
 

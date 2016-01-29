@@ -25,6 +25,7 @@ import org.weasis.dicom.data.SOPInstance;
 import org.weasis.dicom.data.Series;
 import org.weasis.dicom.data.Study;
 import org.weasis.dicom.op.CFind;
+import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomParam;
 import org.weasis.dicom.param.DicomState;
 import org.weasis.dicom.util.DateUtil;
@@ -34,11 +35,15 @@ import org.weasis.dicom.wado.WadoQuery.WadoMessage;
 public class BuildManifestDcmQR {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildManifestDcmQR.class);
+    
+    private BuildManifestDcmQR() {
+        // Static class
+    }
 
-    public static WadoMessage buildFromPatientID(DicomQueryParams params, String patientID) throws Exception {
-        if (!StringUtil.hasText(patientID) || params == null) {
-            //TODO handle message
-            return new WadoMessage("Missing PatientID", "No patient requested", WadoMessage.eLevel.WARN);
+    public static void buildFromPatientID(DicomQueryParams params, String patientID) throws Exception {
+        if (!StringUtil.hasText(patientID)) {
+            params.addGeneralWadoMessage(new WadoMessage("Missing PatientID", "No patient requested", WadoMessage.eLevel.WARN));
+            return;
         }
 
         int beginIndex = patientID.indexOf("^^^");
@@ -60,143 +65,146 @@ public class BuildManifestDcmQR {
             CFind.ReferringPhysicianName, CFind.StudyDescription, CFind.StudyDate, CFind.StudyTime,
             CFind.AccessionNumber, CFind.StudyInstanceUID, CFind.StudyID, new DicomParam(Tag.ModalitiesInStudy) };
 
-        DicomState state = CFind.process(params.getAdvancedParams(), params.getCallingNode(), params.getCalledNode(), 0,
-            QueryRetrieveLevel.STUDY, keysStudies);
+        for (PacsConfiguration pacs : params.getPacsList()) {
+            DicomState state = CFind.process(pacs.getAdvancedParams(), params.getCallingNode(),
+                pacs.getCalledNode(), 0, QueryRetrieveLevel.STUDY, keysStudies);
 
-        List<Attributes> studies = state.getDicomRSP();
-        if (studies != null) {
-            Collections.sort(studies, new Comparator<Attributes>() {
+            List<Attributes> studies = state.getDicomRSP();
+            if (studies != null && !studies.isEmpty()) {
+                Collections.sort(studies, new Comparator<Attributes>() {
 
-                @Override
-                public int compare(Attributes o1, Attributes o2) {
-                    Date date1 = o1.getDate(Tag.StudyDate);
-                    Date date2 = o2.getDate(Tag.StudyDate);
-                    if (date1 != null && date2 != null) {
-                        // inverse time
-                        int rep = date2.compareTo(date1);
-                        if (rep == 0) {
-                            Date time1 = o1.getDate(Tag.StudyTime);
-                            Date time2 = o2.getDate(Tag.StudyTime);
-                            if (time1 != null && time2 != null) {
-                                // inverse time
-                                return time2.compareTo(time1);
+                    @Override
+                    public int compare(Attributes o1, Attributes o2) {
+                        Date date1 = o1.getDate(Tag.StudyDate);
+                        Date date2 = o2.getDate(Tag.StudyDate);
+                        if (date1 != null && date2 != null) {
+                            // inverse time
+                            int rep = date2.compareTo(date1);
+                            if (rep == 0) {
+                                Date time1 = o1.getDate(Tag.StudyTime);
+                                Date time2 = o2.getDate(Tag.StudyTime);
+                                if (time1 != null && time2 != null) {
+                                    // inverse time
+                                    return time2.compareTo(time1);
+                                }
+                            } else {
+                                return rep;
                             }
+                        }
+                        if (date1 == null && date2 == null) {
+                            return o1.getString(Tag.StudyInstanceUID, "")
+                                .compareTo(o2.getString(Tag.StudyInstanceUID, ""));
                         } else {
-                            return rep;
+                            if (date1 == null) {
+                                return 1;
+                            }
+                            if (date2 == null) {
+                                return -1;
+                            }
                         }
+                        return 0;
                     }
-                    if (date1 == null && date2 == null) {
-                        return o1.getString(Tag.StudyInstanceUID, "").compareTo(o2.getString(Tag.StudyInstanceUID, ""));
-                    } else {
-                        if (date1 == null) {
-                            return 1;
-                        }
-                        if (date2 == null) {
-                            return -1;
-                        }
-                    }
-                    return 0;
-                }
-            });
+                });
 
-            if (StringUtil.hasText(params.getLowerDateTime())) {
-                Date lowerDateTime = null;
-                try {
-                    lowerDateTime = javax.xml.bind.DatatypeConverter.parseDateTime(params.getLowerDateTime()).getTime();
-                } catch (Exception e) {
-                    LOGGER.error("Cannot parse date: {}", params.getLowerDateTime());
+                if (StringUtil.hasText(params.getLowerDateTime())) {
+                    Date lowerDateTime = null;
+                    try {
+                        lowerDateTime =
+                            javax.xml.bind.DatatypeConverter.parseDateTime(params.getLowerDateTime()).getTime();
+                    } catch (Exception e) {
+                        LOGGER.error("Cannot parse date: {}", params.getLowerDateTime());
+                    }
+                    if (lowerDateTime != null) {
+                        for (int i = studies.size() - 1; i >= 0; i--) {
+                            Attributes s = studies.get(i);
+                            Date date = DateUtil.dateTime(s.getDate(Tag.StudyDate), s.getDate(Tag.StudyTime));
+                            int rep = date.compareTo(lowerDateTime);
+                            if (rep > 0) {
+                                studies.remove(i);
+                            }
+                        }
+                    }
                 }
-                if (lowerDateTime != null) {
-                    for (int i = studies.size() - 1; i >= 0; i--) {
-                        Attributes s = studies.get(i);
-                        Date date = DateUtil.dateTime(s.getDate(Tag.StudyDate), s.getDate(Tag.StudyTime));
-                        int rep = date.compareTo(lowerDateTime);
-                        if (rep > 0) {
+
+                if (StringUtil.hasText(params.getUpperDateTime())) {
+                    Date upperDateTime = null;
+                    try {
+                        upperDateTime =
+                            javax.xml.bind.DatatypeConverter.parseDateTime(params.getUpperDateTime()).getTime();
+                    } catch (Exception e) {
+                        LOGGER.error("Cannot parse date: {}", params.getUpperDateTime());
+                    }
+                    if (upperDateTime != null) {
+                        for (int i = studies.size() - 1; i >= 0; i--) {
+                            Attributes s = studies.get(i);
+                            Date date = DateUtil.dateTime(s.getDate(Tag.StudyDate), s.getDate(Tag.StudyTime));
+                            int rep = date.compareTo(upperDateTime);
+                            if (rep < 0) {
+                                studies.remove(i);
+                            }
+                        }
+                    }
+                }
+
+                if (StringUtil.hasText(params.getMostRecentResults())) {
+                    int recent = StringUtil.getInteger(params.getMostRecentResults());
+                    if (recent > 0) {
+                        for (int i = studies.size() - 1; i >= recent; i--) {
                             studies.remove(i);
                         }
                     }
                 }
-            }
 
-            if (StringUtil.hasText(params.getUpperDateTime())) {
-                Date upperDateTime = null;
-                try {
-                    upperDateTime = javax.xml.bind.DatatypeConverter.parseDateTime(params.getUpperDateTime()).getTime();
-                } catch (Exception e) {
-                    LOGGER.error("Cannot parse date: {}", params.getUpperDateTime());
-                }
-                if (upperDateTime != null) {
+                if (StringUtil.hasText(params.getModalitiesInStudy())) {
                     for (int i = studies.size() - 1; i >= 0; i--) {
                         Attributes s = studies.get(i);
-                        Date date = DateUtil.dateTime(s.getDate(Tag.StudyDate), s.getDate(Tag.StudyTime));
-                        int rep = date.compareTo(upperDateTime);
-                        if (rep < 0) {
-                            studies.remove(i);
+                        String m = s.getString(Tag.ModalitiesInStudy);
+                        if (StringUtil.hasText(m)) {
+                            boolean remove = true;
+                            for (String mod : params.getModalitiesInStudy().split(",")) {
+                                if (m.indexOf(mod) != -1) {
+                                    remove = false;
+                                    break;
+                                }
+                            }
+
+                            if (remove) {
+                                studies.remove(i);
+                            }
                         }
                     }
-                }
-            }
 
-            if (StringUtil.hasText(params.getMostRecentResults())) {
-                int recent = StringUtil.getInteger(params.getMostRecentResults());
-                if (recent > 0) {
-                    for (int i = studies.size() - 1; i >= recent; i--) {
+                }
+
+                if (StringUtil.hasText(params.getKeywords())) {
+                    String[] keys = params.getKeywords().split(",");
+                    for (int i = 0; i < keys.length; i++) {
+                        keys[i] = StringUtil.deAccent(keys[i].trim().toUpperCase());
+                    }
+
+                    study: for (int i = studies.size() - 1; i >= 0; i--) {
+                        Attributes s = studies.get(i);
+                        String desc = StringUtil.deAccent(s.getString(Tag.StudyDescription, "").toUpperCase());
+
+                        for (int j = 0; j < keys.length; j++) {
+                            if (desc.contains(keys[j])) {
+                                continue study;
+                            }
+                        }
                         studies.remove(i);
                     }
                 }
-            }
 
-            if (StringUtil.hasText(params.getModalitiesInStudy())) {
-                for (int i = studies.size() - 1; i >= 0; i--) {
-                    Attributes s = studies.get(i);
-                    String m = s.getString(Tag.ModalitiesInStudy);
-                    if (StringUtil.hasText(m)) {
-                        boolean remove = true;
-                        for (String mod : params.getModalitiesInStudy().split(",")) {
-                            if (m.indexOf(mod) != -1) {
-                                remove = false;
-                                break;
-                            }
-                        }
-
-                        if (remove) {
-                            studies.remove(i);
-                        }
-                    }
+                for (Attributes studyDataSet : studies) {
+                    fillSeries(pacs, params.getCallingNode(), studyDataSet);
                 }
-
-            }
-
-            if (StringUtil.hasText(params.getKeywords())) {
-                String[] keys = params.getKeywords().split(",");
-                for (int i = 0; i < keys.length; i++) {
-                    keys[i] = StringUtil.deAccent(keys[i].trim().toUpperCase());
-                }
-
-                study: for (int i = studies.size() - 1; i >= 0; i--) {
-                    Attributes s = studies.get(i);
-                    String desc = StringUtil.deAccent(s.getString(Tag.StudyDescription, "").toUpperCase());
-
-                    for (int j = 0; j < keys.length; j++) {
-                        if (desc.contains(keys[j])) {
-                            continue study;
-                        }
-                    }
-                    studies.remove(i);
-                }
-            }
-
-            for (Attributes studyDataSet : studies) {
-                fillSeries(params, studyDataSet);
             }
         }
-        return null;
     }
 
-    public static List<Patient> buildFromStudyInstanceUID(DicomQueryParams params, String studyInstanceUID)
-        throws Exception {
+    public static void buildFromStudyInstanceUID(DicomQueryParams params, String studyInstanceUID) throws Exception {
         if (!StringUtil.hasText(studyInstanceUID)) {
-            return null;
+            return;
         }
         DicomParam[] keysStudies = {
             // Matching Keys
@@ -207,14 +215,11 @@ public class BuildManifestDcmQR {
             CFind.AccessionNumber, CFind.StudyID };
 
         fillStudy(params, keysStudies);
-
-        return params.getPatients();
     }
 
-    public static List<Patient> buildFromStudyAccessionNumber(DicomQueryParams params, String accessionNumber)
-        throws Exception {
+    public static void buildFromStudyAccessionNumber(DicomQueryParams params, String accessionNumber) throws Exception {
         if (!StringUtil.hasText(accessionNumber)) {
-            return null;
+            return;
         }
         DicomParam[] keysStudies = {
             // Matching Keys
@@ -225,14 +230,11 @@ public class BuildManifestDcmQR {
             CFind.StudyInstanceUID, CFind.StudyID };
 
         fillStudy(params, keysStudies);
-
-        return params.getPatients();
     }
 
-    public static List<Patient> buildFromSeriesInstanceUID(DicomQueryParams params, String seriesInstanceUID)
-        throws Exception {
+    public static void buildFromSeriesInstanceUID(DicomQueryParams params, String seriesInstanceUID) throws Exception {
         if (!StringUtil.hasText(seriesInstanceUID)) {
-            return null;
+            return;
         }
 
         DicomParam[] keysSeries = {
@@ -244,26 +246,25 @@ public class BuildManifestDcmQR {
             CFind.AccessionNumber, CFind.StudyInstanceUID, CFind.StudyID, CFind.Modality, CFind.SeriesNumber,
             CFind.SeriesDescription };
 
-        DicomState state = CFind.process(params.getAdvancedParams(), params.getCallingNode(), params.getCalledNode(), 0,
-            QueryRetrieveLevel.SERIES, keysSeries);
+        for (PacsConfiguration pacs : params.getPacsList()) {
+            DicomState state = CFind.process(pacs.getAdvancedParams(), params.getCallingNode(), pacs.getCalledNode(), 0,
+                QueryRetrieveLevel.SERIES, keysSeries);
 
-        List<Attributes> series = state.getDicomRSP();
-        if (series != null && series.size() > 0) {
-            Attributes dataset = series.get(0);
-            Patient patient = getPatient(params, dataset);
-            Study study = getStudy(patient, dataset);
-            for (Attributes seriesDataset : series) {
-                fillInstance(params, seriesDataset, study);
+            List<Attributes> series = state.getDicomRSP();
+            if (series != null && series.size() > 0) {
+                Attributes dataset = series.get(0);
+                Patient patient = getPatient(pacs, params.getCallingNode(), dataset);
+                Study study = getStudy(patient, dataset);
+                for (Attributes seriesDataset : series) {
+                    fillInstance(pacs, params.getCallingNode(), seriesDataset, study);
+                }
             }
         }
-
-        return params.getPatients();
     }
 
-    public static List<Patient> buildFromSopInstanceUID(DicomQueryParams params, String sopInstanceUID)
-        throws Exception {
+    public static void buildFromSopInstanceUID(DicomQueryParams params, String sopInstanceUID) throws Exception {
         if (!StringUtil.hasText(sopInstanceUID)) {
-            return null;
+            return;
         }
 
         DicomParam[] keysInstance = {
@@ -275,41 +276,44 @@ public class BuildManifestDcmQR {
             CFind.AccessionNumber, CFind.StudyInstanceUID, CFind.StudyID, CFind.SeriesInstanceUID, CFind.Modality,
             CFind.SeriesNumber, CFind.SeriesDescription };
 
-        DicomState state = CFind.process(params.getAdvancedParams(), params.getCallingNode(), params.getCalledNode(), 0,
-            QueryRetrieveLevel.IMAGE, keysInstance);
+        for (PacsConfiguration pacs : params.getPacsList()) {
+            DicomState state = CFind.process(pacs.getAdvancedParams(), params.getCallingNode(), pacs.getCalledNode(), 0,
+                QueryRetrieveLevel.IMAGE, keysInstance);
 
-        List<Attributes> instances = state.getDicomRSP();
-        if (instances != null && instances.size() > 0) {
-            Attributes dataset = instances.get(0);
-            Patient patient = getPatient(params, dataset);
-            Study study = getStudy(patient, dataset);
-            Series s = getSeries(study, dataset);
-            for (Attributes instanceDataSet : instances) {
-                String sopUID = instanceDataSet.getString(Tag.SOPInstanceUID);
-                if (sopUID != null) {
-                    SOPInstance sop = new SOPInstance(sopUID);
-                    sop.setInstanceNumber(instanceDataSet.getString(Tag.InstanceNumber));
-                    s.addSOPInstance(sop);
+            List<Attributes> instances = state.getDicomRSP();
+            if (instances != null && instances.size() > 0) {
+                Attributes dataset = instances.get(0);
+                Patient patient = getPatient(pacs, params.getCallingNode(), dataset);
+                Study study = getStudy(patient, dataset);
+                Series s = getSeries(study, dataset);
+                for (Attributes instanceDataSet : instances) {
+                    String sopUID = instanceDataSet.getString(Tag.SOPInstanceUID);
+                    if (sopUID != null) {
+                        SOPInstance sop = new SOPInstance(sopUID);
+                        sop.setInstanceNumber(instanceDataSet.getString(Tag.InstanceNumber));
+                        s.addSOPInstance(sop);
+                    }
                 }
             }
         }
-        return params.getPatients();
     }
 
-    private static WadoMessage fillStudy(DicomQueryParams params, DicomParam[] keysStudies) throws Exception {
-        DicomState state = CFind.process(params.getAdvancedParams(), params.getCallingNode(), params.getCalledNode(), 0,
-            QueryRetrieveLevel.STUDY, keysStudies);
+    private static void fillStudy(DicomQueryParams params, DicomParam[] keysStudies) throws Exception {
+        for (PacsConfiguration pacs : params.getPacsList()) {
+            DicomState state = CFind.process(pacs.getAdvancedParams(), params.getCallingNode(), pacs.getCalledNode(), 0,
+                QueryRetrieveLevel.STUDY, keysStudies);
 
-        List<Attributes> studies = state.getDicomRSP();
-        if (studies != null) {
-            for (Attributes studyDataSet : studies) {
-                fillSeries(params, studyDataSet);
+            List<Attributes> studies = state.getDicomRSP();
+            if (studies != null) {
+                for (Attributes studyDataSet : studies) {
+                    fillSeries(pacs, params.getCallingNode(), studyDataSet);
+                }
             }
         }
-        return null;
     }
 
-    private static void fillSeries(DicomQueryParams params, Attributes studyDataSet) throws Exception {
+    private static void fillSeries(PacsConfiguration pacs, DicomNode callingNode, Attributes studyDataSet)
+        throws Exception {
         String studyInstanceUID = studyDataSet.getString(Tag.StudyInstanceUID);
         if (StringUtil.hasText(studyInstanceUID)) {
 
@@ -319,22 +323,23 @@ public class BuildManifestDcmQR {
                 // Return Keys
                 CFind.SeriesInstanceUID, CFind.Modality, CFind.SeriesNumber, CFind.SeriesDescription };
 
-            DicomState state = CFind.process(params.getAdvancedParams(), params.getCallingNode(),
-                params.getCalledNode(), 0, QueryRetrieveLevel.SERIES, keysSeries);
+            DicomState state = CFind.process(pacs.getAdvancedParams(), callingNode, pacs.getCalledNode(), 0,
+                QueryRetrieveLevel.SERIES, keysSeries);
 
             List<Attributes> series = state.getDicomRSP();
             if (series != null) {
                 // Get patient from each study in case IssuerOfPatientID is different
-                Patient patient = getPatient(params, studyDataSet);
+                Patient patient = getPatient(pacs, callingNode, studyDataSet);
                 Study study = getStudy(patient, studyDataSet);
                 for (Attributes seriesDataset : series) {
-                    fillInstance(params, seriesDataset, study);
+                    fillInstance(pacs, callingNode, seriesDataset, study);
                 }
             }
         }
     }
 
-    private static void fillInstance(DicomQueryParams params, Attributes seriesDataset, Study study) throws Exception {
+    private static void fillInstance(PacsConfiguration pacs, DicomNode callingNode, Attributes seriesDataset,
+        Study study) throws Exception {
         String serieInstanceUID = seriesDataset.getString(Tag.SeriesInstanceUID);
         if (StringUtil.hasText(serieInstanceUID)) {
             DicomParam[] keysInstance = {
@@ -343,8 +348,8 @@ public class BuildManifestDcmQR {
                 new DicomParam(Tag.SeriesInstanceUID, serieInstanceUID),
                 // Return Keys
                 CFind.SOPInstanceUID, CFind.InstanceNumber };
-            DicomState state = CFind.process(params.getAdvancedParams(), params.getCallingNode(),
-                params.getCalledNode(), 0, QueryRetrieveLevel.IMAGE, keysInstance);
+            DicomState state = CFind.process(pacs.getAdvancedParams(), callingNode, pacs.getCalledNode(), 0,
+                QueryRetrieveLevel.IMAGE, keysInstance);
 
             List<Attributes> instances = state.getDicomRSP();
             if (instances != null) {
@@ -362,11 +367,12 @@ public class BuildManifestDcmQR {
         }
     }
 
-    protected static Patient getPatient(DicomQueryParams params, final Attributes patientDataset) throws Exception {
+    protected static Patient getPatient(PacsConfiguration pacs, DicomNode callingNode, final Attributes patientDataset)
+        throws Exception {
         if (patientDataset == null) {
             throw new IllegalArgumentException("patientDataset cannot be null");
         }
-        final List<Patient> patientList = params.getPatients();
+        final List<Patient> patientList = pacs.getPatients();
 
         // Request at SERIES level without relational model can respond without a Patient ID
         if (!patientDataset.contains(Tag.PatientID)) {
@@ -382,8 +388,8 @@ public class BuildManifestDcmQR {
                     // Return Keys
                     CFind.StudyInstanceUID, CFind.Modality, CFind.SeriesNumber, CFind.SeriesDescription };
 
-                DicomState state = CFind.process(params.getAdvancedParams(), params.getCallingNode(),
-                    params.getCalledNode(), 0, QueryRetrieveLevel.SERIES, keysSeries);
+                DicomState state = CFind.process(pacs.getAdvancedParams(), callingNode, pacs.getCalledNode(), 0,
+                    QueryRetrieveLevel.SERIES, keysSeries);
                 List<Attributes> series = state.getDicomRSP();
                 if (series.isEmpty()) {
                     throw new Exception("Get empty C-Find reply at Series level for " + seriesInstanceUID);
@@ -403,8 +409,8 @@ public class BuildManifestDcmQR {
                 CFind.ReferringPhysicianName, CFind.StudyDescription, CFind.StudyDate, CFind.StudyTime,
                 CFind.AccessionNumber, CFind.StudyID };
 
-            DicomState state = CFind.process(params.getAdvancedParams(), params.getCallingNode(),
-                params.getCalledNode(), 0, QueryRetrieveLevel.STUDY, keysStudies);
+            DicomState state = CFind.process(pacs.getAdvancedParams(), callingNode, pacs.getCalledNode(), 0,
+                QueryRetrieveLevel.STUDY, keysStudies);
 
             List<Attributes> studies = state.getDicomRSP();
             if (studies.isEmpty()) {

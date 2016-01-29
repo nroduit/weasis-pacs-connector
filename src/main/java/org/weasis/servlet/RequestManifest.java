@@ -85,6 +85,7 @@ public class RequestManifest extends HttpServlet {
         }
 
         XmlManifest xml = null;
+        String errorMessage = null;
 
         try {
             Future<XmlManifest> future = buidler.getFuture();
@@ -92,23 +93,28 @@ public class RequestManifest extends HttpServlet {
                 xml = future.get(ManifestManagerThread.MAX_LIFE_CYCLE, TimeUnit.MILLISECONDS);
             }
         } catch (Exception e1) {
-            LOGGER.error("Building Manifest Exception [id={}] - {}", id, e1.toString());
+            errorMessage = e1.getMessage();
+            LOGGER.error("Building Manifest Exception [id={}] - {}", id, errorMessage);
         }
 
         threadsMap.remove(id);
         LOGGER.info("Consume ManifestBuilder with key={}", id);
 
         if (xml == null) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Cannot build Manifest [id=" + id + "]");
+            if (errorMessage == null) {
+                errorMessage = "Unexpected Exception";
+            }
+            response.sendError(HttpServletResponse.SC_NOT_FOUND,
+                "Cannot build Manifest [id=" + id + "] - " + errorMessage);
             return;
         }
 
-        response.setCharacterEncoding(xml.getCharsetEncoding());
+        response.setCharacterEncoding("UTF-8");
         String wadoXmlGenerated = xml.xmlManifest();
 
         Boolean gzip = request.getParameter(PARAM_NO_GZIP) == null;
 
-        if (gzip && xml.getWadoMessage() == null) {
+        if (gzip) {
             OutputStream outputStream = null;
             try {
                 outputStream = response.getOutputStream();

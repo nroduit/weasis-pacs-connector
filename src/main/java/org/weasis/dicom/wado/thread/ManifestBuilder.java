@@ -36,6 +36,8 @@ public class ManifestBuilder implements Callable<XmlManifest> {
     private volatile Future<XmlManifest> future;
 
     public ManifestBuilder(DicomQueryParams params) {
+        if (params == null)
+            throw new IllegalArgumentException();
         this.params = params;
         this.xml = null;
         this.requestId = COUNTER.incrementAndGet();
@@ -43,6 +45,8 @@ public class ManifestBuilder implements Callable<XmlManifest> {
     }
 
     public ManifestBuilder(XmlManifest xml) {
+        if (xml == null)
+            throw new IllegalArgumentException();
         this.params = null;
         this.xml = xml;
         this.requestId = COUNTER.incrementAndGet();
@@ -70,11 +74,8 @@ public class ManifestBuilder implements Callable<XmlManifest> {
         if (xml == null) {
             long startTime = System.currentTimeMillis();
 
-            WadoMessage message = ServletUtil.getPatientList(params);
-            WadoQuery wadoQuery =
-                new WadoQuery(params.getPatients(), params.getWadoParameters(), params.getCharsetEncoding(),
-                    params.isAcceptNoImage());
-            wadoQuery.setWadoMessage(message);
+            ServletUtil.fillPatientList(params);
+            WadoQuery wadoQuery = new WadoQuery(params);
 
             LOGGER.info("Build Manifest in {} ms [id={}]", (System.currentTimeMillis() - startTime), requestId);
             return wadoQuery;

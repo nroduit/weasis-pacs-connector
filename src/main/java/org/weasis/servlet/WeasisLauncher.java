@@ -83,47 +83,26 @@ public class WeasisLauncher extends HttpServlet {
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        invokeWeasis(request, response,  null);
+        invokeWeasis(request, response, null);
     }
 
-    protected static Properties initialize(HttpServletRequest request) throws IOException {
-        Properties pacsProperties =
-            (Properties) request.getSession().getServletContext().getAttribute("componentProperties");
-        // Check if the source of this request is allowed
-        if (!ServletUtil.isRequestAllowed(request, pacsProperties, LOGGER)) {
-            throw new RuntimeException("Unautorized request!");
-        }
-
-        Properties extProps = new Properties();
-        extProps.put(
-            "server.base.url",
-            ServletUtil.getBaseURL(request,
-                StringUtil.getNULLtoFalse(pacsProperties.getProperty("server.canonical.hostname.mode"))));
-
-        Properties dynamicProps = (Properties) pacsProperties.clone();
-
-        // Perform variable substitution for system properties.
-        for (Enumeration<?> e = pacsProperties.propertyNames(); e.hasMoreElements();) {
-            String name = (String) e.nextElement();
-            dynamicProps.setProperty(name,
-                TagUtil.substVars(pacsProperties.getProperty(name), name, null, pacsProperties, extProps));
-        }
-
-        dynamicProps.putAll(extProps);
-        return dynamicProps;
-    }
-
-    protected static void invokeWeasis(HttpServletRequest request, HttpServletResponse response,
-        XmlManifest manifest) throws IOException {
+    protected static void invokeWeasis(HttpServletRequest request, HttpServletResponse response, XmlManifest manifest)
+        throws IOException {
 
         try {
             if (LOGGER.isDebugEnabled()) {
                 ServletUtil.logInfo(request, LOGGER);
             }
-            
-            Properties props = initialize(request);
-            
+
             ServletContext ctx = request.getSession().getServletContext();
+            ConnectorProperties connectorProperties = (ConnectorProperties) ctx.getAttribute("componentProperties");
+            // Check if the source of this request is allowed
+            if (!ServletUtil.isRequestAllowed(request, connectorProperties, LOGGER)) {
+                return;
+            }
+
+            ConnectorProperties props = connectorProperties.getResolveConnectorProperties(request);
+
             boolean embeddedManifest = request.getParameterMap().containsKey(PARAM_EMBED);
             String wadoQueryUrl = "";
 
@@ -144,12 +123,13 @@ public class WeasisLauncher extends HttpServlet {
                     final ConcurrentHashMap<Integer, ManifestBuilder> builderMap =
                         (ConcurrentHashMap<Integer, ManifestBuilder>) ctx.getAttribute("manifestBuilderMap");
                     builderMap.remove(builder.getRequestId());
+                    LOGGER.info("Embed an consume ManifestBuilder with key={}", builder.getRequestId());
                 } else {
                     wadoQueryUrl = ServletUtil.buildManifestURL(request, builder, props, true);
                 }
             } catch (Exception e) {
                 LOGGER.error(e.getMessage());
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
                 return;
             }
 
@@ -160,14 +140,15 @@ public class WeasisLauncher extends HttpServlet {
             buf.append(SLwebstart_launcher.PARAM_CODEBASE);
             buf.append("=");
             // If weasis codebase is not in the request, set the url from the weasis-pacs-connector properties.
-            buf.append(queryCodeBasePath == null ? props.getProperty("weasis.base.url",
-                props.getProperty("server.base.url") + "/weasis") : queryCodeBasePath);
-            
-            String cdbExtParam = request.getParameter(SLwebstart_launcher.PARAM_CODEBASE_EXT);           
-            if(cdbExtParam == null){
+            buf.append(queryCodeBasePath == null
+                ? props.getProperty("weasis.base.url", props.getProperty("server.base.url") + "/weasis")
+                : queryCodeBasePath);
+
+            String cdbExtParam = request.getParameter(SLwebstart_launcher.PARAM_CODEBASE_EXT);
+            if (cdbExtParam == null) {
                 // If not in URL parameter, try to get from the config.
                 String cdbExt = props.getProperty("weasis.ext.url", null);
-                if (cdbExt != null){
+                if (cdbExt != null) {
                     buf.append("&");
                     buf.append(SLwebstart_launcher.PARAM_CODEBASE_EXT);
                     buf.append("=");
@@ -176,7 +157,7 @@ public class WeasisLauncher extends HttpServlet {
             }
 
             String jnlpScr = props.getProperty("weasis.default.jnlp", null);
-            if(jnlpScr != null){
+            if (jnlpScr != null) {
                 buf.append("&");
                 buf.append(SLwebstart_launcher.PARAM_SOURCE);
                 buf.append("=");
@@ -190,9 +171,9 @@ public class WeasisLauncher extends HttpServlet {
                 buf.append("$dicom:get -w ");
                 buf.append(wadoQueryUrl);
             }
-            
+
             String addparams = props.getProperty("request.addparams", null);
-            if(addparams != null){
+            if (addparams != null) {
                 buf.append(addparams);
             }
 

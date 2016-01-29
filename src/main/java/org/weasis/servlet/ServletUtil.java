@@ -27,6 +27,7 @@ import java.net.UnknownHostException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,6 +50,7 @@ import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.util.StringUtil.Suffix;
 import org.weasis.dicom.wado.BuildManifestDcmQR;
 import org.weasis.dicom.wado.DicomQueryParams;
+import org.weasis.dicom.wado.PacsConfiguration;
 import org.weasis.dicom.wado.WadoParameters;
 import org.weasis.dicom.wado.WadoQuery.WadoMessage;
 import org.weasis.dicom.wado.thread.ManifestBuilder;
@@ -163,8 +165,7 @@ public class ServletUtil {
         return StringUtil.getTruncatedString(buffer.toString(), 30, Suffix.NO);
     }
 
-    public static WadoMessage getPatientList(DicomQueryParams params) {
-        WadoMessage wadoMessage = null;
+    public static void fillPatientList(DicomQueryParams params) {
         try {
             Properties properties = params.getProperties();
             String key = properties.getProperty("encrypt.key", null);
@@ -179,7 +180,8 @@ public class ServletUtil {
                 } else if (StringUtil.hasText(stuID)) {
                     BuildManifestDcmQR.buildFromStudyInstanceUID(params, ServletUtil.decrypt(stuID, key, StudyUID));
                 } else {
-                    LOGGER.info("Not ID found for STUDY request type: {}", requestType);
+                    LOGGER.error("Not ID found for STUDY request type: {}", requestType);
+                    params.addGeneralWadoMessage(new WadoMessage("Missing Study ID", "No study requested", WadoMessage.eLevel.WARN));
                 }
             } else if (PatientLevel.equals(requestType) && isRequestIDAllowed(PatientLevel, properties)) {
                 String patID = params.getReqPatientID();
@@ -187,7 +189,8 @@ public class ServletUtil {
                     BuildManifestDcmQR.buildFromPatientID(params, ServletUtil.decrypt(patID, key, PatientID));
                 }
             } else if (requestType != null) {
-                LOGGER.info("Not supported IID request type: {}", requestType);
+                LOGGER.error("Not supported IID request type: {}", requestType);
+                params.addGeneralWadoMessage(new WadoMessage("Unexpected Request", "IID request type: " + requestType, WadoMessage.eLevel.WARN));
             } else {
                 String[] pat = params.getReqPatientIDs();
                 String[] stu = params.getReqStudyUIDs();
@@ -198,34 +201,22 @@ public class ServletUtil {
                     for (String id : obj) {
                         BuildManifestDcmQR.buildFromSopInstanceUID(params, decrypt(id, key, ObjectUID));
                     }
-                    if (!isValidateAllIDs(ObjectUID, key, params, pat, stu, anb, ser)) {
-                        params.getPatients().clear();
-                        return null;
-                    }
+                    validateRequiredIDs(ObjectUID, key, params, pat, stu, anb, ser);
                 } else if (ser != null && ser.length > 0 && isRequestIDAllowed(SeriesUID, properties)) {
                     for (String id : ser) {
                         BuildManifestDcmQR.buildFromSeriesInstanceUID(params, decrypt(id, key, SeriesUID));
                     }
-                    if (!isValidateAllIDs(SeriesUID, key, params, pat, stu, anb, null)) {
-                        params.getPatients().clear();
-                        return null;
-                    }
+                    validateRequiredIDs(SeriesUID, key, params, pat, stu, anb, null);
                 } else if (anb != null && anb.length > 0 && isRequestIDAllowed(AccessionNumber, properties)) {
                     for (String id : anb) {
                         BuildManifestDcmQR.buildFromStudyAccessionNumber(params, decrypt(id, key, AccessionNumber));
                     }
-                    if (!isValidateAllIDs(AccessionNumber, key, params, pat, null, null, null)) {
-                        params.getPatients().clear();
-                        return null;
-                    }
+                    validateRequiredIDs(AccessionNumber, key, params, pat, null, null, null);
                 } else if (stu != null && stu.length > 0 && isRequestIDAllowed(StudyUID, properties)) {
                     for (String id : stu) {
                         BuildManifestDcmQR.buildFromStudyInstanceUID(params, decrypt(id, key, StudyUID));
                     }
-                    if (!isValidateAllIDs(StudyUID, key, params, pat, null, null, null)) {
-                        params.getPatients().clear();
-                        return null;
-                    }
+                    validateRequiredIDs(StudyUID, key, params, pat, null, null, null);
                 } else if (pat != null && pat.length > 0 && isRequestIDAllowed(PatientID, properties)) {
                     for (String id : pat) {
                         BuildManifestDcmQR.buildFromPatientID(params, decrypt(id, key, PatientID));
@@ -234,86 +225,71 @@ public class ServletUtil {
             }
         } catch (Exception e) {
             StringUtil.logError(LOGGER, e, "Error when building the patient list");
+            params.addGeneralWadoMessage(new WadoMessage("Unexpected Error", "Unexpected Error when building the manifest", WadoMessage.eLevel.WARN));
         }
-
-        return wadoMessage;
     }
 
-    private static boolean isValidateAllIDs(String id, String key, DicomQueryParams params, String[] pat, String[] stu,
+    private static void validateRequiredIDs(String id, String key, DicomQueryParams params, String[] pat, String[] stu,
         String[] anb, String[] ser) {
-
-        List<Patient> patients = params.getPatients();
-        Properties properties = params.getProperties();
-
-        if (id != null && patients != null && patients.size() > 0) {
-            String ids = properties.getProperty("request." + id);
+        
+        if (id != null) {
+            String ids = params.getProperties().getProperty("request." + id);
             if (ids != null) {
                 for (String val : ids.split(",")) {
                     if (val.trim().equals(PatientID)) {
                         if (pat == null) {
-                            return false;
+                            params.clearAllPatients();
+                            return;
                         }
                         List<String> list = new ArrayList<String>(pat.length);
                         for (String s : pat) {
                             list.add(decrypt(s, key, PatientID));
                         }
-                        for (Patient p : patients) {
-                            if (!list.contains(p.getPatientID())) {
-                                return false;
-                            }
-                        }
+                        params.removePatientId(list);
                     } else if (val.trim().equals(StudyUID)) {
                         if (stu == null) {
-                            return false;
+                            params.clearAllPatients();
+                            return;
                         }
                         List<String> list = new ArrayList<String>(stu.length);
                         for (String s : stu) {
                             list.add(decrypt(s, key, StudyUID));
                         }
-                        for (Patient p : patients) {
-                            for (Study study : p.getStudies()) {
-                                if (!list.contains(study.getStudyID())) {
-                                    return false;
-                                }
-                            }
-                        }
+                        params.removeStudyUid(list);
                     } else if (val.trim().equals(AccessionNumber)) {
                         if (anb == null) {
-                            return false;
+                            params.clearAllPatients();
+                            return;
                         }
                         List<String> list = new ArrayList<String>(anb.length);
                         for (String s : anb) {
                             list.add(decrypt(s, key, AccessionNumber));
                         }
-                        for (Patient p : patients) {
-                            for (Study study : p.getStudies()) {
-                                if (!list.contains(study.getAccessionNumber())) {
-                                    return false;
-                                }
-                            }
-                        }
+                        params.removeAccessionNumber(list);
                     } else if (val.trim().equals(SeriesUID)) {
                         if (ser == null) {
-                            return false;
+                            params.clearAllPatients();
+                            return;
                         }
                         List<String> list = new ArrayList<String>(ser.length);
                         for (String s : ser) {
                             list.add(decrypt(s, key, SeriesUID));
                         }
-                        for (Patient p : patients) {
-                            for (Study study : p.getStudies()) {
-                                for (Series series : study.getSeriesList()) {
-                                    if (!list.contains(series.getSeriesInstanceUID())) {
-                                        return false;
-                                    }
-                                }
-                            }
+                        params.removeSeriesUid(list);
+                    }
+                }
+                
+                // Remove Patient without study
+                for (PacsConfiguration pacsConfiguration : params.getPacsList()) {
+                    List<Patient> patients = pacsConfiguration.getPatients();
+                    for (int i = patients.size() - 1; i >= 0; i--) {
+                        if (patients.get(i).isEmpty()) {
+                            patients.remove(i);
                         }
                     }
                 }
             }
         }
-        return true;
     }
 
     static String decrypt(String message, String key, String level) {
@@ -349,62 +325,9 @@ public class ServletUtil {
         return request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
     }
 
-    public static DicomQueryParams buildDicomQueryParams(HttpServletRequest request, Properties props) {
-
-        String pacsAET = props.getProperty("pacs.aet", "DCM4CHEE");
-        String pacsHost = props.getProperty("pacs.host", "localhost");
-        int pacsPort = Integer.parseInt(props.getProperty("pacs.port", "11112"));
-        DicomNode calledNode = new DicomNode(pacsAET, pacsHost, pacsPort);
-
-        String wadoQueriesURL = props.getProperty("pacs.wado.url", props.getProperty("server.base.url") + "/wado");
-        boolean onlysopuid = StringUtil.getNULLtoFalse(props.getProperty("wado.onlysopuid"));
-        String addparams = props.getProperty("wado.addparams", "");
-        String overrideTags = props.getProperty("wado.override.tags", null);
-        // If the web server requires an authentication (pacs.web.login=user:pwd)
-        String webLogin = props.getProperty("pacs.web.login", null);
-        if (webLogin != null) {
-            webLogin = Base64.encodeBytes(webLogin.trim().getBytes());
-        }
-        String httpTags = props.getProperty("wado.httpTags", null);
-
-        WadoParameters wado = new WadoParameters(wadoQueriesURL, onlysopuid, addparams, overrideTags, webLogin);
-        if (httpTags != null && !httpTags.trim().equals("")) {
-            for (String tag : httpTags.split(",")) {
-                String[] val = tag.split(":");
-                if (val.length == 2) {
-                    wado.addHttpTag(val[0].trim(), val[1].trim());
-                }
-            }
-        }
-
-        boolean tls = StringUtil.getNULLtoFalse(props.getProperty("pacs.tls.mode"));
-        AdvancedParams params = null;
-        if (tls) {
-            try {
-                TlsOptions tlsOptions =
-                    new TlsOptions(StringUtil.getNULLtoFalse(props.getProperty("pacs.tlsNeedClientAuth")),
-                        props.getProperty("pacs.keystoreURL"), props.getProperty("pacs.keystoreType", "JKS"),
-                        props.getProperty("pacs.keystorePass"),
-                        props.getProperty("pacs.keyPass", props.getProperty("pacs.keystorePass")),
-                        props.getProperty("pacs.truststoreURL"), props.getProperty("pacs.truststoreType", "JKS"),
-                        props.getProperty("pacs.truststorePass"));
-                params = new AdvancedParams();
-                params.setTlsOptions(tlsOptions);
-            } catch (Exception e) {
-                StringUtil.logError(LOGGER, e, "Cannot set TLS configuration");
-            }
-
-        }
-
-        return new DicomQueryParams(new DicomNode(props.getProperty("aet", "PACS-CONNECTOR")), calledNode, request,
-            wado, props.getProperty("pacs.db.encoding", "utf-8"),
-            StringUtil.getNULLtoFalse(props.getProperty("accept.noimage")), params, props);
-
-    }
-
-    public static ManifestBuilder buildManifest(HttpServletRequest request, Properties props) throws Exception {
-        final DicomQueryParams params = ServletUtil.buildDicomQueryParams(request, props);
-        return buildManifest(request, new ManifestBuilder(params));
+    public static ManifestBuilder buildManifest(HttpServletRequest request, ConnectorProperties props)
+        throws Exception {
+        return buildManifest(request, new ManifestBuilder(new DicomQueryParams(request, props)));
     }
 
     public static ManifestBuilder buildManifest(HttpServletRequest request, ManifestBuilder builder) throws Exception {

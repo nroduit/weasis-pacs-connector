@@ -90,9 +90,15 @@ public class WeasisAppletLauncher extends HttpServlet {
                 ServletUtil.logInfo(request, LOGGER);
             }
             
-            Properties props = WeasisLauncher.initialize(request);
-            
             ServletContext ctx = request.getSession().getServletContext();
+            ConnectorProperties connectorProperties = (ConnectorProperties) ctx.getAttribute("componentProperties");
+            // Check if the source of this request is allowed
+            if (!ServletUtil.isRequestAllowed(request, connectorProperties, LOGGER)) {
+                return;
+            }
+
+            ConnectorProperties props = connectorProperties.getResolveConnectorProperties(request);
+            
             boolean embeddedManifest = request.getParameterMap().containsKey(WeasisLauncher.PARAM_EMBED);
             String wadoQueryUrl = "";
 
@@ -113,12 +119,13 @@ public class WeasisAppletLauncher extends HttpServlet {
                     final ConcurrentHashMap<Integer, ManifestBuilder> builderMap =
                         (ConcurrentHashMap<Integer, ManifestBuilder>) ctx.getAttribute("manifestBuilderMap");
                     builderMap.remove(builder.getRequestId());
+                    LOGGER.info("Embed an consume ManifestBuilder with key={}", builder.getRequestId());
                 } else {
                     wadoQueryUrl = ServletUtil.buildManifestURL(request, builder, props, true);
                 }
             } catch (Exception e) {
                 LOGGER.error(e.getMessage());
-                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
                 return;
             }
 
