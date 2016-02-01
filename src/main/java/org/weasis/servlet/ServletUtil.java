@@ -10,13 +10,13 @@
  *******************************************************************************/
 package org.weasis.servlet;
 
-import static org.weasis.dicom.wado.DicomQueryParams.AccessionNumber;
-import static org.weasis.dicom.wado.DicomQueryParams.ObjectUID;
-import static org.weasis.dicom.wado.DicomQueryParams.PatientID;
-import static org.weasis.dicom.wado.DicomQueryParams.PatientLevel;
-import static org.weasis.dicom.wado.DicomQueryParams.SeriesUID;
-import static org.weasis.dicom.wado.DicomQueryParams.StudyLevel;
-import static org.weasis.dicom.wado.DicomQueryParams.StudyUID;
+import static org.weasis.query.CommonQueryParams.AccessionNumber;
+import static org.weasis.query.CommonQueryParams.ObjectUID;
+import static org.weasis.query.CommonQueryParams.PatientID;
+import static org.weasis.query.CommonQueryParams.PatientLevel;
+import static org.weasis.query.CommonQueryParams.SeriesUID;
+import static org.weasis.query.CommonQueryParams.StudyLevel;
+import static org.weasis.query.CommonQueryParams.StudyUID;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,11 +41,10 @@ import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.Patient;
 import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.util.StringUtil.Suffix;
-import org.weasis.dicom.wado.BuildManifestDcmQR;
-import org.weasis.dicom.wado.DicomQueryParams;
-import org.weasis.dicom.wado.PacsConfiguration;
 import org.weasis.dicom.wado.WadoQuery.WadoMessage;
 import org.weasis.dicom.wado.thread.ManifestBuilder;
+import org.weasis.query.AbstractQueryConfiguration;
+import org.weasis.query.CommonQueryParams;
 import org.weasis.util.EncryptUtils;
 
 public class ServletUtil {
@@ -157,7 +156,7 @@ public class ServletUtil {
         return StringUtil.getTruncatedString(buffer.toString(), 30, Suffix.NO);
     }
 
-    public static void fillPatientList(DicomQueryParams params) {
+    public static void fillPatientList(CommonQueryParams params) {
         try {
             Properties properties = params.getProperties();
             String key = properties.getProperty("encrypt.key", null);
@@ -167,10 +166,15 @@ public class ServletUtil {
                 String stuID = params.getReqStudyUID();
                 String anbID = params.getReqAccessionNumber();
                 if (StringUtil.hasText(anbID)) {
-                    BuildManifestDcmQR.buildFromStudyAccessionNumber(params,
-                        ServletUtil.decrypt(anbID, key, AccessionNumber));
+                    String val = ServletUtil.decrypt(anbID, key, AccessionNumber);
+                    for (AbstractQueryConfiguration query : params.getPacsList()) {
+                        query.buildFromStudyAccessionNumber(params, val);
+                    }
                 } else if (StringUtil.hasText(stuID)) {
-                    BuildManifestDcmQR.buildFromStudyInstanceUID(params, ServletUtil.decrypt(stuID, key, StudyUID));
+                    String val = ServletUtil.decrypt(stuID, key, StudyUID);
+                    for (AbstractQueryConfiguration query : params.getPacsList()) {
+                        query.buildFromStudyInstanceUID(params, val);
+                    }
                 } else {
                     LOGGER.error("Not ID found for STUDY request type: {}", requestType);
                     params.addGeneralWadoMessage(
@@ -179,7 +183,10 @@ public class ServletUtil {
             } else if (PatientLevel.equals(requestType) && isRequestIDAllowed(PatientLevel, properties)) {
                 String patID = params.getReqPatientID();
                 if (StringUtil.hasText(patID)) {
-                    BuildManifestDcmQR.buildFromPatientID(params, ServletUtil.decrypt(patID, key, PatientID));
+                    String val = ServletUtil.decrypt(patID, key, PatientID);
+                    for (AbstractQueryConfiguration query : params.getPacsList()) {
+                        query.buildFromPatientID(params, val);
+                    }
                 }
             } else if (requestType != null) {
                 LOGGER.error("Not supported IID request type: {}", requestType);
@@ -192,28 +199,33 @@ public class ServletUtil {
                 String[] ser = params.getReqSeriesUIDs();
                 String[] obj = params.getReqObjectUIDs();
                 if (obj != null && obj.length > 0 && isRequestIDAllowed(ObjectUID, properties)) {
-                    for (String id : obj) {
-                        BuildManifestDcmQR.buildFromSopInstanceUID(params, decrypt(id, key, ObjectUID));
+                    String[] val = decrypt(obj, key, ObjectUID);
+                    for (AbstractQueryConfiguration query : params.getPacsList()) {
+                        query.buildFromSopInstanceUID(params, val);
                     }
                     validateRequiredIDs(ObjectUID, key, params, pat, stu, anb, ser);
                 } else if (ser != null && ser.length > 0 && isRequestIDAllowed(SeriesUID, properties)) {
-                    for (String id : ser) {
-                        BuildManifestDcmQR.buildFromSeriesInstanceUID(params, decrypt(id, key, SeriesUID));
+                    String[] val = decrypt(ser, key, SeriesUID);
+                    for (AbstractQueryConfiguration query : params.getPacsList()) {
+                        query.buildFromSeriesInstanceUID(params, val);
                     }
                     validateRequiredIDs(SeriesUID, key, params, pat, stu, anb, null);
                 } else if (anb != null && anb.length > 0 && isRequestIDAllowed(AccessionNumber, properties)) {
-                    for (String id : anb) {
-                        BuildManifestDcmQR.buildFromStudyAccessionNumber(params, decrypt(id, key, AccessionNumber));
+                    String[] val = decrypt(anb, key, AccessionNumber);
+                    for (AbstractQueryConfiguration query : params.getPacsList()) {
+                        query.buildFromStudyAccessionNumber(params, val);
                     }
                     validateRequiredIDs(AccessionNumber, key, params, pat, null, null, null);
                 } else if (stu != null && stu.length > 0 && isRequestIDAllowed(StudyUID, properties)) {
-                    for (String id : stu) {
-                        BuildManifestDcmQR.buildFromStudyInstanceUID(params, decrypt(id, key, StudyUID));
+                    String[] val = decrypt(stu, key, StudyUID);
+                    for (AbstractQueryConfiguration query : params.getPacsList()) {
+                        query.buildFromStudyInstanceUID(params, val);
                     }
                     validateRequiredIDs(StudyUID, key, params, pat, null, null, null);
                 } else if (pat != null && pat.length > 0 && isRequestIDAllowed(PatientID, properties)) {
-                    for (String id : pat) {
-                        BuildManifestDcmQR.buildFromPatientID(params, decrypt(id, key, PatientID));
+                    String[] val = decrypt(pat, key, PatientID);
+                    for (AbstractQueryConfiguration query : params.getPacsList()) {
+                        query.buildFromPatientID(params, val);
                     }
                 }
             }
@@ -224,7 +236,7 @@ public class ServletUtil {
         }
     }
 
-    private static void validateRequiredIDs(String id, String key, DicomQueryParams params, String[] pat, String[] stu,
+    private static void validateRequiredIDs(String id, String key, CommonQueryParams params, String[] pat, String[] stu,
         String[] anb, String[] ser) {
 
         if (id != null) {
@@ -275,7 +287,7 @@ public class ServletUtil {
                 }
 
                 // Remove Patient without study
-                for (PacsConfiguration pacsConfiguration : params.getPacsList()) {
+                for (AbstractQueryConfiguration pacsConfiguration : params.getPacsList()) {
                     List<Patient> patients = pacsConfiguration.getPatients();
                     for (int i = patients.size() - 1; i >= 0; i--) {
                         if (patients.get(i).isEmpty()) {
@@ -291,6 +303,18 @@ public class ServletUtil {
         if (key != null) {
             String decrypt = EncryptUtils.decrypt(message, key);
             LOGGER.debug("Decrypt {}: {} to {}", new Object[] { level, message, decrypt });
+            return decrypt;
+        }
+        return message;
+    }
+
+    static String[] decrypt(String[] message, String key, String level) {
+        if (key != null) {
+            String[] decrypt = new String[message.length];
+            for (int i = 0; i < decrypt.length; i++) {
+                decrypt[i] = EncryptUtils.decrypt(message[i], key);
+                LOGGER.debug("Decrypt {}: {} to {}", new Object[] { level, message[i], decrypt[i] });
+            }
             return decrypt;
         }
         return message;
@@ -322,7 +346,7 @@ public class ServletUtil {
 
     public static ManifestBuilder buildManifest(HttpServletRequest request, ConnectorProperties props)
         throws Exception {
-        return buildManifest(request, new ManifestBuilder(new DicomQueryParams(request, props)));
+        return buildManifest(request, new ManifestBuilder(new CommonQueryParams(request, props)));
     }
 
     public static ManifestBuilder buildManifest(HttpServletRequest request, ManifestBuilder builder) throws Exception {
@@ -330,7 +354,6 @@ public class ServletUtil {
         final ConcurrentHashMap<Integer, ManifestBuilder> builderMap =
             (ConcurrentHashMap<Integer, ManifestBuilder>) ctx.getAttribute("manifestBuilderMap");
 
-        ExecutorService executor = (ExecutorService) ctx.getAttribute("manifestExecutor");
         builder.submit((ExecutorService) ctx.getAttribute("manifestExecutor"));
         builderMap.put(builder.getRequestId(), builder);
         return builder;

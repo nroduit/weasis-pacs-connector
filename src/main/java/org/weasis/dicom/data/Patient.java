@@ -125,7 +125,9 @@ public class Patient implements XmlDescription {
     public String toXml() {
         StringBuilder result = new StringBuilder();
         if (patientID != null && patientName != null) {
-            result.append("\n<" + TagW.DICOM_LEVEL.Patient.name() + " ");
+            result.append("\n<");
+            result.append(TagW.DICOM_LEVEL.Patient.name());
+            result.append(" ");
 
             TagUtil.addXmlAttribute(TagW.PatientID, patientID, result);
             TagUtil.addXmlAttribute(TagW.IssuerOfPatientID, issuerOfPatientID, result);
@@ -171,7 +173,9 @@ public class Patient implements XmlDescription {
             for (Study s : studiesList) {
                 result.append(s.toXml());
             }
-            result.append("\n</Patient>");
+            result.append("\n</");
+            result.append(TagW.DICOM_LEVEL.Patient.name());
+            result.append(">");
         }
 
         String ptXml = result.toString();

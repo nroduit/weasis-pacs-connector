@@ -13,6 +13,7 @@ package org.weasis.dicom.data;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 import org.weasis.dicom.data.xml.TagUtil;
 import org.weasis.dicom.data.xml.XmlDescription;
@@ -24,7 +25,6 @@ public class Series implements XmlDescription {
     private final ArrayList<SOPInstance> sopInstancesList;
     private String modality = null;
     private String seriesNumber = null;
-    private String transferSyntaxUID = null;
     private String wadoTransferSyntaxUID = null;
     // Image quality within the range 1 to 100, 100 being the best quality.
     private int wadoCompression = 0;
@@ -54,10 +54,6 @@ public class Series implements XmlDescription {
         this.seriesNumber = seriesNumber == null ? null : seriesNumber.trim();
     }
 
-    public String getTransferSyntaxUID() {
-        return transferSyntaxUID;
-    }
-
     public String getWadoTransferSyntaxUID() {
         return wadoTransferSyntaxUID;
     }
@@ -72,10 +68,6 @@ public class Series implements XmlDescription {
 
     public void setWadoCompression(int wadoCompression) {
         this.wadoCompression = wadoCompression > 100 ? 100 : wadoCompression;
-    }
-
-    public void setTransferSyntaxUID(String transferSyntaxUID) {
-        this.transferSyntaxUID = transferSyntaxUID;
     }
 
     public void setSeriesDescription(String s) {
@@ -104,7 +96,7 @@ public class Series implements XmlDescription {
         this.thumbnail = thumbnail;
     }
 
-    public ArrayList<SOPInstance> getSopInstancesList() {
+    public List<SOPInstance> getSopInstancesList() {
         return sopInstancesList;
     }
 
@@ -130,13 +122,13 @@ public class Series implements XmlDescription {
     public String toXml() {
         StringBuilder result = new StringBuilder();
         if (seriesInstanceUID != null) {
-            result.append("\n<" + TagW.DICOM_LEVEL.Series.name() + " ");
+            result.append("\n<");
+            result.append(TagW.DICOM_LEVEL.Series.name());
+            result.append(" ");
             TagUtil.addXmlAttribute(TagW.SeriesInstanceUID, seriesInstanceUID, result);
             TagUtil.addXmlAttribute(TagW.SeriesDescription, seriesDescription, result);
             TagUtil.addXmlAttribute(TagW.SeriesNumber, seriesNumber, result);
             TagUtil.addXmlAttribute(TagW.Modality, modality, result);
-            // file_tsuid DICOM Transfer Syntax UID (0002,0010)
-            TagUtil.addXmlAttribute(TagW.TransferSyntaxUID, transferSyntaxUID, result);
             TagUtil.addXmlAttribute(TagW.DirectDownloadThumbnail, thumbnail, result);
             TagUtil.addXmlAttribute(TagW.WadoTransferSyntaxUID, wadoTransferSyntaxUID, result);
             TagUtil.addXmlAttribute(TagW.WadoCompressionRate, wadoCompression < 1 ? null : "" + wadoCompression,
@@ -146,7 +138,9 @@ public class Series implements XmlDescription {
             for (SOPInstance s : sopInstancesList) {
                 result.append(s.toXml());
             }
-            result.append("\n</Series>");
+            result.append("\n</");
+            result.append(TagW.DICOM_LEVEL.Series.name());
+            result.append(">");
         }
         return result.toString();
     }

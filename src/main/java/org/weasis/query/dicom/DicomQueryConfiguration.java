@@ -1,19 +1,10 @@
-/*******************************************************************************
- * Copyright (c) 2014 Weasis Team.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     Nicolas Roduit - initial API and implementation
- *******************************************************************************/
-package org.weasis.dicom.wado;
+package org.weasis.query.dicom;
 
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
@@ -25,50 +16,99 @@ import org.weasis.dicom.data.SOPInstance;
 import org.weasis.dicom.data.Series;
 import org.weasis.dicom.data.Study;
 import org.weasis.dicom.op.CFind;
+import org.weasis.dicom.param.AdvancedParams;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomParam;
 import org.weasis.dicom.param.DicomState;
+import org.weasis.dicom.param.TlsOptions;
 import org.weasis.dicom.util.DateUtil;
 import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.wado.WadoQuery.WadoMessage;
+import org.weasis.query.AbstractQueryConfiguration;
+import org.weasis.query.CommonQueryParams;
 
-public class BuildManifestDcmQR {
+public class DicomQueryConfiguration extends AbstractQueryConfiguration {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DicomQueryConfiguration.class);
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BuildManifestDcmQR.class);
+    private final DicomNode callingNode;
+    private final DicomNode calledNode;
+    private final AdvancedParams advancedParams;
 
-    private BuildManifestDcmQR() {
-        // Static class
+    public DicomQueryConfiguration(Properties properties, DicomNode callingNode) {
+        super(properties);
+        if (callingNode == null) {
+            throw new IllegalArgumentException("callingNode cannot be null!");
+        }
+        this.callingNode = callingNode;
+        this.calledNode = new DicomNode(properties.getProperty("pacs.aet", "DCM4CHEE"),
+            properties.getProperty("pacs.host", "localhost"),
+            Integer.parseInt(properties.getProperty("pacs.port", "11112")));
+        this.advancedParams = buildAdvancedParams();
     }
 
-    public static void buildFromPatientID(DicomQueryParams params, String patientID) throws Exception {
-        if (!StringUtil.hasText(patientID)) {
-            params.addGeneralWadoMessage(
-                new WadoMessage("Missing PatientID", "No patient requested", WadoMessage.eLevel.WARN));
-            return;
+    private AdvancedParams buildAdvancedParams() {
+        boolean tls = StringUtil.getNULLtoFalse(properties.getProperty("pacs.tls.mode"));
+        AdvancedParams params = null;
+        if (tls) {
+            try {
+                TlsOptions tlsOptions = new TlsOptions(
+                    StringUtil.getNULLtoFalse(properties.getProperty("pacs.tlsNeedClientAuth")),
+                    properties.getProperty("pacs.keystoreURL"), properties.getProperty("pacs.keystoreType", "JKS"),
+                    properties.getProperty("pacs.keystorePass"),
+                    properties.getProperty("pacs.keyPass", properties.getProperty("pacs.keystorePass")),
+                    properties.getProperty("pacs.truststoreURL"), properties.getProperty("pacs.truststoreType", "JKS"),
+                    properties.getProperty("pacs.truststorePass"));
+                params = new AdvancedParams();
+                params.setTlsOptions(tlsOptions);
+            } catch (Exception e) {
+                StringUtil.logError(LOGGER, e, "Cannot set TLS configuration");
+            }
         }
+        return params;
+    }
 
-        int beginIndex = patientID.indexOf("^^^");
-        int offset = 3;
-        // IssuerOfPatientID filter ( syntax like in HL7 with extension^^^root)
-        if (beginIndex == -1) {
-            // if patientID has been encrypted
-            beginIndex = patientID.indexOf("%5E%5E%5E");
-            offset = 9;
-        }
+    public DicomNode getCalledNode() {
+        return calledNode;
+    }
 
-        DicomParam[] keysStudies = {
-            // Matching Keys
-            new DicomParam(Tag.PatientID, beginIndex < 0 ? patientID : patientID.substring(0, beginIndex)),
-            // Return Keys, IssuerOfPatientID is a return key except when passed as a extension of PatientID
-            new DicomParam(Tag.IssuerOfPatientID, beginIndex < 0 ? null : patientID.substring(beginIndex + offset)),
-            new DicomParam(Tag.PatientName, params.getPatientName()),
-            new DicomParam(Tag.PatientBirthDate, params.getPatientBirthDate()), CFind.PatientSex,
-            CFind.ReferringPhysicianName, CFind.StudyDescription, CFind.StudyDate, CFind.StudyTime,
-            CFind.AccessionNumber, CFind.StudyInstanceUID, CFind.StudyID, new DicomParam(Tag.ModalitiesInStudy) };
+    public AdvancedParams getAdvancedParams() {
+        return advancedParams;
+    }
 
-        for (PacsConfiguration pacs : params.getPacsList()) {
-            DicomState state = CFind.process(pacs.getAdvancedParams(), params.getCallingNode(), pacs.getCalledNode(), 0,
-                QueryRetrieveLevel.STUDY, keysStudies);
+    public DicomNode getCallingNode() {
+        return callingNode;
+    }
+
+    @Override
+    public void buildFromPatientID(CommonQueryParams params, String... patientIDs) throws Exception {
+        for (String patientID : patientIDs) {
+            if (!StringUtil.hasText(patientID)) {
+                // params.addGeneralWadoMessage(
+                // new WadoMessage("Missing PatientID", "No patient requested", WadoMessage.eLevel.WARN));
+                continue;
+            }
+
+            int beginIndex = patientID.indexOf("^^^");
+            int offset = 3;
+            // IssuerOfPatientID filter ( syntax like in HL7 with extension^^^root)
+            if (beginIndex == -1) {
+                // if patientID has been encrypted
+                beginIndex = patientID.indexOf("%5E%5E%5E");
+                offset = 9;
+            }
+
+            DicomParam[] keysStudies = {
+                // Matching Keys
+                new DicomParam(Tag.PatientID, beginIndex < 0 ? patientID : patientID.substring(0, beginIndex)),
+                // Return Keys, IssuerOfPatientID is a return key except when passed as a extension of PatientID
+                new DicomParam(Tag.IssuerOfPatientID, beginIndex < 0 ? null : patientID.substring(beginIndex + offset)),
+                new DicomParam(Tag.PatientName, params.getPatientName()),
+                new DicomParam(Tag.PatientBirthDate, params.getPatientBirthDate()), CFind.PatientSex,
+                CFind.ReferringPhysicianName, CFind.StudyDescription, CFind.StudyDate, CFind.StudyTime,
+                CFind.AccessionNumber, CFind.StudyInstanceUID, CFind.StudyID, new DicomParam(Tag.ModalitiesInStudy) };
+
+            DicomState state =
+                CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.STUDY, keysStudies);
 
             List<Attributes> studies = state.getDicomRSP();
             if (studies != null && !studies.isEmpty()) {
@@ -197,94 +237,102 @@ public class BuildManifestDcmQR {
                 }
 
                 for (Attributes studyDataSet : studies) {
-                    fillSeries(pacs, params.getCallingNode(), studyDataSet);
+                    fillSeries(studyDataSet);
                 }
             }
         }
     }
 
-    public static void buildFromStudyInstanceUID(DicomQueryParams params, String studyInstanceUID) throws Exception {
-        if (!StringUtil.hasText(studyInstanceUID)) {
-            return;
-        }
-        DicomParam[] keysStudies = {
-            // Matching Keys
-            new DicomParam(Tag.StudyInstanceUID, studyInstanceUID),
-            // Return Keys
-            CFind.PatientID, CFind.IssuerOfPatientID, CFind.PatientName, CFind.PatientBirthDate, CFind.PatientSex,
-            CFind.ReferringPhysicianName, CFind.StudyDescription, CFind.StudyDate, CFind.StudyTime,
-            CFind.AccessionNumber, CFind.StudyID };
+    @Override
+    public void buildFromStudyInstanceUID(CommonQueryParams params, String... studyInstanceUIDs) throws Exception {
+        for (String studyInstanceUID : studyInstanceUIDs) {
+            if (!StringUtil.hasText(studyInstanceUID)) {
+                continue;
+            }
+            DicomParam[] keysStudies = {
+                // Matching Keys
+                new DicomParam(Tag.StudyInstanceUID, studyInstanceUID),
+                // Return Keys
+                CFind.PatientID, CFind.IssuerOfPatientID, CFind.PatientName, CFind.PatientBirthDate, CFind.PatientSex,
+                CFind.ReferringPhysicianName, CFind.StudyDescription, CFind.StudyDate, CFind.StudyTime,
+                CFind.AccessionNumber, CFind.StudyID };
 
-        fillStudy(params, keysStudies);
+            fillStudy(keysStudies);
+        }
     }
 
-    public static void buildFromStudyAccessionNumber(DicomQueryParams params, String accessionNumber) throws Exception {
-        if (!StringUtil.hasText(accessionNumber)) {
-            return;
-        }
-        DicomParam[] keysStudies = {
-            // Matching Keys
-            new DicomParam(Tag.AccessionNumber, accessionNumber),
-            // Return Keys
-            CFind.PatientID, CFind.IssuerOfPatientID, CFind.PatientName, CFind.PatientBirthDate, CFind.PatientSex,
-            CFind.ReferringPhysicianName, CFind.StudyDescription, CFind.StudyDate, CFind.StudyTime,
-            CFind.StudyInstanceUID, CFind.StudyID };
+    @Override
+    public void buildFromStudyAccessionNumber(CommonQueryParams params, String... accessionNumbers) throws Exception {
+        for (String accessionNumber : accessionNumbers) {
+            if (!StringUtil.hasText(accessionNumber)) {
+                continue;
+            }
+            DicomParam[] keysStudies = {
+                // Matching Keys
+                new DicomParam(Tag.AccessionNumber, accessionNumber),
+                // Return Keys
+                CFind.PatientID, CFind.IssuerOfPatientID, CFind.PatientName, CFind.PatientBirthDate, CFind.PatientSex,
+                CFind.ReferringPhysicianName, CFind.StudyDescription, CFind.StudyDate, CFind.StudyTime,
+                CFind.StudyInstanceUID, CFind.StudyID };
 
-        fillStudy(params, keysStudies);
+            fillStudy(keysStudies);
+        }
     }
 
-    public static void buildFromSeriesInstanceUID(DicomQueryParams params, String seriesInstanceUID) throws Exception {
-        if (!StringUtil.hasText(seriesInstanceUID)) {
-            return;
-        }
+    @Override
+    public void buildFromSeriesInstanceUID(CommonQueryParams params, String... seriesInstanceUIDs) throws Exception {
+        for (String seriesInstanceUID : seriesInstanceUIDs) {
+            if (!StringUtil.hasText(seriesInstanceUID)) {
+                continue;
+            }
 
-        DicomParam[] keysSeries = {
-            // Matching Keys
-            new DicomParam(Tag.SeriesInstanceUID, seriesInstanceUID),
-            // Return Keys
-            CFind.PatientID, CFind.IssuerOfPatientID, CFind.PatientName, CFind.PatientBirthDate, CFind.PatientSex,
-            CFind.ReferringPhysicianName, CFind.StudyDescription, CFind.StudyDate, CFind.StudyTime,
-            CFind.AccessionNumber, CFind.StudyInstanceUID, CFind.StudyID, CFind.Modality, CFind.SeriesNumber,
-            CFind.SeriesDescription };
+            DicomParam[] keysSeries = {
+                // Matching Keys
+                new DicomParam(Tag.SeriesInstanceUID, seriesInstanceUID),
+                // Return Keys
+                CFind.PatientID, CFind.IssuerOfPatientID, CFind.PatientName, CFind.PatientBirthDate, CFind.PatientSex,
+                CFind.ReferringPhysicianName, CFind.StudyDescription, CFind.StudyDate, CFind.StudyTime,
+                CFind.AccessionNumber, CFind.StudyInstanceUID, CFind.StudyID, CFind.Modality, CFind.SeriesNumber,
+                CFind.SeriesDescription };
 
-        for (PacsConfiguration pacs : params.getPacsList()) {
-            DicomState state = CFind.process(pacs.getAdvancedParams(), params.getCallingNode(), pacs.getCalledNode(), 0,
-                QueryRetrieveLevel.SERIES, keysSeries);
+            DicomState state =
+                CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.SERIES, keysSeries);
 
             List<Attributes> series = state.getDicomRSP();
             if (series != null && series.size() > 0) {
                 Attributes dataset = series.get(0);
-                Patient patient = getPatient(pacs, params.getCallingNode(), dataset);
+                Patient patient = getPatient(dataset);
                 Study study = getStudy(patient, dataset);
                 for (Attributes seriesDataset : series) {
-                    fillInstance(pacs, params.getCallingNode(), seriesDataset, study);
+                    fillInstance(seriesDataset, study);
                 }
             }
         }
     }
 
-    public static void buildFromSopInstanceUID(DicomQueryParams params, String sopInstanceUID) throws Exception {
-        if (!StringUtil.hasText(sopInstanceUID)) {
-            return;
-        }
+    @Override
+    public void buildFromSopInstanceUID(CommonQueryParams params, String... sopInstanceUIDs) throws Exception {
+        for (String sopInstanceUID : sopInstanceUIDs) {
+            if (!StringUtil.hasText(sopInstanceUID)) {
+                continue;
+            }
 
-        DicomParam[] keysInstance = {
-            // Matching Keys
-            new DicomParam(Tag.SOPInstanceUID, sopInstanceUID),
-            // Return Keys
-            CFind.PatientID, CFind.IssuerOfPatientID, CFind.PatientName, CFind.PatientBirthDate, CFind.PatientSex,
-            CFind.ReferringPhysicianName, CFind.StudyDescription, CFind.StudyDate, CFind.StudyTime,
-            CFind.AccessionNumber, CFind.StudyInstanceUID, CFind.StudyID, CFind.SeriesInstanceUID, CFind.Modality,
-            CFind.SeriesNumber, CFind.SeriesDescription };
+            DicomParam[] keysInstance = {
+                // Matching Keys
+                new DicomParam(Tag.SOPInstanceUID, sopInstanceUID),
+                // Return Keys
+                CFind.PatientID, CFind.IssuerOfPatientID, CFind.PatientName, CFind.PatientBirthDate, CFind.PatientSex,
+                CFind.ReferringPhysicianName, CFind.StudyDescription, CFind.StudyDate, CFind.StudyTime,
+                CFind.AccessionNumber, CFind.StudyInstanceUID, CFind.StudyID, CFind.SeriesInstanceUID, CFind.Modality,
+                CFind.SeriesNumber, CFind.SeriesDescription };
 
-        for (PacsConfiguration pacs : params.getPacsList()) {
-            DicomState state = CFind.process(pacs.getAdvancedParams(), params.getCallingNode(), pacs.getCalledNode(), 0,
-                QueryRetrieveLevel.IMAGE, keysInstance);
+            DicomState state =
+                CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.IMAGE, keysInstance);
 
             List<Attributes> instances = state.getDicomRSP();
             if (instances != null && instances.size() > 0) {
                 Attributes dataset = instances.get(0);
-                Patient patient = getPatient(pacs, params.getCallingNode(), dataset);
+                Patient patient = getPatient(dataset);
                 Study study = getStudy(patient, dataset);
                 Series s = getSeries(study, dataset);
                 for (Attributes instanceDataSet : instances) {
@@ -299,22 +347,19 @@ public class BuildManifestDcmQR {
         }
     }
 
-    private static void fillStudy(DicomQueryParams params, DicomParam[] keysStudies) throws Exception {
-        for (PacsConfiguration pacs : params.getPacsList()) {
-            DicomState state = CFind.process(pacs.getAdvancedParams(), params.getCallingNode(), pacs.getCalledNode(), 0,
-                QueryRetrieveLevel.STUDY, keysStudies);
+    public void fillStudy(DicomParam[] keysStudies) throws Exception {
+        DicomState state =
+            CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.STUDY, keysStudies);
 
-            List<Attributes> studies = state.getDicomRSP();
-            if (studies != null) {
-                for (Attributes studyDataSet : studies) {
-                    fillSeries(pacs, params.getCallingNode(), studyDataSet);
-                }
+        List<Attributes> studies = state.getDicomRSP();
+        if (studies != null) {
+            for (Attributes studyDataSet : studies) {
+                fillSeries(studyDataSet);
             }
         }
     }
 
-    private static void fillSeries(PacsConfiguration pacs, DicomNode callingNode, Attributes studyDataSet)
-        throws Exception {
+    public void fillSeries(Attributes studyDataSet) throws Exception {
         String studyInstanceUID = studyDataSet.getString(Tag.StudyInstanceUID);
         if (StringUtil.hasText(studyInstanceUID)) {
 
@@ -324,23 +369,22 @@ public class BuildManifestDcmQR {
                 // Return Keys
                 CFind.SeriesInstanceUID, CFind.Modality, CFind.SeriesNumber, CFind.SeriesDescription };
 
-            DicomState state = CFind.process(pacs.getAdvancedParams(), callingNode, pacs.getCalledNode(), 0,
-                QueryRetrieveLevel.SERIES, keysSeries);
+            DicomState state =
+                CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.SERIES, keysSeries);
 
             List<Attributes> series = state.getDicomRSP();
             if (series != null) {
                 // Get patient from each study in case IssuerOfPatientID is different
-                Patient patient = getPatient(pacs, callingNode, studyDataSet);
+                Patient patient = getPatient(studyDataSet);
                 Study study = getStudy(patient, studyDataSet);
                 for (Attributes seriesDataset : series) {
-                    fillInstance(pacs, callingNode, seriesDataset, study);
+                    fillInstance(seriesDataset, study);
                 }
             }
         }
     }
 
-    private static void fillInstance(PacsConfiguration pacs, DicomNode callingNode, Attributes seriesDataset,
-        Study study) throws Exception {
+    public void fillInstance(Attributes seriesDataset, Study study) throws Exception {
         String serieInstanceUID = seriesDataset.getString(Tag.SeriesInstanceUID);
         if (StringUtil.hasText(serieInstanceUID)) {
             DicomParam[] keysInstance = {
@@ -349,8 +393,8 @@ public class BuildManifestDcmQR {
                 new DicomParam(Tag.SeriesInstanceUID, serieInstanceUID),
                 // Return Keys
                 CFind.SOPInstanceUID, CFind.InstanceNumber };
-            DicomState state = CFind.process(pacs.getAdvancedParams(), callingNode, pacs.getCalledNode(), 0,
-                QueryRetrieveLevel.IMAGE, keysInstance);
+            DicomState state =
+                CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.IMAGE, keysInstance);
 
             List<Attributes> instances = state.getDicomRSP();
             if (instances != null) {
@@ -368,12 +412,10 @@ public class BuildManifestDcmQR {
         }
     }
 
-    protected static Patient getPatient(PacsConfiguration pacs, DicomNode callingNode, final Attributes patientDataset)
-        throws Exception {
+    protected Patient getPatient(final Attributes patientDataset) throws Exception {
         if (patientDataset == null) {
             throw new IllegalArgumentException("patientDataset cannot be null");
         }
-        final List<Patient> patientList = pacs.getPatients();
 
         // Request at SERIES level without relational model can respond without a Patient ID
         if (!patientDataset.contains(Tag.PatientID)) {
@@ -389,8 +431,8 @@ public class BuildManifestDcmQR {
                     // Return Keys
                     CFind.StudyInstanceUID, CFind.Modality, CFind.SeriesNumber, CFind.SeriesDescription };
 
-                DicomState state = CFind.process(pacs.getAdvancedParams(), callingNode, pacs.getCalledNode(), 0,
-                    QueryRetrieveLevel.SERIES, keysSeries);
+                DicomState state =
+                    CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.SERIES, keysSeries);
                 List<Attributes> series = state.getDicomRSP();
                 if (series.isEmpty()) {
                     throw new Exception("Get empty C-Find reply at Series level for " + seriesInstanceUID);
@@ -410,8 +452,8 @@ public class BuildManifestDcmQR {
                 CFind.ReferringPhysicianName, CFind.StudyDescription, CFind.StudyDate, CFind.StudyTime,
                 CFind.AccessionNumber, CFind.StudyID };
 
-            DicomState state = CFind.process(pacs.getAdvancedParams(), callingNode, pacs.getCalledNode(), 0,
-                QueryRetrieveLevel.STUDY, keysStudies);
+            DicomState state =
+                CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.STUDY, keysStudies);
 
             List<Attributes> studies = state.getDicomRSP();
             if (studies.isEmpty()) {
@@ -422,7 +464,7 @@ public class BuildManifestDcmQR {
         }
         String id = patientDataset.getString(Tag.PatientID, "Unknown");
         String ispid = patientDataset.getString(Tag.IssuerOfPatientID);
-        for (Patient p : patientList) {
+        for (Patient p : patients) {
             if (p.hasSameUniqueID(id, ispid)) {
                 return p;
             }
@@ -432,7 +474,7 @@ public class BuildManifestDcmQR {
         p.setPatientBirthDate(patientDataset.getString(Tag.PatientBirthDate));
         // p.setPatientBirthTime(patientDataset.getString(Tag.PatientBirthTime));
         p.setPatientSex(patientDataset.getString(Tag.PatientSex));
-        patientList.add(p);
+        patients.add(p);
         return p;
     }
 

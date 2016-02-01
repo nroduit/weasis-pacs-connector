@@ -17,9 +17,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.wado.DicomQueryParams;
 import org.weasis.dicom.wado.WadoQuery;
 import org.weasis.dicom.wado.XmlManifest;
+import org.weasis.query.CommonQueryParams;
 import org.weasis.servlet.ServletUtil;
 
 public class ManifestBuilder implements Callable<XmlManifest> {
@@ -30,11 +30,11 @@ public class ManifestBuilder implements Callable<XmlManifest> {
 
     private final int requestId;
     private final long startTimeMillis;
-    private final DicomQueryParams params;
+    private final CommonQueryParams params;
     private final XmlManifest xml;
     private volatile Future<XmlManifest> future;
 
-    public ManifestBuilder(DicomQueryParams params) {
+    public ManifestBuilder(CommonQueryParams params) {
         if (params == null) {
             throw new IllegalArgumentException();
         }

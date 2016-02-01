@@ -1,62 +1,47 @@
-package org.weasis.dicom.wado;
+package org.weasis.query;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.Patient;
 import org.weasis.dicom.data.Series;
 import org.weasis.dicom.data.Study;
 import org.weasis.dicom.data.xml.Base64;
-import org.weasis.dicom.param.AdvancedParams;
-import org.weasis.dicom.param.DicomNode;
-import org.weasis.dicom.param.TlsOptions;
 import org.weasis.dicom.util.StringUtil;
+import org.weasis.dicom.wado.WadoParameters;
+import org.weasis.dicom.wado.WadoQuery;
 import org.weasis.dicom.wado.WadoQuery.WadoMessage;
 
-public class PacsConfiguration {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PacsConfiguration.class);
+public abstract class AbstractQueryConfiguration {
 
-    private final List<Patient> patients;
-    private final List<WadoMessage> wadoMessages;
-    private final DicomNode calledNode;
-    private final AdvancedParams advancedParams;
-    private final Properties properties;
+    protected final List<Patient> patients;
+    protected final List<WadoMessage> wadoMessages;
+    protected final Properties properties;
 
-    public PacsConfiguration(Properties properties) {
+    public AbstractQueryConfiguration(Properties properties) {
+        if (properties == null) {
+            throw new IllegalArgumentException("properties cannot be null!");
+        }
         this.properties = properties;
         this.patients = new ArrayList<Patient>();
         this.wadoMessages = new ArrayList<WadoQuery.WadoMessage>();
-        this.calledNode = new DicomNode(properties.getProperty("pacs.aet", "DCM4CHEE"),
-            properties.getProperty("pacs.host", "localhost"),
-            Integer.parseInt(properties.getProperty("pacs.port", "11112")));
-        this.advancedParams = buildAdvancedParams();
     }
 
-    private AdvancedParams buildAdvancedParams() {
-        boolean tls = StringUtil.getNULLtoFalse(properties.getProperty("pacs.tls.mode"));
-        AdvancedParams params = null;
-        if (tls) {
-            try {
-                TlsOptions tlsOptions = new TlsOptions(
-                    StringUtil.getNULLtoFalse(properties.getProperty("pacs.tlsNeedClientAuth")),
-                    properties.getProperty("pacs.keystoreURL"), properties.getProperty("pacs.keystoreType", "JKS"),
-                    properties.getProperty("pacs.keystorePass"),
-                    properties.getProperty("pacs.keyPass", properties.getProperty("pacs.keystorePass")),
-                    properties.getProperty("pacs.truststoreURL"), properties.getProperty("pacs.truststoreType", "JKS"),
-                    properties.getProperty("pacs.truststorePass"));
-                params = new AdvancedParams();
-                params.setTlsOptions(tlsOptions);
-            } catch (Exception e) {
-                StringUtil.logError(LOGGER, e, "Cannot set TLS configuration");
-            }
-        }
-        return params;
-    }
+    public abstract void buildFromPatientID(CommonQueryParams params, String... patientIDs) throws Exception;
+
+    public abstract void buildFromStudyInstanceUID(CommonQueryParams params, String... studyInstanceUIDs) throws Exception;
+
+    public abstract void buildFromStudyAccessionNumber(CommonQueryParams params, String... accessionNumbers)
+        throws Exception;
+
+    public abstract void buildFromSeriesInstanceUID(CommonQueryParams params, String... seriesInstanceUIDs)
+        throws Exception;
+
+    public abstract void buildFromSopInstanceUID(CommonQueryParams params, String... sopInstanceUIDs) throws Exception;
 
     public String getCharsetEncoding() {
+        // Not required with DICOM C-FIND (handle with attributes.getString(...))
         return properties.getProperty("pacs.db.encoding", "UTF-8");
     }
 
@@ -146,14 +131,6 @@ public class PacsConfiguration {
 
     public List<WadoMessage> getWadoMessages() {
         return wadoMessages;
-    }
-
-    public DicomNode getCalledNode() {
-        return calledNode;
-    }
-
-    public AdvancedParams getAdvancedParams() {
-        return advancedParams;
     }
 
     public Properties getProperties() {

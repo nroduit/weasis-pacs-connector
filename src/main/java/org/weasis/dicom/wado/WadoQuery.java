@@ -14,14 +14,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.Patient;
 import org.weasis.dicom.data.xml.TagUtil;
+import org.weasis.query.AbstractQueryConfiguration;
 
 public class WadoQuery implements XmlManifest {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(WadoQuery.class);
 
     public static final String FILE_PREFIX = "wado_query";
     public static final String FILE_EXTENSION = ".xml.gz";
@@ -32,13 +29,13 @@ public class WadoQuery implements XmlManifest {
     public static final String TAG_MSG_ATTRIBUTE_LEVEL = "severity";
 
     private final StringBuilder wadoQuery = new StringBuilder();
-    private final List<PacsConfiguration> pacsList;
+    private final List<AbstractQueryConfiguration> pacsList;
 
-    public WadoQuery(List<PacsConfiguration> pacsList) {
-        if (pacsList == null) {
+    public WadoQuery(List<AbstractQueryConfiguration> list) {
+        if (list == null) {
             throw new IllegalArgumentException();
         }
-        this.pacsList = pacsList;
+        this.pacsList = list;
     }
 
     @Override
@@ -48,8 +45,8 @@ public class WadoQuery implements XmlManifest {
 
     @Override
     public String xmlManifest() {
-        wadoQuery.append("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>");
-        for (PacsConfiguration pacs : pacsList) {
+        wadoQuery.append("<?xml version=\"1.0\" encoding=\"" + getCharsetEncoding() + "\" ?>");
+        for (AbstractQueryConfiguration pacs : pacsList) {
             if (pacs.getPatients().isEmpty() && pacs.getWadoMessages().isEmpty()) {
                 continue;
             }

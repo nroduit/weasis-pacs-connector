@@ -1,14 +1,4 @@
-/*******************************************************************************
- * Copyright (c) 2014 Weasis Team.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     Nicolas Roduit - initial API and implementation
- *******************************************************************************/
-package org.weasis.dicom.wado;
+package org.weasis.query;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,11 +13,14 @@ import org.slf4j.LoggerFactory;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.wado.WadoQuery.WadoMessage;
+import org.weasis.query.db.DbQueryConfiguration;
+import org.weasis.query.dicom.DicomQueryConfiguration;
 import org.weasis.servlet.ConnectorProperties;
 
-public class DicomQueryParams {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DicomQueryParams.class);
+public class CommonQueryParams {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CommonQueryParams.class);
 
+    // Non IID request parameters
     public static final String SeriesUID = "seriesUID";
     public static final String ObjectUID = "objectUID";
 
@@ -50,32 +43,45 @@ public class DicomQueryParams {
     // HTTP Request Parameters – Study-based
     public static final String StudyUID = "studyUID";
     public static final String AccessionNumber = "accessionNumber";
+
     // Well-Known Values for Viewer Type Parameter
     public static final String IHE_BIR = "IHE_BIR";
     public static final String PatientLevel = "PATIENT";
     public static final String StudyLevel = "STUDY";
 
-    private final ConnectorProperties properties;
-    private final DicomNode callingNode;
-    private final List<PacsConfiguration> pacsList;
-    private final Map<String, String[]> requestMap;
+    protected final ConnectorProperties properties;
+    protected final List<AbstractQueryConfiguration> pacsList;
+    protected final Map<String, String[]> requestMap;
 
-    public DicomQueryParams(HttpServletRequest request, ConnectorProperties properties) {
+    public CommonQueryParams(HttpServletRequest request, ConnectorProperties properties) {
         if (properties == null) {
-            throw new IllegalArgumentException("callingNode or calledNode cannot be null!");
+            throw new IllegalArgumentException("properties cannot be null!");
         }
         this.properties = properties;
-        this.pacsList = new ArrayList<PacsConfiguration>();
-        this.pacsList.add(new PacsConfiguration(properties));
-        for (Properties p : properties.getPacsPropertiesList()) {
-            this.pacsList.add(new PacsConfiguration(p));
-        }
-        this.callingNode = new DicomNode(properties.getProperty("aet", "PACS-CONNECTOR"));
+        this.pacsList = new ArrayList<AbstractQueryConfiguration>();
         this.requestMap = new HashMap<String, String[]>(request.getParameterMap());
+
+        DicomNode callingNode = new DicomNode(properties.getProperty("aet", "PACS-CONNECTOR"));
+
+        for (Properties p : properties.getPacsPropertiesList()) {
+            if (p.getProperty("pacs.aet") != null) {
+                this.pacsList.add(new DicomQueryConfiguration(p, callingNode));
+            } else if (p.getProperty("pacs.db.driver") != null) {
+                this.pacsList.add(new DbQueryConfiguration(p));
+            }
+        }
+
+        if (pacsList.isEmpty()) {
+            // No configuration found. Build with default dcm4chee values
+            this.pacsList.add(new DicomQueryConfiguration(properties, callingNode));
+        }
     }
 
-    public DicomNode getCallingNode() {
-        return callingNode;
+    private static String getFirstParam(String[] val) {
+        if (val != null && val.length > 0) {
+            return val[0];
+        }
+        return null;
     }
 
     public boolean isAcceptNoImage() {
@@ -86,7 +92,7 @@ public class DicomQueryParams {
         return properties;
     }
 
-    public List<PacsConfiguration> getPacsList() {
+    public List<AbstractQueryConfiguration> getPacsList() {
         return pacsList;
     }
 
@@ -97,7 +103,7 @@ public class DicomQueryParams {
     }
 
     public boolean hasPatients() {
-        for (PacsConfiguration pacsConfiguration : pacsList) {
+        for (AbstractQueryConfiguration pacsConfiguration : pacsList) {
             if (!pacsConfiguration.getPatients().isEmpty()) {
                 return true;
             }
@@ -106,31 +112,31 @@ public class DicomQueryParams {
     }
 
     public void clearAllPatients() {
-        for (PacsConfiguration pacsConfiguration : pacsList) {
+        for (AbstractQueryConfiguration pacsConfiguration : pacsList) {
             pacsConfiguration.getPatients().clear();
         }
     }
 
     public void removePatientId(List<String> patientIdList) {
-        for (PacsConfiguration pacsConfiguration : pacsList) {
+        for (AbstractQueryConfiguration pacsConfiguration : pacsList) {
             pacsConfiguration.removePatientId(patientIdList);
         }
     }
 
     public void removeStudyUid(List<String> studyUidList) {
-        for (PacsConfiguration pacsConfiguration : pacsList) {
+        for (AbstractQueryConfiguration pacsConfiguration : pacsList) {
             pacsConfiguration.removeStudyUid(studyUidList);
         }
     }
 
     public void removeAccessionNumber(List<String> accessionNumberList) {
-        for (PacsConfiguration pacsConfiguration : pacsList) {
+        for (AbstractQueryConfiguration pacsConfiguration : pacsList) {
             pacsConfiguration.removeAccessionNumber(accessionNumberList);
         }
     }
 
     public void removeSeriesUid(List<String> seriesUidList) {
-        for (PacsConfiguration pacsConfiguration : pacsList) {
+        for (AbstractQueryConfiguration pacsConfiguration : pacsList) {
             pacsConfiguration.removeSeriesUid(seriesUidList);
         }
     }
@@ -205,13 +211,6 @@ public class DicomQueryParams {
 
     public String[] getReqObjectUIDs() {
         return requestMap.get(ObjectUID);
-    }
-
-    private static String getFirstParam(String[] val) {
-        if (val != null && val.length > 0) {
-            return val[0];
-        }
-        return null;
     }
 
 }

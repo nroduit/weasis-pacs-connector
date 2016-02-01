@@ -77,16 +77,17 @@ public class ManifestManager extends HttpServlet {
                             properties.put(id.trim(), "true");
                         }
                     }
-
+                    
+                    properties.setProperty(ConnectorProperties.CONFIG_FILENAME, "default");
                     String pacsConfigList = properties.getProperty("pacs.config.list", null);
                     if (pacsConfigList != null) {
-
                         for (String pacs : pacsConfigList.split(",")) {
                             URL pacsConfigFile = this.getClass().getResource("/" + pacs.trim());
                             if (pacsConfigFile != null) {
                                 Properties pacsProps = new Properties();
-                                LOGGER.info("Additionnal PACS configuration: {}", pacsConfigFile);
+                                LOGGER.info("PACS configuration: {}", pacsConfigFile);
                                 pacsProps.load(pacsConfigFile.openStream());
+                                pacsProps.setProperty(ConnectorProperties.CONFIG_FILENAME, pacs.trim());
                                 properties.addPacsProperties(pacsProps);
                             }
                         }

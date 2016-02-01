@@ -12,10 +12,11 @@ import org.weasis.dicom.data.xml.TagUtil;
 import org.weasis.dicom.util.StringUtil;
 
 public class ConnectorProperties extends Properties {
+    public static final String CONFIG_FILENAME = "config.filename";
+    
     private final List<Properties> list;
 
     public ConnectorProperties() {
-        super();
         list = new ArrayList<Properties>();
     }
 

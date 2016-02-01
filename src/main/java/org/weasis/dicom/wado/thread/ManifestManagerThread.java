@@ -33,7 +33,7 @@ public class ManifestManagerThread extends Thread {
 
     /**
      * The role of the ManifestManagerThread class is to clean the non consumed threads.
-     * 
+     *
      * @param manifestBuilderMap
      *            the thread safe hashMap
      */

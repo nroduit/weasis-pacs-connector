@@ -108,7 +108,7 @@ public class RequestManifest extends HttpServlet {
             return;
         }
 
-        response.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding(xml.getCharsetEncoding());
         String wadoXmlGenerated = xml.xmlManifest();
 
         Boolean gzip = request.getParameter(PARAM_NO_GZIP) == null;
