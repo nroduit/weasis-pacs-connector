@@ -29,13 +29,13 @@ public class WadoQuery implements XmlManifest {
     public static final String TAG_MSG_ATTRIBUTE_LEVEL = "severity";
 
     private final StringBuilder wadoQuery = new StringBuilder();
-    private final List<AbstractQueryConfiguration> pacsList;
+    private final List<AbstractQueryConfiguration> archiveList;
 
     public WadoQuery(List<AbstractQueryConfiguration> list) {
         if (list == null) {
             throw new IllegalArgumentException();
         }
-        this.pacsList = list;
+        this.archiveList = list;
     }
 
     @Override
@@ -46,11 +46,11 @@ public class WadoQuery implements XmlManifest {
     @Override
     public String xmlManifest() {
         wadoQuery.append("<?xml version=\"1.0\" encoding=\"" + getCharsetEncoding() + "\" ?>");
-        for (AbstractQueryConfiguration pacs : pacsList) {
-            if (pacs.getPatients().isEmpty() && pacs.getWadoMessages().isEmpty()) {
+        for (AbstractQueryConfiguration archive : archiveList) {
+            if (archive.getPatients().isEmpty() && archive.getWadoMessages().isEmpty()) {
                 continue;
             }
-            WadoParameters wadoParameters = pacs.getWadoParameters();
+            WadoParameters wadoParameters = archive.getWadoParameters();
             wadoQuery.append("\n<");
             wadoQuery.append(WadoParameters.TAG_DOCUMENT_ROOT);
             wadoQuery.append(WadoParameters.TAG_SCHEMA);
@@ -77,7 +77,7 @@ public class WadoQuery implements XmlManifest {
                 }
             }
 
-            for (WadoMessage wadoMessage : pacs.getWadoMessages()) {
+            for (WadoMessage wadoMessage : archive.getWadoMessages()) {
                 wadoQuery.append("\n<");
                 wadoQuery.append(TAG_DOCUMENT_MSG);
                 wadoQuery.append(" ");
@@ -87,7 +87,7 @@ public class WadoQuery implements XmlManifest {
                 wadoQuery.append("/>");
             }
 
-            List<Patient> patientList = pacs.getPatients();
+            List<Patient> patientList = archive.getPatients();
             if (patientList != null) {
                 Collections.sort(patientList, new Comparator<Patient>() {
 

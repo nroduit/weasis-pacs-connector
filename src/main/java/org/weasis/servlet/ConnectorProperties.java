@@ -25,11 +25,11 @@ public class ConnectorProperties extends Properties {
         list = new ArrayList<Properties>();
     }
 
-    public void addPacsProperties(Properties pacsProps) {
-        list.add(pacsProps);
+    public void addArchiveProperties(Properties archiveProps) {
+        list.add(archiveProps);
     }
 
-    public List<Properties> getPacsPropertiesList() {
+    public List<Properties> getArchivePropertiesList() {
         return Collections.unmodifiableList(list);
     }
 

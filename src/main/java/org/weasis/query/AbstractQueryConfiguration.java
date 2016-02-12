@@ -42,17 +42,17 @@ public abstract class AbstractQueryConfiguration {
 
     public String getCharsetEncoding() {
         // Not required with DICOM C-FIND (handle with attributes.getString(...))
-        return properties.getProperty("pacs.db.encoding", "UTF-8");
+        return properties.getProperty("arc.db.encoding", "UTF-8");
     }
 
     public WadoParameters getWadoParameters() {
         String wadoQueriesURL =
-            properties.getProperty("pacs.wado.url", properties.getProperty("server.base.url") + "/wado");
+            properties.getProperty("arc.wado.url", properties.getProperty("server.base.url") + "/wado");
         boolean onlysopuid = StringUtil.getNULLtoFalse(properties.getProperty("wado.onlysopuid"));
         String addparams = properties.getProperty("wado.addparams", "");
         String overrideTags = properties.getProperty("wado.override.tags", null);
-        // If the web server requires an authentication (pacs.web.login=user:pwd)
-        String webLogin = properties.getProperty("pacs.web.login", null);
+        // If the web server requires an authentication (arc.web.login=user:pwd)
+        String webLogin = properties.getProperty("arc.web.login", null);
         if (webLogin != null) {
             webLogin = Base64.encodeBytes(webLogin.trim().getBytes());
         }

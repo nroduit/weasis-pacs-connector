@@ -112,11 +112,11 @@ public class ServletUtil {
         return result;
     }
 
-    public static boolean isRequestAllowed(HttpServletRequest request, Properties pacsProperties, Logger logger)
+    public static boolean isRequestAllowed(HttpServletRequest request, Properties archiveProperties, Logger logger)
         throws IOException {
 
         // Test if this client is allowed
-        String hosts = pacsProperties.getProperty("hosts.allow");
+        String hosts = archiveProperties.getProperty("hosts.allow");
         if (hosts != null && !hosts.trim().equals("")) {
             String clientHost = request.getRemoteHost();
             String clientIP = request.getRemoteAddr();
@@ -167,12 +167,12 @@ public class ServletUtil {
                 String anbID = params.getReqAccessionNumber();
                 if (StringUtil.hasText(anbID)) {
                     String val = ServletUtil.decrypt(anbID, key, AccessionNumber);
-                    for (AbstractQueryConfiguration query : params.getPacsList()) {
+                    for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromStudyAccessionNumber(params, val);
                     }
                 } else if (StringUtil.hasText(stuID)) {
                     String val = ServletUtil.decrypt(stuID, key, StudyUID);
-                    for (AbstractQueryConfiguration query : params.getPacsList()) {
+                    for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromStudyInstanceUID(params, val);
                     }
                 } else {
@@ -184,7 +184,7 @@ public class ServletUtil {
                 String patID = params.getReqPatientID();
                 if (StringUtil.hasText(patID)) {
                     String val = ServletUtil.decrypt(patID, key, PatientID);
-                    for (AbstractQueryConfiguration query : params.getPacsList()) {
+                    for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromPatientID(params, val);
                     }
                 }
@@ -200,31 +200,31 @@ public class ServletUtil {
                 String[] obj = params.getReqObjectUIDs();
                 if (obj != null && obj.length > 0 && isRequestIDAllowed(ObjectUID, properties)) {
                     String[] val = decrypt(obj, key, ObjectUID);
-                    for (AbstractQueryConfiguration query : params.getPacsList()) {
+                    for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromSopInstanceUID(params, val);
                     }
                     validateRequiredIDs(ObjectUID, key, params, pat, stu, anb, ser);
                 } else if (ser != null && ser.length > 0 && isRequestIDAllowed(SeriesUID, properties)) {
                     String[] val = decrypt(ser, key, SeriesUID);
-                    for (AbstractQueryConfiguration query : params.getPacsList()) {
+                    for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromSeriesInstanceUID(params, val);
                     }
                     validateRequiredIDs(SeriesUID, key, params, pat, stu, anb, null);
                 } else if (anb != null && anb.length > 0 && isRequestIDAllowed(AccessionNumber, properties)) {
                     String[] val = decrypt(anb, key, AccessionNumber);
-                    for (AbstractQueryConfiguration query : params.getPacsList()) {
+                    for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromStudyAccessionNumber(params, val);
                     }
                     validateRequiredIDs(AccessionNumber, key, params, pat, null, null, null);
                 } else if (stu != null && stu.length > 0 && isRequestIDAllowed(StudyUID, properties)) {
                     String[] val = decrypt(stu, key, StudyUID);
-                    for (AbstractQueryConfiguration query : params.getPacsList()) {
+                    for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromStudyInstanceUID(params, val);
                     }
                     validateRequiredIDs(StudyUID, key, params, pat, null, null, null);
                 } else if (pat != null && pat.length > 0 && isRequestIDAllowed(PatientID, properties)) {
                     String[] val = decrypt(pat, key, PatientID);
-                    for (AbstractQueryConfiguration query : params.getPacsList()) {
+                    for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromPatientID(params, val);
                     }
                 }
@@ -287,8 +287,8 @@ public class ServletUtil {
                 }
 
                 // Remove Patient without study
-                for (AbstractQueryConfiguration pacsConfiguration : params.getPacsList()) {
-                    List<Patient> patients = pacsConfiguration.getPatients();
+                for (AbstractQueryConfiguration arcConfig : params.getArchiveList()) {
+                    List<Patient> patients = arcConfig.getPatients();
                     for (int i = patients.size() - 1; i >= 0; i--) {
                         if (patients.get(i).isEmpty()) {
                             patients.remove(i);

@@ -79,7 +79,7 @@ public class ManifestBuilder implements Callable<XmlManifest> {
             if (!params.hasPatients() && !params.isAcceptNoImage()) {
                 throw new Exception("Empty Patient List");
             }
-            WadoQuery wadoQuery = new WadoQuery(params.getPacsList());
+            WadoQuery wadoQuery = new WadoQuery(params.getArchiveList());
 
             LOGGER.info("Build Manifest in {} ms [id={}]", (System.currentTimeMillis() - startTime), requestId);
             return wadoQuery;

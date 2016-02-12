@@ -31,15 +31,14 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
 
     @Override
     public void buildFromPatientID(CommonQueryParams params, String... patientIDs) throws Exception {
-        throw new IllegalArgumentException(
-            "Not yet implemented in DbQueryConfiguration. Cannot build manifest from PatientID");
+        // TODO
     }
 
     @Override
     public void buildFromStudyInstanceUID(CommonQueryParams params, String... studyInstanceUIDs) throws Exception {
         String studiesUIDsQuery = getQueryString(studyInstanceUIDs);
         String query = buildQuery(
-            properties.getProperty("pacs.db.query.studies.where").replaceFirst("%studies%", studiesUIDsQuery));
+            properties.getProperty("arc.db.query.studies.where").replaceFirst("%studies%", studiesUIDsQuery));
 
         executeDbQuery(query);
     }
@@ -47,7 +46,7 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
     @Override
     public void buildFromStudyAccessionNumber(CommonQueryParams params, String... accessionNumbers) throws Exception {
         String accessionNumbersQuery = getQueryString(accessionNumbers);
-        String query = buildQuery(properties.getProperty("pacs.db.query.accessionnum.where")
+        String query = buildQuery(properties.getProperty("arc.db.query.accessionnum.where")
             .replaceFirst("%accessionnum%", accessionNumbersQuery));
 
         executeDbQuery(query);
@@ -57,15 +56,14 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
     public void buildFromSeriesInstanceUID(CommonQueryParams params, String... seriesInstanceUIDs) throws Exception {
         String seriesUIDsQuery = getQueryString(seriesInstanceUIDs);
         String query =
-            buildQuery(properties.getProperty("pacs.db.query.series.where").replaceFirst("%series%", seriesUIDsQuery));
+            buildQuery(properties.getProperty("arc.db.query.series.where").replaceFirst("%series%", seriesUIDsQuery));
 
         executeDbQuery(query);
     }
 
     @Override
     public void buildFromSopInstanceUID(CommonQueryParams params, String... sopInstanceUIDs) throws Exception {
-        throw new IllegalArgumentException(
-            "Not yet implemented in DbQueryConfiguration. Cannot build manifest from SopInstanceUID");
+        // TODO
     }
 
     private void executeDbQuery(String query) throws Exception {
@@ -84,30 +82,30 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
 
     private void buildListFromDB(ResultSet resultSet) throws Exception {
         try {
-            String patientNameField = properties.getProperty("pacs.db.query.setpatientname");
-            String patientBirthdateTypeField = properties.getProperty("pacs.db.query.patientbirthdate.type");
-            String patientBirthdateFormatField = properties.getProperty("pacs.db.query.patientbirthdate.format");
-            String patientBirthDateField = properties.getProperty("pacs.db.query.patientbirthdate");
-            String patientBirthTimeField = properties.getProperty("pacs.db.query.patientbirthtime");
-            String patientSexField = properties.getProperty("pacs.db.query.patientsex");
+            String patientNameField = properties.getProperty("arc.db.query.setpatientname");
+            String patientBirthdateTypeField = properties.getProperty("arc.db.query.patientbirthdate.type");
+            String patientBirthdateFormatField = properties.getProperty("arc.db.query.patientbirthdate.format");
+            String patientBirthDateField = properties.getProperty("arc.db.query.patientbirthdate");
+            String patientBirthTimeField = properties.getProperty("arc.db.query.patientbirthtime");
+            String patientSexField = properties.getProperty("arc.db.query.patientsex");
 
-            String studyDateTypeField = properties.getProperty("pacs.db.query.studydate.type");
-            String studyDateField = properties.getProperty("pacs.db.query.studydate");
-            String accessionNumberField = properties.getProperty("pacs.db.query.accessionnumber");
-            String studyIdField = properties.getProperty("pacs.db.query.studyid");
-            String referringPhysicianNameField = properties.getProperty("pacs.db.query.referringphysicianname");
-            String studyDescriptionField = properties.getProperty("pacs.db.query.studydescription");
+            String studyDateTypeField = properties.getProperty("arc.db.query.studydate.type");
+            String studyDateField = properties.getProperty("arc.db.query.studydate");
+            String accessionNumberField = properties.getProperty("arc.db.query.accessionnumber");
+            String studyIdField = properties.getProperty("arc.db.query.studyid");
+            String referringPhysicianNameField = properties.getProperty("arc.db.query.referringphysicianname");
+            String studyDescriptionField = properties.getProperty("arc.db.query.studydescription");
 
-            String seriesDescriptionField = properties.getProperty("pacs.db.query.seriesdescription");
-            String modalityField = properties.getProperty("pacs.db.query.modality");
-            String seriesNumberField = properties.getProperty("pacs.db.query.seriesnumber");
+            String seriesDescriptionField = properties.getProperty("arc.db.query.seriesdescription");
+            String modalityField = properties.getProperty("arc.db.query.modality");
+            String seriesNumberField = properties.getProperty("arc.db.query.seriesnumber");
 
-            String instanceNumberField = properties.getProperty("pacs.db.query.instancenumber");
+            String instanceNumberField = properties.getProperty("arc.db.query.instancenumber");
 
-            String patIDField = properties.getProperty("pacs.db.query.patientid");
-            String studyIUIDField = properties.getProperty("pacs.db.query.studyinstanceuid");
-            String seriesIUIDField = properties.getProperty("pacs.db.query.seriesinstanceuid");
-            String sopIUIDField = properties.getProperty("pacs.db.query.sopinstanceuid");
+            String patIDField = properties.getProperty("arc.db.query.patientid");
+            String studyIUIDField = properties.getProperty("arc.db.query.studyinstanceuid");
+            String seriesIUIDField = properties.getProperty("arc.db.query.seriesinstanceuid");
+            String sopIUIDField = properties.getProperty("arc.db.query.sopinstanceuid");
 
             while (resultSet.next()) {
                 Patient patient = getPatient(getString(resultSet, patIDField));
@@ -212,9 +210,9 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
 
     private String buildQuery(String clauseWhere) {
         StringBuilder query = new StringBuilder();
-        query.append(properties.getProperty("pacs.db.query.select"));
+        query.append(properties.getProperty("arc.db.query.select"));
         query.append(" where ").append(clauseWhere).append(" ");
-        query.append(properties.getProperty("pacs.db.query.and"));
+        query.append(properties.getProperty("arc.db.query.and"));
         return query.toString();
     }
 

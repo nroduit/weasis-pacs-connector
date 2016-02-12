@@ -40,24 +40,24 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
             throw new IllegalArgumentException("callingNode cannot be null!");
         }
         this.callingNode = callingNode;
-        this.calledNode = new DicomNode(properties.getProperty("pacs.aet", "DCM4CHEE"),
-            properties.getProperty("pacs.host", "localhost"),
-            Integer.parseInt(properties.getProperty("pacs.port", "11112")));
+        this.calledNode = new DicomNode(properties.getProperty("arc.aet", "DCM4CHEE"),
+            properties.getProperty("arc.host", "localhost"),
+            Integer.parseInt(properties.getProperty("arc.port", "11112")));
         this.advancedParams = buildAdvancedParams();
     }
 
     private AdvancedParams buildAdvancedParams() {
-        boolean tls = StringUtil.getNULLtoFalse(properties.getProperty("pacs.tls.mode"));
+        boolean tls = StringUtil.getNULLtoFalse(properties.getProperty("arc.tls.mode"));
         AdvancedParams params = null;
         if (tls) {
             try {
                 TlsOptions tlsOptions = new TlsOptions(
-                    StringUtil.getNULLtoFalse(properties.getProperty("pacs.tlsNeedClientAuth")),
-                    properties.getProperty("pacs.keystoreURL"), properties.getProperty("pacs.keystoreType", "JKS"),
-                    properties.getProperty("pacs.keystorePass"),
-                    properties.getProperty("pacs.keyPass", properties.getProperty("pacs.keystorePass")),
-                    properties.getProperty("pacs.truststoreURL"), properties.getProperty("pacs.truststoreType", "JKS"),
-                    properties.getProperty("pacs.truststorePass"));
+                    StringUtil.getNULLtoFalse(properties.getProperty("arc.tlsNeedClientAuth")),
+                    properties.getProperty("arc.keystoreURL"), properties.getProperty("arc.keystoreType", "JKS"),
+                    properties.getProperty("arc.keystorePass"),
+                    properties.getProperty("arc.keyPass", properties.getProperty("arc.keystorePass")),
+                    properties.getProperty("arc.truststoreURL"), properties.getProperty("arc.truststoreType", "JKS"),
+                    properties.getProperty("arc.truststorePass"));
                 params = new AdvancedParams();
                 params.setTlsOptions(tlsOptions);
             } catch (Exception e) {

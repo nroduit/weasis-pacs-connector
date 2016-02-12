@@ -61,13 +61,13 @@ public class DbQuery {
     public final static DbQuery executeDBQuery(String query, Properties dbProperties) throws SQLException {
         if (StringUtil.hasText(query) && dbProperties != null) {
             try {
-                Class.forName(dbProperties.getProperty("pacs.db.driver"));
+                Class.forName(dbProperties.getProperty("arc.db.driver"));
             } catch (ClassNotFoundException e) {
                 throw new SQLException("Cannot load Database Driver: " + e.getMessage());
             }
 
-            Connection connection = DriverManager.getConnection(dbProperties.getProperty("pacs.db.uri"),
-                dbProperties.getProperty("pacs.db.user"), dbProperties.getProperty("pacs.db.password"));
+            Connection connection = DriverManager.getConnection(dbProperties.getProperty("arc.db.uri"),
+                dbProperties.getProperty("arc.db.user"), dbProperties.getProperty("arc.db.password"));
             Statement statement = connection.createStatement();
 
             long startQuery = System.nanoTime();

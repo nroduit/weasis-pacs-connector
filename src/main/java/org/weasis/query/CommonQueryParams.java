@@ -50,7 +50,7 @@ public class CommonQueryParams {
     public static final String StudyLevel = "STUDY";
 
     protected final ConnectorProperties properties;
-    protected final List<AbstractQueryConfiguration> pacsList;
+    protected final List<AbstractQueryConfiguration> archiveList;
     protected final Map<String, String[]> requestMap;
 
     public CommonQueryParams(HttpServletRequest request, ConnectorProperties properties) {
@@ -58,22 +58,22 @@ public class CommonQueryParams {
             throw new IllegalArgumentException("properties cannot be null!");
         }
         this.properties = properties;
-        this.pacsList = new ArrayList<AbstractQueryConfiguration>();
+        this.archiveList = new ArrayList<AbstractQueryConfiguration>();
         this.requestMap = new HashMap<String, String[]>(request.getParameterMap());
 
         DicomNode callingNode = new DicomNode(properties.getProperty("aet", "PACS-CONNECTOR"));
 
-        for (Properties p : properties.getPacsPropertiesList()) {
-            if (p.getProperty("pacs.aet") != null) {
-                this.pacsList.add(new DicomQueryConfiguration(p, callingNode));
-            } else if (p.getProperty("pacs.db.driver") != null) {
-                this.pacsList.add(new DbQueryConfiguration(p));
+        for (Properties p : properties.getArchivePropertiesList()) {
+            if (p.getProperty("arc.aet") != null) {
+                this.archiveList.add(new DicomQueryConfiguration(p, callingNode));
+            } else if (p.getProperty("arc.db.driver") != null) {
+                this.archiveList.add(new DbQueryConfiguration(p));
             }
         }
 
-        if (pacsList.isEmpty()) {
+        if (archiveList.isEmpty()) {
             // No configuration found. Build with default dcm4chee values
-            this.pacsList.add(new DicomQueryConfiguration(properties, callingNode));
+            this.archiveList.add(new DicomQueryConfiguration(properties, callingNode));
         }
     }
 
@@ -92,19 +92,19 @@ public class CommonQueryParams {
         return properties;
     }
 
-    public List<AbstractQueryConfiguration> getPacsList() {
-        return pacsList;
+    public List<AbstractQueryConfiguration> getArchiveList() {
+        return archiveList;
     }
 
     public void addGeneralWadoMessage(WadoMessage wadoMessage) {
-        if (!pacsList.isEmpty()) {
-            pacsList.get(0).getWadoMessages().add(wadoMessage);
+        if (!archiveList.isEmpty()) {
+            archiveList.get(0).getWadoMessages().add(wadoMessage);
         }
     }
 
     public boolean hasPatients() {
-        for (AbstractQueryConfiguration pacsConfiguration : pacsList) {
-            if (!pacsConfiguration.getPatients().isEmpty()) {
+        for (AbstractQueryConfiguration arcConfig : archiveList) {
+            if (!arcConfig.getPatients().isEmpty()) {
                 return true;
             }
         }
@@ -112,32 +112,32 @@ public class CommonQueryParams {
     }
 
     public void clearAllPatients() {
-        for (AbstractQueryConfiguration pacsConfiguration : pacsList) {
-            pacsConfiguration.getPatients().clear();
+        for (AbstractQueryConfiguration arcConfig : archiveList) {
+            arcConfig.getPatients().clear();
         }
     }
 
     public void removePatientId(List<String> patientIdList) {
-        for (AbstractQueryConfiguration pacsConfiguration : pacsList) {
-            pacsConfiguration.removePatientId(patientIdList);
+        for (AbstractQueryConfiguration arcConfig : archiveList) {
+            arcConfig.removePatientId(patientIdList);
         }
     }
 
     public void removeStudyUid(List<String> studyUidList) {
-        for (AbstractQueryConfiguration pacsConfiguration : pacsList) {
-            pacsConfiguration.removeStudyUid(studyUidList);
+        for (AbstractQueryConfiguration arcConfig : archiveList) {
+            arcConfig.removeStudyUid(studyUidList);
         }
     }
 
     public void removeAccessionNumber(List<String> accessionNumberList) {
-        for (AbstractQueryConfiguration pacsConfiguration : pacsList) {
-            pacsConfiguration.removeAccessionNumber(accessionNumberList);
+        for (AbstractQueryConfiguration arcConfig : archiveList) {
+            arcConfig.removeAccessionNumber(accessionNumberList);
         }
     }
 
     public void removeSeriesUid(List<String> seriesUidList) {
-        for (AbstractQueryConfiguration pacsConfiguration : pacsList) {
-            pacsConfiguration.removeSeriesUid(seriesUidList);
+        for (AbstractQueryConfiguration arcConfig : archiveList) {
+            arcConfig.removeSeriesUid(seriesUidList);
         }
     }
 
