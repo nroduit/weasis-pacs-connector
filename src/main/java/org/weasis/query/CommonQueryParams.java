@@ -61,13 +61,53 @@ public class CommonQueryParams {
         this.archiveList = new ArrayList<AbstractQueryConfiguration>();
         this.requestMap = new HashMap<String, String[]>(request.getParameterMap());
 
+        initArchiveList();
+    }
+
+    private void initArchiveList() {
         DicomNode callingNode = new DicomNode(properties.getProperty("aet", "PACS-CONNECTOR"));
 
-        for (Properties p : properties.getArchivePropertiesList()) {
-            if (p.getProperty("arc.aet") != null) {
-                this.archiveList.add(new DicomQueryConfiguration(p, callingNode));
-            } else if (p.getProperty("arc.db.driver") != null) {
-                this.archiveList.add(new DbQueryConfiguration(p));
+        String[] archives = requestMap.get("archive");
+        if (archives != null && archives.length > 0) {
+            for (String archiveID : archives) {
+                if (StringUtil.hasText(archiveID)) {
+                    for (Properties p : properties.getArchivePropertiesList()) {
+                        boolean buildConfig = false;
+                        String id = p.getProperty("arc.id");
+                        if (archiveID.equals(id)) {
+                            buildConfig = true;
+                        } else {
+                            String oldIDs = p.getProperty("arc.inherit.ids");
+                            if (StringUtil.hasText(oldIDs) && archiveID.equals(id)) {
+                                for (String s : oldIDs.split(",")) {
+                                    if (archiveID.equals(s.trim())) {
+                                        buildConfig = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (buildConfig) {
+                            if (p.getProperty("arc.aet") != null) {
+                                this.archiveList.add(new DicomQueryConfiguration(p, callingNode));
+                            } else if (p.getProperty("arc.db.driver") != null) {
+                                this.archiveList.add(new DbQueryConfiguration(p));
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+        } else {
+            for (Properties p : properties.getArchivePropertiesList()) {
+                if (StringUtil.getNULLtoFalse(p.getProperty("arc.activate"))) {
+                    if (p.getProperty("arc.aet") != null) {
+                        this.archiveList.add(new DicomQueryConfiguration(p, callingNode));
+                    } else if (p.getProperty("arc.db.driver") != null) {
+                        this.archiveList.add(new DbQueryConfiguration(p));
+                    }
+                }
             }
         }
 

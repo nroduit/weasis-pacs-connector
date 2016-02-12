@@ -85,10 +85,10 @@ public class ManifestManager extends HttpServlet {
                             URL arcConfigFile = this.getClass().getResource("/" + arc.trim());
                             if (arcConfigFile != null) {
                                 Properties archiveProps = new Properties();
-                                LOGGER.info("Archive configuration: {}", arcConfigFile);
                                 archiveProps.load(arcConfigFile.openStream());
                                 archiveProps.setProperty(ConnectorProperties.CONFIG_FILENAME, arc.trim());
                                 properties.addArchiveProperties(archiveProps);
+                                LOGGER.info("Archive configuration: {}", arcConfigFile);
                             }
                         }
                     }

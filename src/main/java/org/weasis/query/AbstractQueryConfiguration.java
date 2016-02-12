@@ -50,15 +50,15 @@ public abstract class AbstractQueryConfiguration {
             properties.getProperty("arc.wado.url", properties.getProperty("server.base.url") + "/wado");
         boolean onlysopuid = StringUtil.getNULLtoFalse(properties.getProperty("wado.onlysopuid"));
         String addparams = properties.getProperty("wado.addparams", "");
-        String overrideTags = properties.getProperty("wado.override.tags", null);
+        String overrideTags = properties.getProperty("wado.override.tags");
         // If the web server requires an authentication (arc.web.login=user:pwd)
-        String webLogin = properties.getProperty("arc.web.login", null);
+        String webLogin = properties.getProperty("arc.web.login");
         if (webLogin != null) {
             webLogin = Base64.encodeBytes(webLogin.trim().getBytes());
         }
-        String httpTags = properties.getProperty("wado.httpTags", null);
+        String httpTags = properties.getProperty("wado.httpTags");
 
-        WadoParameters wado = new WadoParameters(wadoQueriesURL, onlysopuid, addparams, overrideTags, webLogin);
+        WadoParameters wado = new WadoParameters(properties.getProperty("arc.id"), wadoQueriesURL, onlysopuid, addparams, overrideTags, webLogin);
         if (httpTags != null && !httpTags.trim().equals("")) {
             for (String tag : httpTags.split(",")) {
                 String[] val = tag.split(":");

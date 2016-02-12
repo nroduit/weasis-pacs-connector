@@ -46,16 +46,22 @@ public class WadoQuery implements XmlManifest {
     @Override
     public String xmlManifest() {
         wadoQuery.append("<?xml version=\"1.0\" encoding=\"" + getCharsetEncoding() + "\" ?>");
+        wadoQuery.append("\n<");
+        wadoQuery.append(WadoParameters.TAG_DOCUMENT_ROOT);
+        wadoQuery.append(" ");
+        wadoQuery.append(WadoParameters.TAG_SCHEMA);
+        wadoQuery.append(">");
+        
         for (AbstractQueryConfiguration archive : archiveList) {
             if (archive.getPatients().isEmpty() && archive.getWadoMessages().isEmpty()) {
                 continue;
             }
             WadoParameters wadoParameters = archive.getWadoParameters();
             wadoQuery.append("\n<");
-            wadoQuery.append(WadoParameters.TAG_DOCUMENT_ROOT);
-            wadoQuery.append(WadoParameters.TAG_SCHEMA);
+            wadoQuery.append(WadoParameters.TAG_WADO_QUERY);
             wadoQuery.append(" ");
 
+            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_ARCHIVE_ID, wadoParameters.getArchiveID(), wadoQuery);
             TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_URL, wadoParameters.getWadoURL(), wadoQuery);
             TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_WEB_LOGIN, wadoParameters.getWebLogin(), wadoQuery);
             TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_ONLY_SOP_UID, wadoParameters.isRequireOnlySOPInstanceUID(),
@@ -103,10 +109,13 @@ public class WadoQuery implements XmlManifest {
             }
 
             wadoQuery.append("\n</");
-            wadoQuery.append(WadoParameters.TAG_DOCUMENT_ROOT);
+            wadoQuery.append(WadoParameters.TAG_WADO_QUERY);
             wadoQuery.append(">");
-
         }
+        
+        wadoQuery.append("\n</");
+        wadoQuery.append(WadoParameters.TAG_DOCUMENT_ROOT);
+        wadoQuery.append(">");
 
         return wadoQuery.toString();
     }
