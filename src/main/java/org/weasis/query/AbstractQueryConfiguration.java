@@ -1,19 +1,23 @@
 package org.weasis.query;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.Patient;
 import org.weasis.dicom.data.Series;
 import org.weasis.dicom.data.Study;
 import org.weasis.dicom.data.xml.Base64;
 import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.wado.WadoParameters;
-import org.weasis.dicom.wado.WadoQuery;
 import org.weasis.dicom.wado.WadoQuery.WadoMessage;
+import org.weasis.servlet.ConnectorProperties;
 
 public abstract class AbstractQueryConfiguration {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractQueryConfiguration.class);
 
     protected final List<Patient> patients;
     protected final List<WadoMessage> wadoMessages;
@@ -24,21 +28,19 @@ public abstract class AbstractQueryConfiguration {
             throw new IllegalArgumentException("properties cannot be null!");
         }
         this.properties = properties;
-        this.patients = new ArrayList<Patient>();
-        this.wadoMessages = new ArrayList<WadoQuery.WadoMessage>();
+        this.patients = new ArrayList<>();
+        this.wadoMessages = new ArrayList<>();
     }
 
-    public abstract void buildFromPatientID(CommonQueryParams params, String... patientIDs) throws Exception;
+    public abstract void buildFromPatientID(CommonQueryParams params, String... patientIDs);
 
-    public abstract void buildFromStudyInstanceUID(CommonQueryParams params, String... studyInstanceUIDs) throws Exception;
+    public abstract void buildFromStudyInstanceUID(CommonQueryParams params, String... studyInstanceUIDs);
 
-    public abstract void buildFromStudyAccessionNumber(CommonQueryParams params, String... accessionNumbers)
-        throws Exception;
+    public abstract void buildFromStudyAccessionNumber(CommonQueryParams params, String... accessionNumbers);
 
-    public abstract void buildFromSeriesInstanceUID(CommonQueryParams params, String... seriesInstanceUIDs)
-        throws Exception;
+    public abstract void buildFromSeriesInstanceUID(CommonQueryParams params, String... seriesInstanceUIDs);
 
-    public abstract void buildFromSopInstanceUID(CommonQueryParams params, String... sopInstanceUIDs) throws Exception;
+    public abstract void buildFromSopInstanceUID(CommonQueryParams params, String... sopInstanceUIDs);
 
     public String getCharsetEncoding() {
         // Not required with DICOM C-FIND (handle with attributes.getString(...))
@@ -54,12 +56,17 @@ public abstract class AbstractQueryConfiguration {
         // If the web server requires an authentication (arc.web.login=user:pwd)
         String webLogin = properties.getProperty("arc.web.login");
         if (webLogin != null) {
-            webLogin = Base64.encodeBytes(webLogin.trim().getBytes());
+            try {
+                webLogin = Base64.encodeBytes(webLogin.trim().getBytes());
+            } catch (IOException e) {
+                LOGGER.error("Error on encoding webLogin", e);
+            }
         }
         String httpTags = properties.getProperty("wado.httpTags");
 
-        WadoParameters wado = new WadoParameters(properties.getProperty("arc.id"), wadoQueriesURL, onlysopuid, addparams, overrideTags, webLogin);
-        if (httpTags != null && !httpTags.trim().equals("")) {
+        WadoParameters wado =
+            new WadoParameters(getArchiveID(), wadoQueriesURL, onlysopuid, addparams, overrideTags, webLogin);
+        if (StringUtil.hasText(httpTags)) {
             for (String tag : httpTags.split(",")) {
                 String[] val = tag.split(":");
                 if (val.length == 2) {
@@ -135,6 +142,14 @@ public abstract class AbstractQueryConfiguration {
 
     public Properties getProperties() {
         return properties;
+    }
+
+    public String getArchiveID() {
+        return properties.getProperty("arc.id");
+    }
+
+    public String getArchiveConfigName() {
+        return properties.getProperty(ConnectorProperties.CONFIG_FILENAME);
     }
 
 }

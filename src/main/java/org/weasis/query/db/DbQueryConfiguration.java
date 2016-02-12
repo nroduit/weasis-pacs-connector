@@ -17,7 +17,6 @@ import org.weasis.dicom.data.Study;
 import org.weasis.dicom.data.xml.EscapeChars;
 import org.weasis.dicom.util.DateUtil;
 import org.weasis.dicom.util.StringUtil;
-import org.weasis.dicom.wado.WadoQuery.WadoMessage;
 import org.weasis.query.AbstractQueryConfiguration;
 import org.weasis.query.CommonQueryParams;
 
@@ -30,12 +29,12 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
     }
 
     @Override
-    public void buildFromPatientID(CommonQueryParams params, String... patientIDs) throws Exception {
-        // TODO
+    public void buildFromPatientID(CommonQueryParams params, String... patientIDs) {
+        // TODO implement this method
     }
 
     @Override
-    public void buildFromStudyInstanceUID(CommonQueryParams params, String... studyInstanceUIDs) throws Exception {
+    public void buildFromStudyInstanceUID(CommonQueryParams params, String... studyInstanceUIDs) {
         String studiesUIDsQuery = getQueryString(studyInstanceUIDs);
         String query = buildQuery(
             properties.getProperty("arc.db.query.studies.where").replaceFirst("%studies%", studiesUIDsQuery));
@@ -44,7 +43,7 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
     }
 
     @Override
-    public void buildFromStudyAccessionNumber(CommonQueryParams params, String... accessionNumbers) throws Exception {
+    public void buildFromStudyAccessionNumber(CommonQueryParams params, String... accessionNumbers) {
         String accessionNumbersQuery = getQueryString(accessionNumbers);
         String query = buildQuery(properties.getProperty("arc.db.query.accessionnum.where")
             .replaceFirst("%accessionnum%", accessionNumbersQuery));
@@ -53,7 +52,7 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
     }
 
     @Override
-    public void buildFromSeriesInstanceUID(CommonQueryParams params, String... seriesInstanceUIDs) throws Exception {
+    public void buildFromSeriesInstanceUID(CommonQueryParams params, String... seriesInstanceUIDs) {
         String seriesUIDsQuery = getQueryString(seriesInstanceUIDs);
         String query =
             buildQuery(properties.getProperty("arc.db.query.series.where").replaceFirst("%series%", seriesUIDsQuery));
@@ -62,17 +61,17 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
     }
 
     @Override
-    public void buildFromSopInstanceUID(CommonQueryParams params, String... sopInstanceUIDs) throws Exception {
-        // TODO
+    public void buildFromSopInstanceUID(CommonQueryParams params, String... sopInstanceUIDs) {
+        // TODO implement this method
     }
 
-    private void executeDbQuery(String query) throws Exception {
+    private void executeDbQuery(String query) {
         DbQuery dbQuery = null;
         try {
             dbQuery = DbQuery.executeDBQuery(query, properties);
             buildListFromDB(dbQuery.getResultSet());
-        } catch (SQLException e) {
-            throw new Exception("DB Access Error: " + e.getMessage());
+        } catch (Exception e) {
+            LOGGER.error("DB query Error of {}", getArchiveConfigName(), e);
         } finally {
             if (dbQuery != null) {
                 dbQuery.close();
@@ -80,107 +79,98 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
         }
     }
 
-    private void buildListFromDB(ResultSet resultSet) throws Exception {
-        try {
-            String patientNameField = properties.getProperty("arc.db.query.setpatientname");
-            String patientBirthdateTypeField = properties.getProperty("arc.db.query.patientbirthdate.type");
-            String patientBirthdateFormatField = properties.getProperty("arc.db.query.patientbirthdate.format");
-            String patientBirthDateField = properties.getProperty("arc.db.query.patientbirthdate");
-            String patientBirthTimeField = properties.getProperty("arc.db.query.patientbirthtime");
-            String patientSexField = properties.getProperty("arc.db.query.patientsex");
+    private void buildListFromDB(ResultSet resultSet) throws SQLException {
+        String patientNameField = properties.getProperty("arc.db.query.setpatientname");
+        String patientBirthdateTypeField = properties.getProperty("arc.db.query.patientbirthdate.type");
+        String patientBirthdateFormatField = properties.getProperty("arc.db.query.patientbirthdate.format");
+        String patientBirthDateField = properties.getProperty("arc.db.query.patientbirthdate");
+        String patientBirthTimeField = properties.getProperty("arc.db.query.patientbirthtime");
+        String patientSexField = properties.getProperty("arc.db.query.patientsex");
 
-            String studyDateTypeField = properties.getProperty("arc.db.query.studydate.type");
-            String studyDateField = properties.getProperty("arc.db.query.studydate");
-            String accessionNumberField = properties.getProperty("arc.db.query.accessionnumber");
-            String studyIdField = properties.getProperty("arc.db.query.studyid");
-            String referringPhysicianNameField = properties.getProperty("arc.db.query.referringphysicianname");
-            String studyDescriptionField = properties.getProperty("arc.db.query.studydescription");
+        String studyDateTypeField = properties.getProperty("arc.db.query.studydate.type");
+        String studyDateField = properties.getProperty("arc.db.query.studydate");
+        String accessionNumberField = properties.getProperty("arc.db.query.accessionnumber");
+        String studyIdField = properties.getProperty("arc.db.query.studyid");
+        String referringPhysicianNameField = properties.getProperty("arc.db.query.referringphysicianname");
+        String studyDescriptionField = properties.getProperty("arc.db.query.studydescription");
 
-            String seriesDescriptionField = properties.getProperty("arc.db.query.seriesdescription");
-            String modalityField = properties.getProperty("arc.db.query.modality");
-            String seriesNumberField = properties.getProperty("arc.db.query.seriesnumber");
+        String seriesDescriptionField = properties.getProperty("arc.db.query.seriesdescription");
+        String modalityField = properties.getProperty("arc.db.query.modality");
+        String seriesNumberField = properties.getProperty("arc.db.query.seriesnumber");
 
-            String instanceNumberField = properties.getProperty("arc.db.query.instancenumber");
+        String instanceNumberField = properties.getProperty("arc.db.query.instancenumber");
 
-            String patIDField = properties.getProperty("arc.db.query.patientid");
-            String studyIUIDField = properties.getProperty("arc.db.query.studyinstanceuid");
-            String seriesIUIDField = properties.getProperty("arc.db.query.seriesinstanceuid");
-            String sopIUIDField = properties.getProperty("arc.db.query.sopinstanceuid");
+        String patIDField = properties.getProperty("arc.db.query.patientid");
+        String studyIUIDField = properties.getProperty("arc.db.query.studyinstanceuid");
+        String seriesIUIDField = properties.getProperty("arc.db.query.seriesinstanceuid");
+        String sopIUIDField = properties.getProperty("arc.db.query.sopinstanceuid");
 
-            while (resultSet.next()) {
-                Patient patient = getPatient(getString(resultSet, patIDField));
-                if (patient == null) {
-                    patient = new Patient(getString(resultSet, patIDField));
-                    patient.setPatientName(getString(resultSet, patientNameField));
+        while (resultSet.next()) {
+            Patient patient = getPatient(getString(resultSet, patIDField));
+            if (patient == null) {
+                patient = new Patient(getString(resultSet, patIDField));
+                patient.setPatientName(getString(resultSet, patientNameField));
 
-                    if (patientBirthdateTypeField.equals("VARCHAR2")) {
-                        patient.setPatientBirthDate(getDate(resultSet, patientBirthDateField,
-                            patientBirthdateFormatField, DateUtil.DATE_FORMAT));
-                    } else if (patientBirthdateTypeField.equals("DATE")) {
-                        patient.setPatientBirthDate(getDate(resultSet, patientBirthDateField, DateUtil.DATE_FORMAT));
-                    }
-
-                    if (patientBirthTimeField != null) {
-                        patient.setPatientBirthTime(getDate(resultSet, patientBirthTimeField, DateUtil.TIME_FORMAT));
-                    }
-
-                    patient.setPatientSex(getString(resultSet, patientSexField));
-                    patients.add(patient);
+                if ("VARCHAR2".equals(patientBirthdateTypeField)) {
+                    patient.setPatientBirthDate(
+                        getDate(resultSet, patientBirthDateField, patientBirthdateFormatField, DateUtil.DATE_FORMAT));
+                } else if ("DATE".equals(patientBirthdateTypeField)) {
+                    patient.setPatientBirthDate(getDate(resultSet, patientBirthDateField, DateUtil.DATE_FORMAT));
                 }
 
-                Study study = patient.getStudy(getString(resultSet, studyIUIDField));
-
-                if (study == null) {
-                    study = new Study(getString(resultSet, studyIUIDField));
-
-                    if (studyDateTypeField.equalsIgnoreCase("DATE")) {
-                        study.setStudyDate(getDate(resultSet, studyDateField, DateUtil.DATE_FORMAT));
-                        study.setStudyTime(getDate(resultSet, studyDateField, DateUtil.TIME_FORMAT));
-                    } else if (studyDateTypeField.equalsIgnoreCase("TIMESTAMP")) {
-                        study.setStudyDate(getTimeStamp(resultSet, studyDateField, DateUtil.DATE_FORMAT));
-                        study.setStudyTime(getTimeStamp(resultSet, studyDateField, DateUtil.TIME_FORMAT));
-                    }
-
-                    study.setAccessionNumber(getString(resultSet, accessionNumberField));
-                    study.setStudyID(getString(resultSet, studyIdField));
-                    study.setReferringPhysicianName(getString(resultSet, referringPhysicianNameField));
-                    study.setStudyDescription(getString(resultSet, studyDescriptionField));
-
-                    patient.addStudy(study);
+                if (patientBirthTimeField != null) {
+                    patient.setPatientBirthTime(getDate(resultSet, patientBirthTimeField, DateUtil.TIME_FORMAT));
                 }
 
-                Series series = study.getSeries(getString(resultSet, seriesIUIDField));
-
-                if (series == null) {
-                    series = new Series(getString(resultSet, seriesIUIDField));
-                    series.setSeriesDescription(getString(resultSet, seriesDescriptionField));
-                    series.setModality(getString(resultSet, modalityField));
-                    series.setSeriesNumber(getString(resultSet, seriesNumberField));
-
-                    String wadotTsuid = properties.getProperty("wado.request.tsuid");
-                    if (wadotTsuid != null) {
-                        String[] val = wadotTsuid.split(":");
-                        if (val.length > 0) {
-                            series.setWadoTransferSyntaxUID(val[0]);
-                        }
-
-                        if (val.length > 1) {
-                            try {
-                                series.setWadoCompression(Integer.parseInt(val[1]));
-                            } catch (NumberFormatException e) {
-                                LOGGER.warn("Invalid compression profile value :" + val[1]);
-                            }
-                        }
-                    }
-                    study.addSeries(series);
-                }
-
-                SOPInstance sop = new SOPInstance(getString(resultSet, sopIUIDField));
-                sop.setInstanceNumber(getString(resultSet, instanceNumberField));
-                series.addSOPInstance(sop);
+                patient.setPatientSex(getString(resultSet, patientSexField));
+                patients.add(patient);
             }
-        } catch (SQLException e) {
-            throw new Exception("SQL Query Error" + e.getMessage());
+
+            Study study = patient.getStudy(getString(resultSet, studyIUIDField));
+
+            if (study == null) {
+                study = new Study(getString(resultSet, studyIUIDField));
+
+                if ("DATE".equalsIgnoreCase(studyDateTypeField)) {
+                    study.setStudyDate(getDate(resultSet, studyDateField, DateUtil.DATE_FORMAT));
+                    study.setStudyTime(getDate(resultSet, studyDateField, DateUtil.TIME_FORMAT));
+                } else if ("TIMESTAMP".equalsIgnoreCase(studyDateTypeField)) {
+                    study.setStudyDate(getTimeStamp(resultSet, studyDateField, DateUtil.DATE_FORMAT));
+                    study.setStudyTime(getTimeStamp(resultSet, studyDateField, DateUtil.TIME_FORMAT));
+                }
+
+                study.setAccessionNumber(getString(resultSet, accessionNumberField));
+                study.setStudyID(getString(resultSet, studyIdField));
+                study.setReferringPhysicianName(getString(resultSet, referringPhysicianNameField));
+                study.setStudyDescription(getString(resultSet, studyDescriptionField));
+
+                patient.addStudy(study);
+            }
+
+            Series series = study.getSeries(getString(resultSet, seriesIUIDField));
+
+            if (series == null) {
+                series = new Series(getString(resultSet, seriesIUIDField));
+                series.setSeriesDescription(getString(resultSet, seriesDescriptionField));
+                series.setModality(getString(resultSet, modalityField));
+                series.setSeriesNumber(getString(resultSet, seriesNumberField));
+
+                String wadotTsuid = properties.getProperty("wado.request.tsuid");
+                if (StringUtil.hasText(wadotTsuid)) {
+                    String[] val = wadotTsuid.split(":");
+                    if (val.length > 0) {
+                        series.setWadoTransferSyntaxUID(val[0]);
+                    }
+                    if (val.length > 1) {
+                        series.setWadoCompression(val[1]);
+                    }
+                }
+                study.addSeries(series);
+            }
+
+            SOPInstance sop = new SOPInstance(getString(resultSet, sopIUIDField));
+            sop.setInstanceNumber(getString(resultSet, instanceNumberField));
+            series.addSOPInstance(sop);
         }
     }
 
@@ -243,7 +233,7 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
         throws SQLException {
         String dateStr = resultSet.getString(field);
         try {
-            if ((dateStr != null) && (!dateStr.equalsIgnoreCase(""))) {
+            if (StringUtil.hasText(dateStr)) {
                 return new SimpleDateFormat(targetFormat).format(new SimpleDateFormat(sourceFormat).parse(dateStr));
             }
         } catch (ParseException e) {

@@ -10,13 +10,13 @@
  *******************************************************************************/
 package org.weasis.servlet;
 
-import static org.weasis.query.CommonQueryParams.AccessionNumber;
-import static org.weasis.query.CommonQueryParams.ObjectUID;
-import static org.weasis.query.CommonQueryParams.PatientID;
-import static org.weasis.query.CommonQueryParams.PatientLevel;
-import static org.weasis.query.CommonQueryParams.SeriesUID;
-import static org.weasis.query.CommonQueryParams.StudyLevel;
-import static org.weasis.query.CommonQueryParams.StudyUID;
+import static org.weasis.query.CommonQueryParams.ACCESSION_NUMBER;
+import static org.weasis.query.CommonQueryParams.OBJECT_UID;
+import static org.weasis.query.CommonQueryParams.PATIENT_ID;
+import static org.weasis.query.CommonQueryParams.PATIENT_LEVEL;
+import static org.weasis.query.CommonQueryParams.SERIES_UID;
+import static org.weasis.query.CommonQueryParams.STUDY_LEVEL;
+import static org.weasis.query.CommonQueryParams.STUDY_UID;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,6 +35,7 @@ import java.util.concurrent.ExecutorService;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +49,7 @@ import org.weasis.query.CommonQueryParams;
 import org.weasis.util.EncryptUtils;
 
 public class ServletUtil {
-    private static Logger LOGGER = LoggerFactory.getLogger(ServletUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServletUtil.class);
 
     private ServletUtil() {
     }
@@ -112,12 +113,13 @@ public class ServletUtil {
         return result;
     }
 
-    public static boolean isRequestAllowed(HttpServletRequest request, Properties archiveProperties, Logger logger)
-        throws IOException {
-
+    public static boolean isRequestAllowed(HttpServletRequest request, Properties archiveProperties, Logger logger) {
+        if (request == null || archiveProperties == null) {
+            return false;
+        }
         // Test if this client is allowed
         String hosts = archiveProperties.getProperty("hosts.allow");
-        if (hosts != null && !hosts.trim().equals("")) {
+        if (StringUtil.hasText(hosts)) {
             String clientHost = request.getRemoteHost();
             String clientIP = request.getRemoteAddr();
             boolean accept = false;
@@ -128,7 +130,9 @@ public class ServletUtil {
                 }
             }
             if (!accept) {
-                logger.warn("The request from {} is not allowed.", clientHost);
+                if (logger != null) {
+                    logger.warn("The request from {} is not allowed.", clientHost);
+                }
                 return false;
             }
         }
@@ -136,16 +140,16 @@ public class ServletUtil {
     }
 
     public static void logInfo(HttpServletRequest request, Logger logger) {
-        logger.debug("logRequestInfo() - getRequestQueryURL: {}{}", request.getRequestURL().toString(),
+        logger.debug("HttpServletRequest - getRequestQueryURL: {}{}", request.getRequestURL().toString(),
             request.getQueryString() != null ? ("?" + request.getQueryString().trim()) : "");
-        logger.debug("logRequestInfo() - getContextPath: {}", request.getContextPath());
-        logger.debug("logRequestInfo() - getServletPath: {}", request.getServletPath());
+        logger.debug("HttpServletRequest - getContextPath: {}", request.getContextPath());
+        logger.debug("HttpServletRequest - getServletPath: {}", request.getServletPath());
     }
 
     public static String getFilename(List<Patient> patients) {
         StringBuilder buffer = new StringBuilder();
 
-        if (patients.size() > 0) {
+        if (!patients.isEmpty()) {
             for (Patient patient : patients) {
                 buffer.append(
                     StringUtil.hasText(patient.getPatientName()) ? patient.getPatientName() : patient.getPatientID());
@@ -162,77 +166,77 @@ public class ServletUtil {
             String key = properties.getProperty("encrypt.key", null);
             String requestType = params.getRequestType();
 
-            if (StudyLevel.equals(requestType) && isRequestIDAllowed(StudyLevel, properties)) {
+            if (STUDY_LEVEL.equals(requestType) && isRequestIDAllowed(STUDY_LEVEL, properties)) {
                 String stuID = params.getReqStudyUID();
                 String anbID = params.getReqAccessionNumber();
                 if (StringUtil.hasText(anbID)) {
-                    String val = ServletUtil.decrypt(anbID, key, AccessionNumber);
+                    String val = ServletUtil.decrypt(anbID, key, ACCESSION_NUMBER);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromStudyAccessionNumber(params, val);
                     }
                 } else if (StringUtil.hasText(stuID)) {
-                    String val = ServletUtil.decrypt(stuID, key, StudyUID);
+                    String val = ServletUtil.decrypt(stuID, key, STUDY_UID);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromStudyInstanceUID(params, val);
                     }
                 } else {
                     LOGGER.error("Not ID found for STUDY request type: {}", requestType);
-                    params.addGeneralWadoMessage(
-                        new WadoMessage("Missing Study ID", "No study requested", WadoMessage.eLevel.WARN));
+                    params.addGeneralWadoMessage(new WadoMessage("Missing Study ID", "No study ID found in the request",
+                        WadoMessage.eLevel.ERROR));
                 }
-            } else if (PatientLevel.equals(requestType) && isRequestIDAllowed(PatientLevel, properties)) {
+            } else if (PATIENT_LEVEL.equals(requestType) && isRequestIDAllowed(PATIENT_LEVEL, properties)) {
                 String patID = params.getReqPatientID();
                 if (StringUtil.hasText(patID)) {
-                    String val = ServletUtil.decrypt(patID, key, PatientID);
+                    String val = ServletUtil.decrypt(patID, key, PATIENT_ID);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromPatientID(params, val);
                     }
                 }
             } else if (requestType != null) {
                 LOGGER.error("Not supported IID request type: {}", requestType);
-                params.addGeneralWadoMessage(
-                    new WadoMessage("Unexpected Request", "IID request type: " + requestType, WadoMessage.eLevel.WARN));
+                params.addGeneralWadoMessage(new WadoMessage("Unexpected Request", "IID request type: " + requestType,
+                    WadoMessage.eLevel.ERROR));
             } else {
                 String[] pat = params.getReqPatientIDs();
                 String[] stu = params.getReqStudyUIDs();
                 String[] anb = params.getReqAccessionNumbers();
                 String[] ser = params.getReqSeriesUIDs();
                 String[] obj = params.getReqObjectUIDs();
-                if (obj != null && obj.length > 0 && isRequestIDAllowed(ObjectUID, properties)) {
-                    String[] val = decrypt(obj, key, ObjectUID);
+                if (obj != null && obj.length > 0 && isRequestIDAllowed(OBJECT_UID, properties)) {
+                    String[] val = decrypt(obj, key, OBJECT_UID);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromSopInstanceUID(params, val);
                     }
-                    validateRequiredIDs(ObjectUID, key, params, pat, stu, anb, ser);
-                } else if (ser != null && ser.length > 0 && isRequestIDAllowed(SeriesUID, properties)) {
-                    String[] val = decrypt(ser, key, SeriesUID);
+                    validateRequiredIDs(OBJECT_UID, key, params, pat, stu, anb, ser);
+                } else if (ser != null && ser.length > 0 && isRequestIDAllowed(SERIES_UID, properties)) {
+                    String[] val = decrypt(ser, key, SERIES_UID);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromSeriesInstanceUID(params, val);
                     }
-                    validateRequiredIDs(SeriesUID, key, params, pat, stu, anb, null);
-                } else if (anb != null && anb.length > 0 && isRequestIDAllowed(AccessionNumber, properties)) {
-                    String[] val = decrypt(anb, key, AccessionNumber);
+                    validateRequiredIDs(SERIES_UID, key, params, pat, stu, anb, null);
+                } else if (anb != null && anb.length > 0 && isRequestIDAllowed(ACCESSION_NUMBER, properties)) {
+                    String[] val = decrypt(anb, key, ACCESSION_NUMBER);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromStudyAccessionNumber(params, val);
                     }
-                    validateRequiredIDs(AccessionNumber, key, params, pat, null, null, null);
-                } else if (stu != null && stu.length > 0 && isRequestIDAllowed(StudyUID, properties)) {
-                    String[] val = decrypt(stu, key, StudyUID);
+                    validateRequiredIDs(ACCESSION_NUMBER, key, params, pat, null, null, null);
+                } else if (stu != null && stu.length > 0 && isRequestIDAllowed(STUDY_UID, properties)) {
+                    String[] val = decrypt(stu, key, STUDY_UID);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromStudyInstanceUID(params, val);
                     }
-                    validateRequiredIDs(StudyUID, key, params, pat, null, null, null);
-                } else if (pat != null && pat.length > 0 && isRequestIDAllowed(PatientID, properties)) {
-                    String[] val = decrypt(pat, key, PatientID);
+                    validateRequiredIDs(STUDY_UID, key, params, pat, null, null, null);
+                } else if (pat != null && pat.length > 0 && isRequestIDAllowed(PATIENT_ID, properties)) {
+                    String[] val = decrypt(pat, key, PATIENT_ID);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromPatientID(params, val);
                     }
                 }
             }
-        } catch (Exception e) {
-            StringUtil.logError(LOGGER, e, "Error when building the patient list");
+        } catch (Throwable t) {
+            LOGGER.error("Error when building the patient list", t);
             params.addGeneralWadoMessage(new WadoMessage("Unexpected Error",
-                "Unexpected Error when building the manifest", WadoMessage.eLevel.WARN));
+                "Unexpected Error when building the manifest: " + t.getMessage(), WadoMessage.eLevel.ERROR));
         }
     }
 
@@ -243,44 +247,44 @@ public class ServletUtil {
             String ids = params.getProperties().getProperty("request." + id);
             if (ids != null) {
                 for (String val : ids.split(",")) {
-                    if (val.trim().equals(PatientID)) {
+                    if (val.trim().equals(PATIENT_ID)) {
                         if (pat == null) {
                             params.clearAllPatients();
                             return;
                         }
-                        List<String> list = new ArrayList<String>(pat.length);
+                        List<String> list = new ArrayList<>(pat.length);
                         for (String s : pat) {
-                            list.add(decrypt(s, key, PatientID));
+                            list.add(decrypt(s, key, PATIENT_ID));
                         }
                         params.removePatientId(list);
-                    } else if (val.trim().equals(StudyUID)) {
+                    } else if (val.trim().equals(STUDY_UID)) {
                         if (stu == null) {
                             params.clearAllPatients();
                             return;
                         }
-                        List<String> list = new ArrayList<String>(stu.length);
+                        List<String> list = new ArrayList<>(stu.length);
                         for (String s : stu) {
-                            list.add(decrypt(s, key, StudyUID));
+                            list.add(decrypt(s, key, STUDY_UID));
                         }
                         params.removeStudyUid(list);
-                    } else if (val.trim().equals(AccessionNumber)) {
+                    } else if (val.trim().equals(ACCESSION_NUMBER)) {
                         if (anb == null) {
                             params.clearAllPatients();
                             return;
                         }
-                        List<String> list = new ArrayList<String>(anb.length);
+                        List<String> list = new ArrayList<>(anb.length);
                         for (String s : anb) {
-                            list.add(decrypt(s, key, AccessionNumber));
+                            list.add(decrypt(s, key, ACCESSION_NUMBER));
                         }
                         params.removeAccessionNumber(list);
-                    } else if (val.trim().equals(SeriesUID)) {
+                    } else if (val.trim().equals(SERIES_UID)) {
                         if (ser == null) {
                             params.clearAllPatients();
                             return;
                         }
-                        List<String> list = new ArrayList<String>(ser.length);
+                        List<String> list = new ArrayList<>(ser.length);
                         for (String s : ser) {
-                            list.add(decrypt(s, key, SeriesUID));
+                            list.add(decrypt(s, key, SERIES_UID));
                         }
                         params.removeSeriesUid(list);
                     }
@@ -338,18 +342,17 @@ public class ServletUtil {
                 return request.getScheme() + "://" + InetAddress.getLocalHost().getCanonicalHostName() + ":"
                     + request.getServerPort();
             } catch (UnknownHostException e) {
-                StringUtil.logError(LOGGER, e, "Cannot get hostname");
+                LOGGER.error("Cannot get hostname", e);
             }
         }
         return request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
     }
 
-    public static ManifestBuilder buildManifest(HttpServletRequest request, ConnectorProperties props)
-        throws Exception {
+    public static ManifestBuilder buildManifest(HttpServletRequest request, ConnectorProperties props) {
         return buildManifest(request, new ManifestBuilder(new CommonQueryParams(request, props)));
     }
 
-    public static ManifestBuilder buildManifest(HttpServletRequest request, ManifestBuilder builder) throws Exception {
+    public static ManifestBuilder buildManifest(HttpServletRequest request, ManifestBuilder builder) {
         ServletContext ctx = request.getSession().getServletContext();
         final ConcurrentHashMap<Integer, ManifestBuilder> builderMap =
             (ConcurrentHashMap<Integer, ManifestBuilder>) ctx.getAttribute("manifestBuilderMap");
@@ -360,7 +363,7 @@ public class ServletUtil {
     }
 
     public static String buildManifestURL(HttpServletRequest request, ManifestBuilder builder, Properties props,
-        boolean gzip) throws Exception {
+        boolean gzip) {
         StringBuilder buf =
             new StringBuilder(props.getProperty("manifest.base.url", props.getProperty("server.base.url")));
         buf.append(request.getContextPath());
@@ -428,8 +431,9 @@ public class ServletUtil {
             }
             throwable = throwable.getCause();
         }
+
         if (!ignoreException) {
-            throw new RuntimeException("Unable to write the response", e);
+            throw new IllegalStateException("Unable to write the response", e);
         }
     }
 
@@ -447,6 +451,15 @@ public class ServletUtil {
                 handleException(e);
             }
         }
+    }
+
+    public static void sendResponseError(HttpServletResponse response, int code, String message) {
+        try {
+            response.sendError(code, message);
+        } catch (IOException e) {
+            LOGGER.error("Cannot send http response message!", e);
+        }
+
     }
 
 }

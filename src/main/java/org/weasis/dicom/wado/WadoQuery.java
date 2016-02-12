@@ -28,14 +28,15 @@ public class WadoQuery implements XmlManifest {
     public static final String TAG_MSG_ATTRIBUTE_DESC = "description";
     public static final String TAG_MSG_ATTRIBUTE_LEVEL = "severity";
 
-    private final StringBuilder wadoQuery = new StringBuilder();
     private final List<AbstractQueryConfiguration> archiveList;
+    private final StringBuilder manifest;
 
     public WadoQuery(List<AbstractQueryConfiguration> list) {
         if (list == null) {
             throw new IllegalArgumentException();
         }
         this.archiveList = list;
+        this.manifest = new StringBuilder();
     }
 
     @Override
@@ -45,52 +46,52 @@ public class WadoQuery implements XmlManifest {
 
     @Override
     public String xmlManifest() {
-        wadoQuery.append("<?xml version=\"1.0\" encoding=\"" + getCharsetEncoding() + "\" ?>");
-        wadoQuery.append("\n<");
-        wadoQuery.append(WadoParameters.TAG_DOCUMENT_ROOT);
-        wadoQuery.append(" ");
-        wadoQuery.append(WadoParameters.TAG_SCHEMA);
-        wadoQuery.append(">");
-        
+        manifest.append("<?xml version=\"1.0\" encoding=\"" + getCharsetEncoding() + "\" ?>");
+        manifest.append("\n<");
+        manifest.append(WadoParameters.TAG_DOCUMENT_ROOT);
+        manifest.append(" ");
+        manifest.append(WadoParameters.TAG_SCHEMA);
+        manifest.append(">");
+
         for (AbstractQueryConfiguration archive : archiveList) {
             if (archive.getPatients().isEmpty() && archive.getWadoMessages().isEmpty()) {
                 continue;
             }
             WadoParameters wadoParameters = archive.getWadoParameters();
-            wadoQuery.append("\n<");
-            wadoQuery.append(WadoParameters.TAG_WADO_QUERY);
-            wadoQuery.append(" ");
+            manifest.append("\n<");
+            manifest.append(WadoParameters.TAG_WADO_QUERY);
+            manifest.append(" ");
 
-            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_ARCHIVE_ID, wadoParameters.getArchiveID(), wadoQuery);
-            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_URL, wadoParameters.getWadoURL(), wadoQuery);
-            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_WEB_LOGIN, wadoParameters.getWebLogin(), wadoQuery);
+            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_ARCHIVE_ID, wadoParameters.getArchiveID(), manifest);
+            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_URL, wadoParameters.getWadoURL(), manifest);
+            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_WEB_LOGIN, wadoParameters.getWebLogin(), manifest);
             TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_ONLY_SOP_UID, wadoParameters.isRequireOnlySOPInstanceUID(),
-                wadoQuery);
+                manifest);
             TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_ADDITIONNAL_PARAMETERS,
-                wadoParameters.getAdditionnalParameters(), wadoQuery);
+                wadoParameters.getAdditionnalParameters(), manifest);
             TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_OVERRIDE_TAGS, wadoParameters.getOverrideDicomTagsList(),
-                wadoQuery);
-            wadoQuery.append(">");
+                manifest);
+            manifest.append(">");
             if (wadoParameters.getHttpTaglist() != null) {
                 for (WadoParameters.HttpTag tag : wadoParameters.getHttpTaglist()) {
-                    wadoQuery.append("\n<");
-                    wadoQuery.append(WadoParameters.TAG_HTTP_TAG);
-                    wadoQuery.append(" key=\"");
-                    wadoQuery.append(tag.getKey());
-                    wadoQuery.append("\" value=\"");
-                    wadoQuery.append(tag.getValue());
-                    wadoQuery.append("\" />");
+                    manifest.append("\n<");
+                    manifest.append(WadoParameters.TAG_HTTP_TAG);
+                    manifest.append(" key=\"");
+                    manifest.append(tag.getKey());
+                    manifest.append("\" value=\"");
+                    manifest.append(tag.getValue());
+                    manifest.append("\" />");
                 }
             }
 
             for (WadoMessage wadoMessage : archive.getWadoMessages()) {
-                wadoQuery.append("\n<");
-                wadoQuery.append(TAG_DOCUMENT_MSG);
-                wadoQuery.append(" ");
-                TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_TITLE, wadoMessage.title, wadoQuery);
-                TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_DESC, wadoMessage.message, wadoQuery);
-                TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_LEVEL, wadoMessage.level.name(), wadoQuery);
-                wadoQuery.append("/>");
+                manifest.append("\n<");
+                manifest.append(TAG_DOCUMENT_MSG);
+                manifest.append(" ");
+                TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_TITLE, wadoMessage.title, manifest);
+                TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_DESC, wadoMessage.message, manifest);
+                TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_LEVEL, wadoMessage.level.name(), manifest);
+                manifest.append("/>");
             }
 
             List<Patient> patientList = archive.getPatients();
@@ -104,20 +105,20 @@ public class WadoQuery implements XmlManifest {
                 });
 
                 for (Patient patient : patientList) {
-                    wadoQuery.append(patient.toXml());
+                    manifest.append(patient.toXml());
                 }
             }
 
-            wadoQuery.append("\n</");
-            wadoQuery.append(WadoParameters.TAG_WADO_QUERY);
-            wadoQuery.append(">");
+            manifest.append("\n</");
+            manifest.append(WadoParameters.TAG_WADO_QUERY);
+            manifest.append(">");
         }
-        
-        wadoQuery.append("\n</");
-        wadoQuery.append(WadoParameters.TAG_DOCUMENT_ROOT);
-        wadoQuery.append(">");
 
-        return wadoQuery.toString();
+        manifest.append("\n</");
+        manifest.append(WadoParameters.TAG_DOCUMENT_ROOT);
+        manifest.append(">");
+
+        return manifest.toString();
     }
 
     public static class WadoMessage {

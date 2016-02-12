@@ -59,7 +59,7 @@ public class SOPInstance implements XmlDescription {
     public String toXml() {
         StringBuilder result = new StringBuilder();
         result.append("\n<");
-        result.append(TagW.DICOM_LEVEL.Instance.name());
+        result.append(TagW.DICOM_LEVEL.INSTANCE.name());
         result.append(" ");
         TagUtil.addXmlAttribute(TagW.SOPInstanceUID, sopInstanceUID, result);
         // file_tsuid DICOM Transfer Syntax UID (0002,0010)

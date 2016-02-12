@@ -13,16 +13,46 @@ import org.weasis.dicom.util.StringUtil;
 
 public class ConnectorProperties extends Properties {
     public static final String CONFIG_FILENAME = "config.filename";
-    
+
     private final List<Properties> list;
 
     public ConnectorProperties() {
-        list = new ArrayList<Properties>();
+        list = new ArrayList<>();
     }
 
     public ConnectorProperties(Properties defaults) {
         super(defaults);
-        list = new ArrayList<Properties>();
+        list = new ArrayList<>();
+    }
+
+    @Override
+    public synchronized boolean equals(Object o) {
+        if (o instanceof ConnectorProperties) {
+            ConnectorProperties c = (ConnectorProperties) o;
+            boolean identical = super.equals(c);
+            if (identical && c.list.size() == list.size()) {
+                for (int i = 0; i < list.size(); i++) {
+                    Object oa = list.get(i);
+                    Object ob = c.list.get(i);
+                    // Handle both are null
+                    if ((oa == null && ob != null) || (oa != null && ob == null)
+                        || (oa != null && ob != null && !oa.equals(ob))) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public synchronized int hashCode() {
+        int code = super.hashCode();
+        for (Properties p : list) {
+            code ^= p.hashCode();
+        }
+        return code;
     }
 
     public void addArchiveProperties(Properties archiveProps) {
@@ -33,8 +63,7 @@ public class ConnectorProperties extends Properties {
         return Collections.unmodifiableList(list);
     }
 
-    @Override
-    public synchronized Object clone() {
+    public ConnectorProperties getDeepCopy() {
         ConnectorProperties newObject = new ConnectorProperties();
         newObject.putAll(this);
         for (Properties properties : list) {
@@ -48,7 +77,7 @@ public class ConnectorProperties extends Properties {
         extProps.put("server.base.url", ServletUtil.getBaseURL(request,
             StringUtil.getNULLtoFalse(this.getProperty("server.canonical.hostname.mode"))));
 
-        ConnectorProperties dynamicProps = (ConnectorProperties) this.clone();
+        ConnectorProperties dynamicProps = getDeepCopy();
 
         // Perform variable substitution for system properties.
         for (Enumeration<?> e = this.propertyNames(); e.hasMoreElements();) {

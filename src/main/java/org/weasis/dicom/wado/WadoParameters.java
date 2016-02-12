@@ -35,14 +35,14 @@ public class WadoParameters {
     private final String webLogin;
     private final List<WadoParameters.HttpTag> httpTaglist;
 
-    public WadoParameters(String archiveID, String wadoURL, boolean requireOnlySOPInstanceUID, String additionnalParameters,
-        String overrideDicomTagsList, String webLogin) {
+    public WadoParameters(String archiveID, String wadoURL, boolean requireOnlySOPInstanceUID,
+        String additionnalParameters, String overrideDicomTagsList, String webLogin) {
         if (archiveID == null || wadoURL == null) {
             throw new IllegalArgumentException("archiveID and wadoURL cannot be null");
         }
         this.archiveID = archiveID;
         this.wadoURL = wadoURL;
-        this.httpTaglist = new ArrayList<WadoParameters.HttpTag>(2);
+        this.httpTaglist = new ArrayList<>(2);
         this.webLogin = webLogin == null ? null : webLogin.trim();
         this.requireOnlySOPInstanceUID = requireOnlySOPInstanceUID;
         this.additionnalParameters = additionnalParameters == null ? "" : additionnalParameters;

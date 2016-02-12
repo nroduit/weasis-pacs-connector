@@ -31,34 +31,20 @@ public class BuildManifest extends HttpServlet {
         super();
     }
 
-    /**
-     * Initialization of the servlet. <br>
-     *
-     * @throws ServletException
-     *             if an error occurs
-     */
     @Override
-    public void init() throws ServletException {
+    protected void doHead(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
+
+        response.setContentType("text/xml");
     }
 
     @Override
-    protected void doHead(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        try {
-            response.setContentType("text/xml");
-
-        } catch (Exception e) {
-            LOGGER.error("doHead(HttpServletRequest, HttpServletResponse)", e);
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Override
-    public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         doGet(request, response);
     }
 
     @Override
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         ConnectorProperties connectorProperties =
             (ConnectorProperties) this.getServletContext().getAttribute("componentProperties");
         // Check if the source of this request is allowed
@@ -69,9 +55,7 @@ public class BuildManifest extends HttpServlet {
         buildManifest(request, response, connectorProperties.getResolveConnectorProperties(request));
     }
 
-    private void buildManifest(HttpServletRequest request, HttpServletResponse response, ConnectorProperties props)
-        throws IOException {
-
+    private void buildManifest(HttpServletRequest request, HttpServletResponse response, ConnectorProperties props) {
         try {
             if (LOGGER.isDebugEnabled()) {
                 ServletUtil.logInfo(request, LOGGER);
@@ -86,9 +70,9 @@ public class BuildManifest extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_OK);
             response.sendRedirect(wadoQueryUrl);
 
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage());
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        } catch (Throwable t) {
+            LOGGER.error("Building manifest", t);
+            ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, t.getMessage());
         }
     }
 }

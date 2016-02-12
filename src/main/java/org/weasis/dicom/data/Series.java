@@ -15,10 +15,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.xml.TagUtil;
 import org.weasis.dicom.data.xml.XmlDescription;
 
 public class Series implements XmlDescription {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Series.class);
 
     private final String seriesInstanceUID;
     private String seriesDescription = null;
@@ -35,7 +38,7 @@ public class Series implements XmlDescription {
             throw new IllegalArgumentException("seriesInstanceUID is null");
         }
         this.seriesInstanceUID = seriesInstanceUID;
-        sopInstancesList = new ArrayList<SOPInstance>();
+        sopInstancesList = new ArrayList<>();
     }
 
     public String getSeriesInstanceUID() {
@@ -67,7 +70,15 @@ public class Series implements XmlDescription {
     }
 
     public void setWadoCompression(int wadoCompression) {
-        this.wadoCompression = wadoCompression > 100 ? 100 : wadoCompression;
+        this.wadoCompression = wadoCompression > 100 ? 100 : wadoCompression < 0 ? 0 : wadoCompression;
+    }
+
+    public void setWadoCompression(String wadoCompression) {
+        try {
+            setWadoCompression(Integer.parseInt(wadoCompression));
+        } catch (NumberFormatException e) {
+            LOGGER.warn("Invalid compression value: {}", wadoCompression);
+        }
     }
 
     public void setSeriesDescription(String s) {
@@ -123,7 +134,7 @@ public class Series implements XmlDescription {
         StringBuilder result = new StringBuilder();
         if (seriesInstanceUID != null) {
             result.append("\n<");
-            result.append(TagW.DICOM_LEVEL.Series.name());
+            result.append(TagW.DICOM_LEVEL.SERIES.name());
             result.append(" ");
             TagUtil.addXmlAttribute(TagW.SeriesInstanceUID, seriesInstanceUID, result);
             TagUtil.addXmlAttribute(TagW.SeriesDescription, seriesDescription, result);
@@ -131,21 +142,21 @@ public class Series implements XmlDescription {
             TagUtil.addXmlAttribute(TagW.Modality, modality, result);
             TagUtil.addXmlAttribute(TagW.DirectDownloadThumbnail, thumbnail, result);
             TagUtil.addXmlAttribute(TagW.WadoTransferSyntaxUID, wadoTransferSyntaxUID, result);
-            TagUtil.addXmlAttribute(TagW.WadoCompressionRate, wadoCompression < 1 ? null : "" + wadoCompression,
-                result);
+            TagUtil.addXmlAttribute(TagW.WadoCompressionRate,
+                wadoCompression < 1 ? null : Integer.toString(wadoCompression), result);
             result.append(">");
             sortByInstanceNumber();
             for (SOPInstance s : sopInstancesList) {
                 result.append(s.toXml());
             }
             result.append("\n</");
-            result.append(TagW.DICOM_LEVEL.Series.name());
+            result.append(TagW.DICOM_LEVEL.SERIES.name());
             result.append(">");
         }
         return result.toString();
     }
 
     public boolean isEmpty() {
-        return sopInstancesList.size() == 0;
+        return sopInstancesList.isEmpty();
     }
 }

@@ -40,44 +40,54 @@ public class DbQuery {
         safeClose(connection, resultSet, statement);
     }
 
-    public final static void safeClose(Object... sqlObjects) {
-        if (sqlObjects != null) {
-            for (Object sqlClosableObject : sqlObjects) {
-                try {
-                    if (sqlClosableObject instanceof Connection) {
-                        ((Connection) sqlClosableObject).close();
-                    } else if (sqlClosableObject instanceof Statement) {
-                        ((Statement) sqlClosableObject).close();
-                    } else if (sqlClosableObject instanceof ResultSet) {
-                        ((ResultSet) sqlClosableObject).close();
-                    }
-                } catch (Exception doNothing) {
-                    LOGGER.warn("Exception on {} close: {}", sqlClosableObject.getClass(), doNothing.getMessage());
+    public static final void safeClose(Object... sqlObjects) {
+        if (sqlObjects == null) {
+            return;
+        }
+        for (Object sqlClosableObject : sqlObjects) {
+            try {
+                if (sqlClosableObject instanceof Connection) {
+                    ((Connection) sqlClosableObject).close();
+                } else if (sqlClosableObject instanceof Statement) {
+                    ((Statement) sqlClosableObject).close();
+                } else if (sqlClosableObject instanceof ResultSet) {
+                    ((ResultSet) sqlClosableObject).close();
                 }
+            } catch (Exception e) {
+                LOGGER.warn("Exception when closing sqlClosableObject", e);
             }
         }
     }
 
-    public final static DbQuery executeDBQuery(String query, Properties dbProperties) throws SQLException {
+    public static final DbQuery executeDBQuery(String query, Properties dbProperties) throws SQLException {
         if (StringUtil.hasText(query) && dbProperties != null) {
             try {
                 Class.forName(dbProperties.getProperty("arc.db.driver"));
             } catch (ClassNotFoundException e) {
-                throw new SQLException("Cannot load Database Driver: " + e.getMessage());
+                throw new SQLException("Cannot load Database Driver", e);
             }
 
-            Connection connection = DriverManager.getConnection(dbProperties.getProperty("arc.db.uri"),
-                dbProperties.getProperty("arc.db.user"), dbProperties.getProperty("arc.db.password"));
-            Statement statement = connection.createStatement();
+            Connection connection = null;
+            Statement statement = null;
+            ResultSet resultSet = null;
+            try {
+                connection = DriverManager.getConnection(dbProperties.getProperty("arc.db.uri"),
+                    dbProperties.getProperty("arc.db.user"), dbProperties.getProperty("arc.db.password"));
+                statement = connection.createStatement();
 
-            long startQuery = System.nanoTime();
-            ResultSet resultSet = statement.executeQuery(query);
+                long startQuery = System.nanoTime();
+                resultSet = statement.executeQuery(query);
 
-            long dbQueryTime = (System.nanoTime() - startQuery) / 1000000; // ms
-            if (dbQueryTime > 4000) { // to get LOG less verbose and trace only uncommon long time DB response
-                LOGGER.info("executeDBQuery - SQL request executed in {} ms :\n\t[{}]", dbQueryTime, query);
-            } else {
-                LOGGER.debug("executeDBQuery - SQL request executed in {} ms :\n\t[{}]", dbQueryTime, query);
+                long dbQueryTime = (System.nanoTime() - startQuery) / 1000000; // ms
+                if (dbQueryTime > 4000) { // to get LOG less verbose and trace only uncommon long time DB response
+                    LOGGER.info("executeDBQuery - SQL request executed in {} ms :\n\t[{}]", dbQueryTime, query);
+                } else {
+                    LOGGER.debug("executeDBQuery - SQL request executed in {} ms :\n\t[{}]", dbQueryTime, query);
+                }
+            } catch (Throwable e) {
+                // Ensure to close DB connection with any exception
+                DbQuery.safeClose(connection, resultSet, statement);
+                throw e;
             }
             return new DbQuery(connection, statement, resultSet);
         }
