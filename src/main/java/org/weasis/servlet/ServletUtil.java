@@ -420,7 +420,8 @@ public class ServletUtil {
 
     public static String buildManifestURL(HttpServletRequest request, ManifestBuilder builder, Properties props,
         boolean gzip) throws Exception {
-        StringBuilder buf = new StringBuilder(props.getProperty("server.base.url"));
+        StringBuilder buf =
+            new StringBuilder(props.getProperty("manifest.base.url", props.getProperty("server.base.url")));
         buf.append(request.getContextPath());
         buf.append("/RequestManifest?");
         buf.append(RequestManifest.PARAM_ID);
