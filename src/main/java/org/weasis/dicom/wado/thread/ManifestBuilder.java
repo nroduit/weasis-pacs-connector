@@ -17,10 +17,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.wado.DicomQueryParams;
 import org.weasis.dicom.wado.WadoQuery;
-import org.weasis.dicom.wado.WadoQuery.WadoMessage;
 import org.weasis.dicom.wado.XmlManifest;
+import org.weasis.query.CommonQueryParams;
 import org.weasis.servlet.ServletUtil;
 
 public class ManifestBuilder implements Callable<XmlManifest> {
@@ -31,11 +30,14 @@ public class ManifestBuilder implements Callable<XmlManifest> {
 
     private final int requestId;
     private final long startTimeMillis;
-    private final DicomQueryParams params;
+    private final CommonQueryParams params;
     private final XmlManifest xml;
     private volatile Future<XmlManifest> future;
 
-    public ManifestBuilder(DicomQueryParams params) {
+    public ManifestBuilder(CommonQueryParams params) {
+        if (params == null) {
+            throw new IllegalArgumentException();
+        }
         this.params = params;
         this.xml = null;
         this.requestId = COUNTER.incrementAndGet();
@@ -43,6 +45,9 @@ public class ManifestBuilder implements Callable<XmlManifest> {
     }
 
     public ManifestBuilder(XmlManifest xml) {
+        if (xml == null) {
+            throw new IllegalArgumentException();
+        }
         this.params = null;
         this.xml = xml;
         this.requestId = COUNTER.incrementAndGet();
@@ -70,13 +75,13 @@ public class ManifestBuilder implements Callable<XmlManifest> {
         if (xml == null) {
             long startTime = System.currentTimeMillis();
 
-            WadoMessage message = ServletUtil.getPatientList(params);
-            WadoQuery wadoQuery =
-                new WadoQuery(params.getPatients(), params.getWadoParameters(), params.getCharsetEncoding(),
-                    params.isAcceptNoImage());
-            wadoQuery.setWadoMessage(message);
+            ServletUtil.fillPatientList(params);
+            if (!params.hasPatients() && !params.isAcceptNoImage()) {
+                throw new IllegalStateException("Empty Patient List");
+            }
+            WadoQuery wadoQuery = new WadoQuery(params.getArchiveList());
 
-            LOGGER.info("Build Manifest in {} ms [id={}]", (System.currentTimeMillis() - startTime), requestId);
+            LOGGER.info("Build Manifest in {} ms [id={}]", System.currentTimeMillis() - startTime, requestId);
             return wadoQuery;
         } else {
             return xml;

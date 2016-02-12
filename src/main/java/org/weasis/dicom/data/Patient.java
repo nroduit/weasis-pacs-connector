@@ -25,7 +25,7 @@ import org.weasis.dicom.util.DateUtil;
 
 public class Patient implements XmlDescription {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(Patient.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Patient.class);
 
     private final String patientID;
     private String issuerOfPatientID = null;
@@ -45,7 +45,7 @@ public class Patient implements XmlDescription {
         }
         this.patientID = patientID;
         this.issuerOfPatientID = issuerOfPatientID;
-        studiesList = new ArrayList<Study>();
+        studiesList = new ArrayList<>();
     }
 
     public boolean hasSameUniqueID(String patientID, String issuerOfPatientID) {
@@ -100,11 +100,12 @@ public class Patient implements XmlDescription {
     }
 
     public void setPatientSex(String patientSex) {
-        if (patientSex != null) {
-            patientSex = patientSex.toUpperCase(Locale.getDefault());
-            patientSex = patientSex.startsWith("M") ? "M" : patientSex.startsWith("F") ? "F" : "O";
+        if (patientSex == null) {
+            this.patientSex = null;
+        } else {
+            String val = patientSex.toUpperCase(Locale.getDefault());
+            this.patientSex = val.startsWith("M") ? "M" : val.startsWith("F") ? "F" : "O";
         }
-        this.patientSex = patientSex;
     }
 
     public void setPatientName(String patientName) {
@@ -118,14 +119,16 @@ public class Patient implements XmlDescription {
     }
 
     /**
-     * 
+     *
      * @return
      */
     @Override
     public String toXml() {
         StringBuilder result = new StringBuilder();
         if (patientID != null && patientName != null) {
-            result.append("\n<" + TagW.DICOM_LEVEL.Patient.name() + " ");
+            result.append("\n<");
+            result.append(TagW.DICOM_LEVEL.PATIENT.name());
+            result.append(" ");
 
             TagUtil.addXmlAttribute(TagW.PatientID, patientID, result);
             TagUtil.addXmlAttribute(TagW.IssuerOfPatientID, issuerOfPatientID, result);
@@ -135,48 +138,54 @@ public class Patient implements XmlDescription {
             TagUtil.addXmlAttribute(TagW.PatientSex, patientSex, result);
             result.append(">");
 
-            Collections.sort(studiesList, new Comparator<Study>() {
-
-                @Override
-                public int compare(Study o1, Study o2) {
-                    Date date1 = DateUtil.getDate(o1.getStudyDate());
-                    Date date2 = DateUtil.getDate(o2.getStudyDate());
-                    if (date1 != null && date2 != null) {
-                        // inverse time
-                        int rep = date2.compareTo(date1);
-                        if (rep == 0) {
-                            Date time1 = DateUtil.getTime(o1.getStudyTime());
-                            Date time2 = DateUtil.getTime(o2.getStudyTime());
-                            if (time1 != null && time2 != null) {
-                                // inverse time
-                                return time2.compareTo(time1);
-                            }
-                        } else {
-                            return rep;
-                        }
-                    }
-                    if (date1 == null && date2 == null) {
-                        return o1.getStudyInstanceUID().compareTo(o2.getStudyInstanceUID());
-                    } else {
-                        if (date1 == null) {
-                            return 1;
-                        }
-                        if (date2 == null) {
-                            return -1;
-                        }
-                    }
-                    return 0;
-                }
-            });
+            Collections.sort(studiesList, getStudyComparator());
             for (Study s : studiesList) {
                 result.append(s.toXml());
             }
-            result.append("\n</Patient>");
+            result.append("\n</");
+            result.append(TagW.DICOM_LEVEL.PATIENT.name());
+            result.append(">");
         }
 
         String ptXml = result.toString();
         LOGGER.debug("Patient toXml [{}]", ptXml);
         return ptXml;
+    }
+
+    private static Comparator<Study> getStudyComparator() {
+        return new Comparator<Study>() {
+
+            @Override
+            public int compare(Study o1, Study o2) {
+                Date date1 = DateUtil.getDate(o1.getStudyDate());
+                Date date2 = DateUtil.getDate(o2.getStudyDate());
+                if (date1 != null && date2 != null) {
+                    // inverse time
+                    int rep = date2.compareTo(date1);
+                    if (rep == 0) {
+                        Date time1 = DateUtil.getTime(o1.getStudyTime());
+                        Date time2 = DateUtil.getTime(o2.getStudyTime());
+                        if (time1 != null && time2 != null) {
+                            // inverse time
+                            return time2.compareTo(time1);
+                        }
+                    } else {
+                        return rep;
+                    }
+                }
+                if (date1 == null && date2 == null) {
+                    return o1.getStudyInstanceUID().compareTo(o2.getStudyInstanceUID());
+                } else {
+                    if (date1 == null) {
+                        return 1;
+                    }
+                    if (date2 == null) {
+                        return -1;
+                    }
+                }
+                return 0;
+            }
+        };
     }
 
     public Study getStudy(String uid) {

@@ -15,10 +15,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
 import java.net.URLConnection;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -41,13 +41,12 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.data.xml.Base64;
 import org.weasis.dicom.util.FileUtil;
 import org.weasis.dicom.util.StringUtil;
 
-public class SLwebstart_launcher extends HttpServlet {
+public class JnlpLauncher extends HttpServlet {
     private static final long serialVersionUID = 5979263846495591025L;
-    private static final Logger logger = LoggerFactory.getLogger(SLwebstart_launcher.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JnlpLauncher.class);
 
     public static final String DEFAULT_JNLP_TEMPLATE_NAME = "weasis.jnlp";
     public static final String JNLP_EXTENSION = ".jnlp";
@@ -85,20 +84,13 @@ public class SLwebstart_launcher extends HttpServlet {
     protected static final String JNLP_TAG_ELT_APPLET_DESC = "applet-desc";
     protected static final String JNLP_TAG_ELT_PARAM = "param";
 
-    protected RequestDispatcher defaultRequestDispatcher;
-
-    public SLwebstart_launcher() {
+    public JnlpLauncher() {
         super();
     }
 
     @Override
-    public void init() throws ServletException {
-        defaultRequestDispatcher = getServletConfig().getServletContext().getNamedDispatcher("default");
-        logger.debug("init() - defaultRequestDispatcher : {}", defaultRequestDispatcher.getClass());
-    }
-
-    @Override
-    protected void doHead(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    protected void doHead(HttpServletRequest request, HttpServletResponse response)
+        throws ServletException, IOException {
 
         try {
             if (handleRequestAndRedirect(request, response)) {
@@ -106,26 +98,28 @@ public class SLwebstart_launcher extends HttpServlet {
             }
             response.setContentType(JNLP_MIME_TYPE);
         } catch (Exception e) {
-            logger.error("doHead()", e);
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            LOGGER.error("JNLP head", e);
+            ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
         }
-
     }
 
     @Override
-    public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-        String uploadParam = request.getParameter(SLwebstart_launcher.PARAM_UPLOAD);
-
+        String uploadParam = request.getParameter(JnlpLauncher.PARAM_UPLOAD);
         if (StringUtil.hasText(uploadParam)) {
-            StringBuilder buf = new StringBuilder();
-            String line = null;
-            BufferedReader reader = request.getReader();
-            while ((line = reader.readLine()) != null) {
-                buf.append(line);
-            }
-            if (buf.length() > 0) {
-                request.setAttribute(ATTRIBUTE_UPLOADED_ARGUMENT, buf.toString());
+            try (BufferedReader reader = request.getReader()) {
+                StringBuilder buf = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    buf.append(line);
+                }
+                if (buf.length() > 0) {
+                    request.setAttribute(ATTRIBUTE_UPLOADED_ARGUMENT, buf.toString());
+                }
+            } catch (Throwable t) {
+                LOGGER.error("Uploading jnlp", t);
+                ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, t.getMessage());
             }
         }
 
@@ -133,15 +127,15 @@ public class SLwebstart_launcher extends HttpServlet {
     }
 
     @Override
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         buildJNLP(request, response);
     }
 
-    protected void buildJNLP(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    protected void buildJNLP(HttpServletRequest request, HttpServletResponse response) {
 
         try {
-            if (logger.isDebugEnabled()) {
-                ServletUtil.logInfo(request, logger);
+            if (LOGGER.isDebugEnabled()) {
+                ServletUtil.logInfo(request, LOGGER);
             }
             if (handleRequestAndRedirect(request, response)) {
                 return;
@@ -150,8 +144,8 @@ public class SLwebstart_launcher extends HttpServlet {
             // Store jnlp templates jdom structure in hashMap, avoid to always read the same jnlp file
             Element rootJnlp = null;
             JnlpTemplate launcher = createLauncherTemplate(request);
-            final Map<URL, Element> jnlpTemplates =
-                (Map<URL, Element>) this.getServletContext().getAttribute("jnlpTemplates");
+            final Map<URI, Element> jnlpTemplates =
+                (Map<URI, Element>) this.getServletContext().getAttribute("jnlpTemplates");
             if (jnlpTemplates != null) {
                 Element element = jnlpTemplates.get(launcher.realPathURL);
                 if (element != null) {
@@ -177,7 +171,7 @@ public class SLwebstart_launcher extends HttpServlet {
             }
             String launcherStr = buildJnlpResponse(launcher);
 
-            logger.debug("doGet() - launcherStr = [\n{}\n]", launcherStr);
+            LOGGER.debug("doGet() - launcherStr = [\n{}\n]", launcherStr);
 
             response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1
             response.setHeader("Pragma", "no-cache"); // HTTP 1.0
@@ -188,30 +182,30 @@ public class SLwebstart_launcher extends HttpServlet {
 
             ServletUtil.write(launcherStr, response.getOutputStream());
         } catch (ServletErrorException e) {
-            logger.error("doGet()", e);
-            response.sendError(e.responseErrorCode);
-        } catch (Exception e) {
-            logger.error("doGet()", e);
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            LOGGER.error("Build jnlp", e);
+            ServletUtil.sendResponseError(response, e.responseErrorCode, e.getMessage());
+        } catch (Throwable t) {
+            LOGGER.error("Build jnlp", t);
+            ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, t.getMessage());
         }
     }
 
     protected boolean handleRequestAndRedirect(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
 
-        // if (request.getServletPath().endsWith("/"))
-        // request.getRequestDispatcher(DEFAULT_JNLP_TEMPLATE_NAME).forward(request, response);
-
-        // NOTE : if redirect to default launcher template file the ?src= parameter would never be handle
-
-        // NOTE : in web.xml config file the "<url-pattern>" must be directory mapping and not file mapping like
-        // "*.jnlp" otherwise external launcher template from ?src= parameter would never be used and launcher template
-        // could never be outside of Servlet context
-        // Ex of mapping the root of Servlet context : <servlet-mapping><url-pattern>/</url-pattern></servlet-mapping>
+        /*
+         * NOTE: in web.xml config file the "<url-pattern>" must be directory mapping and not file mapping like "*.jnlp"
+         * otherwise external launcher template from ?src= parameter would never be used and launcher template could
+         * never be outside of Servlet context
+         *
+         * Ex of mapping the root of Servlet context : <servlet-mapping><url-pattern>/</url-pattern></servlet-mapping>
+         */
 
         if (!request.getServletPath().endsWith("/") && !request.getServletPath().endsWith(JNLP_EXTENSION)) {
-            logger.debug("handleRequestAndRedirect() - forward request to default dispatcher : {}",
+            LOGGER.debug("handleRequestAndRedirect() - forward request to default dispatcher : {}",
                 request.getServletPath());
+            RequestDispatcher defaultRequestDispatcher =
+                getServletConfig().getServletContext().getNamedDispatcher("default");
             defaultRequestDispatcher.forward(request, response);
             return true;
         }
@@ -224,16 +218,14 @@ public class SLwebstart_launcher extends HttpServlet {
 
         String templatePath = null;
         String templateFileName = null;
-        URL templateURL = null;
+        URI templateURL = null;
         String codeBasePath = null;
         String codeBaseExtPath = null;
         Map<String, Object> queryParameterMap = null;
 
         try {
-            // GET LAUNCHER TEMPLATE FILE NAME, PATH AND URL
-
+            // Get launcher Template filename, path and URI
             templatePath = serverPath + request.getContextPath() + request.getServletPath();
-
             String queryLauncherPath = request.getParameter(PARAM_SOURCE); // this overrides Servlet context path
             if (queryLauncherPath != null) { // template isn't in the Web Servlet Context
                 if (queryLauncherPath.startsWith("/")) {
@@ -256,36 +248,35 @@ public class SLwebstart_launcher extends HttpServlet {
             }
 
             if (templatePath.startsWith(serverPath + request.getContextPath())) {
-                // !!!! templateURL = getServletContext().getResource(templatePath + "/" + templateFileName);
-                // NOTE : resource has to be accessed through local File URL Connection otherwise the Servlet is
-                // called again in loop trying reading the file
+                /*
+                 * NOTE : resource has to be accessed through local File URL Connection otherwise the Servlet is called
+                 * again in loop trying reading the file.
+                 */
 
-                String URItemplatePath = templatePath.replaceFirst(serverPath + request.getContextPath(), "");
-                String realPath = getServletContext().getRealPath(URItemplatePath + templateFileName);
-                templateURL = new File(realPath).toURI().toURL();
+                String uriTemplatePath = templatePath.replaceFirst(serverPath + request.getContextPath(), "");
+                String realPath = getServletContext().getRealPath(uriTemplatePath + templateFileName);
+                templateURL = new File(realPath).toURI();
 
             } else {
-                templateURL = new URL(templatePath + "/" + templateFileName);
+                templateURL = new URI(templatePath + "/" + templateFileName);
             }
 
-            logger.debug("locateLauncherTemplate() - String templatePath = {}", templatePath);
-            logger.debug("locateLauncherTemplate() - String templateFileName = {}", templateFileName);
-            logger.debug("locateLauncherTemplate() - URL templateURL = {}", templateURL);
+            LOGGER.debug("locateLauncherTemplate() - String templatePath = {}", templatePath);
+            LOGGER.debug("locateLauncherTemplate() - String templateFileName = {}", templateFileName);
+            LOGGER.debug("locateLauncherTemplate() - URL templateURL = {}", templateURL);
 
-            // CHECK IF LAUNCHER TEMPLATE RESOURCE EXIST
-
-            URLConnection launcherTemplateConnection = templateURL.openConnection();
-
+            // Check if launcher template resource exists
+            URLConnection launcherTemplateConnection = templateURL.toURL().openConnection();
             if (launcherTemplateConnection instanceof HttpURLConnection) {
                 if (((HttpURLConnection) launcherTemplateConnection).getResponseCode() != HttpURLConnection.HTTP_OK) {
-                    throw new Exception("HttpURLConnection not accessible : " + templateURL);
+                    throw new IllegalStateException("HttpURLConnection not accessible : " + templateURL);
                 }
             } else if (launcherTemplateConnection.getContentLength() <= 0) {
-                throw new Exception("URLConnection  not accessible : " + templatePath + "/" + templateFileName);
+                throw new IllegalStateException(
+                    "URLConnection  not accessible : " + templatePath + "/" + templateFileName);
             }
 
-            // GET SOURCECODE CODEBASE PATH
-
+            // Get codebase path
             String queryCodeBasePath = request.getParameter(PARAM_CODEBASE);
             if (queryCodeBasePath != null) { // codebase is not in the Web Servlet Context
                 if (queryCodeBasePath.startsWith("/")) {
@@ -301,10 +292,9 @@ public class SLwebstart_launcher extends HttpServlet {
                 codeBasePath = codeBasePath.substring(0, codeBasePath.length() - 1);
             }
 
-            logger.debug("locateLauncherTemplate(HttpServletRequest) - String codeBasePath = {}", codeBasePath);
+            LOGGER.debug("locateLauncherTemplate(HttpServletRequest) - String codeBasePath = {}", codeBasePath);
 
-            // GET SOURCECODE CODEBASE_EXT PATH
-
+            // Get codebaseExt path
             String queryCodeBaseExtPath = request.getParameter(PARAM_CODEBASE_EXT);
             if (queryCodeBaseExtPath != null) { // codebaseExt is not in the Web Servlet Context
                 if (queryCodeBaseExtPath.startsWith("/")) {
@@ -320,10 +310,10 @@ public class SLwebstart_launcher extends HttpServlet {
                 codeBaseExtPath = codeBaseExtPath.substring(0, codeBaseExtPath.length() - 1);
             }
 
-            logger.debug("locateLauncherTemplate(HttpServletRequest) - String codeBaseExtPath = {}", codeBaseExtPath);
+            LOGGER.debug("locateLauncherTemplate(HttpServletRequest) - String codeBaseExtPath = {}", codeBaseExtPath);
 
-            // GET OTHER PARAMETERS
-            queryParameterMap = new HashMap<String, Object>(request.getParameterMap());
+            // Get other parameters
+            queryParameterMap = new HashMap<>(request.getParameterMap());
 
             String initialHeapSize = request.getParameter(PARM_JVM_INITIAL_HEAP_SIZE);
             if (initialHeapSize == null) {
@@ -357,7 +347,7 @@ public class SLwebstart_launcher extends HttpServlet {
     public class ServletErrorException extends Exception {
         private static final long serialVersionUID = -1673431720286835416L;
 
-        int responseErrorCode;
+        final int responseErrorCode;
 
         public ServletErrorException(int httpServletResponseCode, String message, Throwable cause) {
             super(message, cause);
@@ -377,21 +367,16 @@ public class SLwebstart_launcher extends HttpServlet {
 
     protected void parseLauncherTemplate(JnlpTemplate launcher) throws ServletErrorException, IOException {
 
-        // PARSE JNLP LAUNCHER AS JDOM
+        // Parse JNLP launcher as JDOM
         Element rootElt = null;
         BufferedReader reader = null;
 
         try {
             // Assume the template has UTF-8 encoding
-            reader =
-                new BufferedReader(new InputStreamReader(launcher.realPathURL.openConnection().getInputStream(),
-                    "UTF-8"));
+            reader = new BufferedReader(
+                new InputStreamReader(launcher.realPathURL.toURL().openConnection().getInputStream(), "UTF-8"));
 
             rootElt = new SAXBuilder(XMLReaders.NONVALIDATING, null, null).build(reader).getRootElement();
-
-            // rootElt = new SAXBuilder().build(launcher.realPathURL).getRootElement();
-            // NOTE : doesn't work with all URl like "file://///server/..."
-
         } catch (JDOMException e) {
             throw new ServletErrorException(HttpServletResponse.SC_NOT_ACCEPTABLE, "Can't parse launcher template", e);
         } finally {
@@ -438,7 +423,7 @@ public class SLwebstart_launcher extends HttpServlet {
                 if (applicationDescElt == null) {
                     applicationDescElt = launcher.rootElt.getChild(JNLP_TAG_ELT_APPLET_DESC);
                     if (applicationDescElt == null) {
-                        throw new Exception("JNLP TAG : <application-desc> or <applet-desc> is not found");
+                        throw new IllegalStateException("JNLP TAG : <application-desc> or <applet-desc> is not found");
                     } else {
                         // Arguments in Applet are formatted as properties
                         for (String newContent : argValues) {
@@ -454,8 +439,8 @@ public class SLwebstart_launcher extends HttpServlet {
                                 paramElt.setAttribute(JNLP_TAG_PRO_VALUE, propertyValue);
                                 applicationDescElt.addContent(paramElt);
                             } else {
-                                throw new Exception("Applet Query Parameter {property} is invalid : "
-                                    + argValues.toString());
+                                throw new IllegalStateException(
+                                    "Applet Query Parameter {property} is invalid : " + Arrays.toString(argValues));
                             }
                         }
                     }
@@ -479,7 +464,7 @@ public class SLwebstart_launcher extends HttpServlet {
                 Element resourcesElt = launcher.rootElt.getChild(JNLP_TAG_ELT_RESOURCES);
 
                 if (resourcesElt == null) {
-                    throw new Exception("JNLP TAG : <" + JNLP_TAG_ELT_RESOURCES + "> is not found");
+                    throw new IllegalStateException("JNLP TAG : <" + JNLP_TAG_ELT_RESOURCES + "> is not found");
                 }
 
                 for (int i = 0; i < propValues.length; i++) {
@@ -491,7 +476,7 @@ public class SLwebstart_launcher extends HttpServlet {
 
                     if (propertyName != null && propertyValue != null) {
                         boolean valueReplaced = false;
-        
+
                         Iterator<Element> itr = resourcesElt.getChildren(JNLP_TAG_ELT_PROPERTY).iterator();
                         while (itr.hasNext()) {
                             Element elt = itr.next();
@@ -503,14 +488,15 @@ public class SLwebstart_launcher extends HttpServlet {
                             }
                         }
 
-                        if (!valueReplaced){
+                        if (!valueReplaced) {
                             Element propertyElt = new Element(JNLP_TAG_ELT_PROPERTY);
                             propertyElt.setAttribute(JNLP_TAG_PRO_NAME, propertyName);
                             propertyElt.setAttribute(JNLP_TAG_PRO_VALUE, propertyValue);
                             resourcesElt.addContent(propertyElt);
                         }
                     } else {
-                        throw new Exception("Query Parameter {property} is invalid : " + propValues.toString());
+                        throw new IllegalStateException(
+                            "Query Parameter {property} is invalid : " + Arrays.toString(propValues));
                     }
                 }
             } catch (Exception e) {
@@ -526,7 +512,7 @@ public class SLwebstart_launcher extends HttpServlet {
             try {
                 Element resourcesElt = launcher.rootElt.getChild(JNLP_TAG_ELT_RESOURCES);
                 if (resourcesElt == null) {
-                    throw new Exception("JNLP TAG : <" + JNLP_TAG_ELT_RESOURCES + "> is not found");
+                    throw new IllegalStateException("JNLP TAG : <" + JNLP_TAG_ELT_RESOURCES + "> is not found");
                 }
 
                 filterMarkerInAttribute(resourcesElt.getChildren(), launcher.parameterMap);
@@ -535,7 +521,7 @@ public class SLwebstart_launcher extends HttpServlet {
                 if (applicationElt == null) {
                     applicationElt = launcher.rootElt.getChild(JNLP_TAG_ELT_APPLET_DESC);
                     if (applicationElt == null) {
-                        throw new Exception("JNLP TAG : <application-desc> or <applet-desc> is not found");
+                        throw new IllegalStateException("JNLP TAG : <application-desc> or <applet-desc> is not found");
                     } else {
                         filterMarkerInElement(applicationElt.getChildren(JNLP_TAG_ELT_PARAM), launcher.parameterMap);
                     }
@@ -552,7 +538,7 @@ public class SLwebstart_launcher extends HttpServlet {
 
     static void filterMarkerInAttribute(List<Element> eltList, Map<String, Object> parameterMap) {
 
-        final Pattern patternMarker = Pattern.compile("\\$\\{([^}]+)\\}"); // matching pattern is ${..}
+        final Pattern patternMarker = Pattern.compile("\\$\\{([^}]+)\\}"); // matching pattern is "${..}"
 
         for (Element elt : eltList) {
             for (Attribute attribute : elt.getAttributes()) {
@@ -564,14 +550,14 @@ public class SLwebstart_launcher extends HttpServlet {
 
                 Matcher matcher = patternMarker.matcher(attributeValue);
                 while (matcher.find()) {
-                    String marker = matcher.group(0); // full pattern matched ${..}
+                    String marker = matcher.group(0); // full pattern matched "${..}"
                     String markerName = matcher.group(1); // get only text between curly braces
                     String parameterValue = ServletUtil.getFirstParameter(parameterMap.get(markerName));
                     if (parameterValue != null) {
                         attributeValue = attributeValue.replace(marker, parameterValue);
                         attribute.setValue(attributeValue);
                     } else {
-                        logger.warn("Found marker \"" + marker + "\" with NO matching parameter in Element <"
+                        LOGGER.warn("Found marker \"" + marker + "\" with NO matching parameter in Element <"
                             + elt.getName() + "> " + attribute);
                     }
                 }
@@ -580,7 +566,7 @@ public class SLwebstart_launcher extends HttpServlet {
     }
 
     static void filterMarkerInElement(List<Element> eltList, Map<String, Object> parameterMap) {
-        final Pattern patternMarker = Pattern.compile("\\$\\{([^}]+)\\}"); // matching pattern is ${..}
+        final Pattern patternMarker = Pattern.compile("\\$\\{([^}]+)\\}"); // matching pattern is "${..}"
 
         for (Element elt : eltList) {
             String elementValue = elt.getText();
@@ -591,7 +577,7 @@ public class SLwebstart_launcher extends HttpServlet {
 
             Matcher matcher = patternMarker.matcher(elementValue);
             while (matcher.find()) {
-                String marker = matcher.group(0); // full pattern matched ${..}
+                String marker = matcher.group(0); // full pattern matched "${..}"
                 String markerName = matcher.group(1); // get only text between curly braces
                 String parameterValue = ServletUtil.getFirstParameter(parameterMap.get(markerName));
 
@@ -600,7 +586,7 @@ public class SLwebstart_launcher extends HttpServlet {
                     elt.setText(elementValue);
 
                 } else {
-                    logger.warn("Found marker \"" + marker + "\" with NO matching parameter in Element <"
+                    LOGGER.warn("Found marker \"" + marker + "\" with NO matching parameter in Element <"
                         + elt.getName() + ">");
                 }
             }
@@ -610,12 +596,12 @@ public class SLwebstart_launcher extends HttpServlet {
     static class JnlpTemplate {
 
         final String templateFileName;
-        final URL realPathURL;
+        final URI realPathURL;
         final Map<String, Object> parameterMap;
 
         Element rootElt;
 
-        public JnlpTemplate(String templateFileName, URL realPathURL, Map<String, Object> queryParameterMap) {
+        public JnlpTemplate(String templateFileName, URI realPathURL, Map<String, Object> queryParameterMap) {
             this.templateFileName = templateFileName;
             this.realPathURL = realPathURL;
             this.parameterMap = queryParameterMap;

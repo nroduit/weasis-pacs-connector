@@ -20,23 +20,14 @@ public class EncryptUtils {
     private static final int KEY_MIN_SIZE = 10; // inclusive
     private static final int KEY_MAX_SIZE = 30; // inclusive
 
-    private EncryptUtils() {
-    }
+    private static final String ERROR_MSG = "message or key arguments cannot be null!";
 
-    // TODO make test
-    public static void main(String[] args) {
-        String message = "1234";
-        String key = "paraphrasefortest";
-        System.out.println("message: " + message);
-        String result = encrypt(message, key);
-        System.out.println("Encrypt: " + result);
-        result = decrypt(result, key);
-        System.out.println("Decrypt: " + result);
+    private EncryptUtils() {
     }
 
     public static String encrypt(String message, String key) {
         if (message == null || key == null) {
-            throw new IllegalArgumentException("message or key arguments cannot be null!");
+            throw new IllegalArgumentException(ERROR_MSG);
         }
         String result = xorMessage(message.trim(), key);
         try {
@@ -48,7 +39,7 @@ public class EncryptUtils {
 
     private static String xorMessage(String message, String key) {
         if (message == null || key == null) {
-            throw new IllegalArgumentException("message or key arguments cannot be null!");
+            throw new IllegalArgumentException(ERROR_MSG);
         }
         char[] mChars = message.toCharArray();
         char[] kChars = key.toCharArray();
@@ -56,8 +47,8 @@ public class EncryptUtils {
             throw new IllegalArgumentException("Cannot encode empty message!");
         }
         if (kChars.length < KEY_MIN_SIZE || kChars.length > KEY_MAX_SIZE) {
-            throw new IllegalArgumentException("key size must be >= " + KEY_MIN_SIZE + " and <= " + KEY_MAX_SIZE
-                + " characters");
+            throw new IllegalArgumentException(
+                "key size must be >= " + KEY_MIN_SIZE + " and <= " + KEY_MAX_SIZE + " characters");
         }
 
         int kl = kChars.length;
@@ -76,7 +67,7 @@ public class EncryptUtils {
 
     public static String decrypt(String message, String key) {
         if (message == null || key == null) {
-            throw new IllegalArgumentException("message or key arguments cannot be null!");
+            throw new IllegalArgumentException(ERROR_MSG);
         }
         String result = null;
         try {
@@ -89,7 +80,7 @@ public class EncryptUtils {
 
     private static String unXorMessage(String message, String key) {
         if (message == null || key == null) {
-            throw new IllegalArgumentException("message or key arguments cannot be null!");
+            throw new IllegalArgumentException(ERROR_MSG);
         }
         char[] mChars = message.toCharArray();
         char[] kChars = key.toCharArray();

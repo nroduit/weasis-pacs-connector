@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.servlet;
 
+import java.net.URI;
 import java.net.URL;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -18,12 +19,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 
 import org.jdom2.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.wado.thread.ManifestBuilder;
 import org.weasis.dicom.wado.thread.ManifestManagerThread;
 
@@ -32,15 +33,12 @@ public class ManifestManager extends HttpServlet {
     private static final long serialVersionUID = -3980526826815714220L;
     private static final Logger LOGGER = LoggerFactory.getLogger(ManifestManager.class);
 
-    private final Properties properties = new Properties();
-    private final ConcurrentHashMap<Integer, ManifestBuilder> manifestBuilderMap =
-        new ConcurrentHashMap<Integer, ManifestBuilder>();
-
-    private final ManifestManagerThread manifestManagerThread = new ManifestManagerThread(manifestBuilderMap);
-    private final Map<URL, Element> jnlpTemplates = ManifestManager.<URL, Element> createLRUMap(20);
+    private final ConcurrentHashMap<Integer, ManifestBuilder> manifestBuilderMap = new ConcurrentHashMap<>();
+    private final transient ManifestManagerThread manifestManagerThread = new ManifestManagerThread(manifestBuilderMap);
+    private final Map<URI, Element> jnlpTemplates = ManifestManager.<URI, Element> createLRUMap(20);
 
     @Override
-    public void init() {
+    public void init() throws ServletException {
         LOGGER.info("Start the manifest manager servlet");
         if (this.getServletContext().getAttribute("manifestBuilderMap") != null) {
             LOGGER.error(
@@ -49,6 +47,7 @@ public class ManifestManager extends HttpServlet {
             LOGGER.debug("init() - getServletContext: {} ", getServletConfig().getServletContext());
             LOGGER.debug("init() - getRealPath: {}", getServletConfig().getServletContext().getRealPath("/"));
 
+            final ConnectorProperties properties = new ConnectorProperties();
             try {
                 URL config = this.getClass().getResource("/weasis-pacs-connector.properties");
                 if (config == null) {
@@ -60,8 +59,8 @@ public class ManifestManager extends HttpServlet {
 
                 if (config != null) {
                     properties.load(config.openStream());
-                    String requests = properties.getProperty("request.ids", null);
-                    String requestIID = properties.getProperty("request.IID.level", null);
+                    String requests = properties.getProperty("request.ids");
+                    String requestIID = properties.getProperty("request.IID.level");
                     if (requests == null) {
                         LOGGER.error(
                             "No request ID is allowed for the web context /viewer, /viewer-applet and /manifest!");
@@ -78,11 +77,26 @@ public class ManifestManager extends HttpServlet {
                         }
                     }
 
+                    properties.setProperty(ConnectorProperties.CONFIG_FILENAME, "default");
+                    String arcConfigList = properties.getProperty("arc.config.list");
+                    if (arcConfigList != null) {
+                        for (String arc : arcConfigList.split(",")) {
+                            URL arcConfigFile = this.getClass().getResource("/" + arc.trim());
+                            if (arcConfigFile != null) {
+                                Properties archiveProps = new Properties();
+                                archiveProps.load(arcConfigFile.openStream());
+                                archiveProps.setProperty(ConnectorProperties.CONFIG_FILENAME, arc.trim());
+                                properties.addArchiveProperties(archiveProps);
+                                LOGGER.info("Archive configuration: {}", arcConfigFile);
+                            }
+                        }
+                    }
+
                 } else {
                     LOGGER.error("Cannot find  a configuration file for weasis-pacs-connector");
                 }
 
-                String jnlpName = properties.getProperty("jnlp.default.name", null);
+                String jnlpName = properties.getProperty("jnlp.default.name");
                 if (jnlpName != null) {
                     URL jnlpTemplate = this.getClass().getResource("/" + jnlpName);
                     if (jnlpTemplate != null) {
@@ -91,7 +105,7 @@ public class ManifestManager extends HttpServlet {
                     }
                 }
             } catch (Exception e) {
-                StringUtil.logError(LOGGER, e, "Error on initialization");
+                LOGGER.error("Error on initialization of ManifestManager", e);
             }
             this.getServletContext().setAttribute("componentProperties", properties);
             this.getServletContext().setAttribute("jnlpTemplates", jnlpTemplates);
@@ -121,6 +135,9 @@ public class ManifestManager extends HttpServlet {
     // Get map where the oldest entry when the limit size is reached
     public static <K, V> Map<K, V> createLRUMap(final int maxEntries) {
         return new LinkedHashMap<K, V>(maxEntries * 3 / 2, 0.7f, true) {
+
+            private static final long serialVersionUID = 6516827063164041400L;
+
             @Override
             protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
                 return size() > maxEntries;

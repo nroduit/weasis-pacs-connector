@@ -17,6 +17,7 @@ import java.util.List;
 
 import org.weasis.dicom.data.xml.TagUtil;
 import org.weasis.dicom.data.xml.XmlDescription;
+import org.weasis.dicom.util.StringUtil;
 
 public class Study implements XmlDescription {
 
@@ -26,7 +27,7 @@ public class Study implements XmlDescription {
     private String studyDate = null;
     private String studyTime = null;
     private String accessionNumber = null;
-    private String ReferringPhysicianName = null;
+    private String referringPhysicianName = null;
     private final List<Series> seriesList;
 
     public Study(String studyInstanceUID) {
@@ -34,7 +35,7 @@ public class Study implements XmlDescription {
             throw new IllegalArgumentException("studyInstanceUID cannot be null!");
         }
         this.studyInstanceUID = studyInstanceUID;
-        seriesList = new ArrayList<Series>();
+        seriesList = new ArrayList<>();
     }
 
     public String getStudyInstanceUID() {
@@ -66,11 +67,11 @@ public class Study implements XmlDescription {
     }
 
     public String getReferringPhysicianName() {
-        return ReferringPhysicianName;
+        return referringPhysicianName;
     }
 
     public void setReferringPhysicianName(String referringPhysicianName) {
-        ReferringPhysicianName = referringPhysicianName;
+        this.referringPhysicianName = referringPhysicianName;
     }
 
     public void setStudyDescription(String studyDesc) {
@@ -99,14 +100,16 @@ public class Study implements XmlDescription {
     public String toXml() {
         StringBuilder result = new StringBuilder();
         if (studyInstanceUID != null) {
-            result.append("\n<" + TagW.DICOM_LEVEL.Study.name() + " ");
+            result.append("\n<");
+            result.append(TagW.DICOM_LEVEL.STUDY.name());
+            result.append(" ");
             TagUtil.addXmlAttribute(TagW.StudyInstanceUID, studyInstanceUID, result);
             TagUtil.addXmlAttribute(TagW.StudyDescription, studyDescription, result);
             TagUtil.addXmlAttribute(TagW.StudyDate, studyDate, result);
             TagUtil.addXmlAttribute(TagW.StudyTime, studyTime, result);
             TagUtil.addXmlAttribute(TagW.AccessionNumber, accessionNumber, result);
             TagUtil.addXmlAttribute(TagW.StudyID, studyID, result);
-            TagUtil.addXmlAttribute(TagW.ReferringPhysicianName, ReferringPhysicianName, result);
+            TagUtil.addXmlAttribute(TagW.ReferringPhysicianName, referringPhysicianName, result);
             result.append(">");
             Collections.sort(seriesList, new Comparator<Series>() {
 
@@ -115,11 +118,16 @@ public class Study implements XmlDescription {
                     int nubmer1 = 0;
                     int nubmer2 = 0;
                     try {
-                        nubmer1 = Integer.parseInt(o1.getSeriesNumber());
-                        nubmer2 = Integer.parseInt(o2.getSeriesNumber());
+                        if (StringUtil.hasText(o1.getSeriesNumber())) {
+                            nubmer1 = Integer.parseInt(o1.getSeriesNumber());
+                        }
+                        if (StringUtil.hasText(o2.getSeriesNumber())) {
+                            nubmer2 = Integer.parseInt(o2.getSeriesNumber());
+                        }
                     } catch (NumberFormatException e) {
+                        // Do nothing
                     }
-                    int rep = (nubmer1 < nubmer2 ? -1 : (nubmer1 == nubmer2 ? 0 : 1));
+                    int rep = nubmer1 < nubmer2 ? -1 : (nubmer1 == nubmer2 ? 0 : 1);
                     if (rep != 0) {
                         return rep;
                     }
@@ -130,7 +138,9 @@ public class Study implements XmlDescription {
                 result.append(s.toXml());
             }
 
-            result.append("\n</Study>");
+            result.append("\n</");
+            result.append(TagW.DICOM_LEVEL.STUDY.name());
+            result.append(">");
         }
         return result.toString();
     }

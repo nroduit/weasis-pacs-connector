@@ -11,13 +11,12 @@
 package org.weasis.dicom.wado.thread;
 
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.wado.WadoQuery;
 import org.weasis.dicom.wado.XmlManifest;
 
 public class ManifestManagerThread extends Thread {
@@ -27,19 +26,19 @@ public class ManifestManagerThread extends Thread {
     public static final long MAX_LIFE_CYCLE = 300000L; // in milliseconds => 5 min
     public static final long CLEAN_FREQUENCY = 60000L; // in milliseconds => 1 min
 
-    private final ConcurrentHashMap<Integer, ManifestBuilder> manifestBuilderMap;
+    private final ConcurrentMap<Integer, ManifestBuilder> manifestBuilderMap;
 
     private long maxLifeCycle = MAX_LIFE_CYCLE;
     private long cleanFrequency = CLEAN_FREQUENCY;
 
     /**
      * The role of the ManifestManagerThread class is to clean the non consumed threads.
-     * 
+     *
      * @param manifestBuilderMap
      *            the thread safe hashMap
      */
 
-    public ManifestManagerThread(ConcurrentHashMap<Integer, ManifestBuilder> manifestBuilderMap) {
+    public ManifestManagerThread(ConcurrentMap<Integer, ManifestBuilder> manifestBuilderMap) {
         if (manifestBuilderMap == null) {
             throw new IllegalArgumentException();
         }

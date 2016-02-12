@@ -15,9 +15,11 @@ import java.util.List;
 
 public class WadoParameters {
 
-    public static final String TAG_DOCUMENT_ROOT = "wado_query";
+    public static final String TAG_DOCUMENT_ROOT = "manifest";
     public static final String TAG_SCHEMA =
-        " xmlns= \"http://www.weasis.org/xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"";
+        "xmlns=\"http://www.weasis.org/xsd/2.5\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"";
+    public static final String TAG_WADO_QUERY = "wado_query";
+    public static final String TAG_WADO_ARCHIVE_ID = "id";
     public static final String TAG_WADO_URL = "wadoURL";
     public static final String TAG_WADO_ONLY_SOP_UID = "requireOnlySOPInstanceUID";
     public static final String TAG_WADO_ADDITIONNAL_PARAMETERS = "additionnalParameters";
@@ -25,6 +27,7 @@ public class WadoParameters {
     public static final String TAG_WADO_WEB_LOGIN = "webLogin";
     public static final String TAG_HTTP_TAG = "httpTag";
 
+    private final String archiveID;
     private final String wadoURL;
     private final boolean requireOnlySOPInstanceUID;
     private final String additionnalParameters;
@@ -32,13 +35,14 @@ public class WadoParameters {
     private final String webLogin;
     private final List<WadoParameters.HttpTag> httpTaglist;
 
-    public WadoParameters(String wadoURL, boolean requireOnlySOPInstanceUID, String additionnalParameters,
-        String overrideDicomTagsList, String webLogin) {
-        if (wadoURL == null) {
-            throw new IllegalArgumentException("wadoURL cannot be null");
+    public WadoParameters(String archiveID, String wadoURL, boolean requireOnlySOPInstanceUID,
+        String additionnalParameters, String overrideDicomTagsList, String webLogin) {
+        if (archiveID == null || wadoURL == null) {
+            throw new IllegalArgumentException("archiveID and wadoURL cannot be null");
         }
+        this.archiveID = archiveID;
         this.wadoURL = wadoURL;
-        this.httpTaglist = new ArrayList<WadoParameters.HttpTag>(2);
+        this.httpTaglist = new ArrayList<>(2);
         this.webLogin = webLogin == null ? null : webLogin.trim();
         this.requireOnlySOPInstanceUID = requireOnlySOPInstanceUID;
         this.additionnalParameters = additionnalParameters == null ? "" : additionnalParameters;
@@ -59,6 +63,10 @@ public class WadoParameters {
         return webLogin;
     }
 
+    public String getArchiveID() {
+        return archiveID;
+    }
+
     public String getWadoURL() {
         return wadoURL;
     }
@@ -74,7 +82,6 @@ public class WadoParameters {
     public String getOverrideDicomTagsList() {
         return overrideDicomTagsList;
     }
-
 
     static class HttpTag {
         private final String key;

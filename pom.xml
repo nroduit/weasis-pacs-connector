@@ -6,7 +6,7 @@
 	<artifactId>weasis-pacs-connector</artifactId>
 	<packaging>war</packaging>
 	<name>Weasis PACS Connector</name>
-	<version>5.0.1</version>
+	<version>6.1.0</version>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -41,14 +41,14 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.2</version>
 				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
+					<source>1.7</source>
+					<target>1.7</target>
 				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-war-plugin</artifactId>
-				<version>2.5</version>
+				<version>2.6</version>
 				<configuration>
 					<packagingExcludes>WEB-INF/lib/dcm4che-dict-*</packagingExcludes>
 					<warName>weasis-pacs-connector</warName>
@@ -67,14 +67,14 @@
 						<artifactId>maven-compiler-plugin</artifactId>
 						<version>3.2</version>
 						<configuration>
-							<source>1.6</source>
-							<target>1.6</target>
+							<source>1.7</source>
+							<target>1.7</target>
 						</configuration>
 					</plugin>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-war-plugin</artifactId>
-						<version>2.5</version>
+						<version>2.6</version>
 						<configuration>
 							<packagingExcludes>WEB-INF/lib/dcm4che-dict-*,WEB-INF/lib/log4j*,WEB-INF/lib/slf4j*</packagingExcludes>
 							<warName>weasis-pacs-connector</warName>
@@ -112,8 +112,7 @@
 					<groupId>junit</groupId>
 					<artifactId>junit</artifactId>
 				</exclusion>
-				<!-- Only required by storeSCU for uncompressing data not supported by 
-					the destination, not useful for this package -->
+				<!-- Only required by storeSCU for uncompressing data not supported by the destination, not useful for this package -->
 				<exclusion>
 					<groupId>org.dcm4che</groupId>
 					<artifactId>dcm4che-imageio</artifactId>
@@ -127,7 +126,12 @@
 					<artifactId>dcm4che-image</artifactId>
 				</exclusion>
 			</exclusions>
-			<version>0.9.8</version>
+			<version>1.0.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>1.7.5</version>
 		</dependency>
 	</dependencies>
 </project>

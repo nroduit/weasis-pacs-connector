@@ -21,15 +21,17 @@ public class TagUtil {
     private static final String DELIM_START = "${";
     private static final String DELIM_STOP = "}";
 
-    public static String substVars(String val, String currentKey, Map<String, String> cycleMap, Properties configProps, Properties extProps)
-        throws IllegalArgumentException {
-        if (cycleMap == null) {
-            cycleMap = new HashMap<String, String>();
-        }
-        cycleMap.put(currentKey, currentKey);
+    private TagUtil() {
+    }
+
+    public static String substVars(String val, String currentKey, Map<String, String> cycleMap, Properties configProps,
+        Properties extProps) {
+
+        Map<String, String> map = cycleMap == null ? new HashMap<String, String>() : cycleMap;
+        map.put(currentKey, currentKey);
 
         int stopDelim = -1;
-        int startDelim = -1;
+        int startDelim;
 
         do {
             stopDelim = val.indexOf(DELIM_STOP, stopDelim + 1);
@@ -52,21 +54,21 @@ public class TagUtil {
 
         String variable = val.substring(startDelim + DELIM_START.length(), stopDelim);
 
-        if (cycleMap.get(variable) != null) {
+        if (map.get(variable) != null) {
             throw new IllegalArgumentException("recursive variable reference: " + variable);
         }
         String substValue = System.getProperty(variable);
-        if (substValue == null) {            
-             substValue = configProps == null ?null : configProps.getProperty(variable, null);
-             if (substValue == null) {            
-                 substValue = extProps == null ? null : extProps.getProperty(variable, null);
-             }
+        if (substValue == null) {
+            substValue = configProps == null ? null : configProps.getProperty(variable, null);
+            if (substValue == null) {
+                substValue = extProps == null ? null : extProps.getProperty(variable, null);
+            }
         }
 
-        cycleMap.remove(variable);
-        val = val.substring(0, startDelim) + substValue + val.substring(stopDelim + DELIM_STOP.length(), val.length());
-        val = substVars(val, currentKey, cycleMap, configProps,extProps);
-        return val;
+        map.remove(variable);
+        String result =
+            val.substring(0, startDelim) + substValue + val.substring(stopDelim + DELIM_STOP.length(), val.length());
+        return substVars(result, currentKey, map, configProps, extProps);
     }
 
     public static void addXmlAttribute(TagW tag, String value, StringBuilder result) {
