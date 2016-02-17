@@ -35,11 +35,14 @@ public class ConnectorProperties extends Properties {
                     Object oa = list.get(i);
                     Object ob = c.list.get(i);
                     // Handle both are null
-                    if ((oa == null && ob != null) || (oa != null && ob == null)
-                        || (oa != null && ob != null && !oa.equals(ob))) {
+                    if (oa == null && ob == null) {
+                        continue;
+                    }
+                    if (oa == null || !oa.equals(ob)) {
                         return false;
                     }
                 }
+                return true;
             }
         }
 

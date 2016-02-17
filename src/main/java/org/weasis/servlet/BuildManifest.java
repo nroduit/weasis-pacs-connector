@@ -40,26 +40,27 @@ public class BuildManifest extends HttpServlet {
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        doGet(request, response);
+        buildManifest(request, response);
     }
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        ConnectorProperties connectorProperties =
-            (ConnectorProperties) this.getServletContext().getAttribute("componentProperties");
-        // Check if the source of this request is allowed
-        if (!ServletUtil.isRequestAllowed(request, connectorProperties, LOGGER)) {
-            return;
-        }
-
-        buildManifest(request, response, connectorProperties.getResolveConnectorProperties(request));
+        buildManifest(request, response);
     }
 
-    private void buildManifest(HttpServletRequest request, HttpServletResponse response, ConnectorProperties props) {
+    private void buildManifest(HttpServletRequest request, HttpServletResponse response) {
         try {
             if (LOGGER.isDebugEnabled()) {
                 ServletUtil.logInfo(request, LOGGER);
             }
+            ConnectorProperties connectorProperties =
+                (ConnectorProperties) this.getServletContext().getAttribute("componentProperties");
+            // Check if the source of this request is allowed
+            if (!ServletUtil.isRequestAllowed(request, connectorProperties, LOGGER)) {
+                return;
+            }
+
+            ConnectorProperties props = connectorProperties.getResolveConnectorProperties(request);
 
             boolean gzip = request.getParameter("gzip") != null;
 
@@ -70,9 +71,9 @@ public class BuildManifest extends HttpServlet {
             response.setStatus(HttpServletResponse.SC_OK);
             response.sendRedirect(wadoQueryUrl);
 
-        } catch (Throwable t) {
-            LOGGER.error("Building manifest", t);
-            ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, t.getMessage());
+        } catch (Exception e) {
+            LOGGER.error("Building manifest", e);
+            ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
 }

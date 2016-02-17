@@ -8,8 +8,6 @@ import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.wado.WadoQuery.WadoMessage;
@@ -18,7 +16,6 @@ import org.weasis.query.dicom.DicomQueryConfiguration;
 import org.weasis.servlet.ConnectorProperties;
 
 public class CommonQueryParams {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CommonQueryParams.class);
 
     // Non IID request parameters
     public static final String SERIES_UID = "seriesUID";

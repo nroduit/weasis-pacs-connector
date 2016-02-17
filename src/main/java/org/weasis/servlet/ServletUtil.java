@@ -233,10 +233,10 @@ public class ServletUtil {
                     }
                 }
             }
-        } catch (Throwable t) {
-            LOGGER.error("Error when building the patient list", t);
+        } catch (Exception e) {
+            LOGGER.error("Error when building the patient list", e);
             params.addGeneralWadoMessage(new WadoMessage("Unexpected Error",
-                "Unexpected Error when building the manifest: " + t.getMessage(), WadoMessage.eLevel.ERROR));
+                "Unexpected Error when building the manifest: " + e.getMessage(), WadoMessage.eLevel.ERROR));
         }
     }
 

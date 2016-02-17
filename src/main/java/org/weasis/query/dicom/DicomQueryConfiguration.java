@@ -110,7 +110,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                     Collections.sort(studies, getStudyComparator());
                     applyAllFilters(params, studies);
                 }
-            } catch (Throwable t) {
+            } catch (Exception t) {
                 LOGGER.error("DICOM query Error of {}", getArchiveConfigName(), t);
             }
         }
@@ -121,8 +121,8 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
             Date lowerDateTime = null;
             try {
                 lowerDateTime = javax.xml.bind.DatatypeConverter.parseDateTime(params.getLowerDateTime()).getTime();
-            } catch (Throwable e) {
-                LOGGER.error("Cannot parse date: {}", params.getLowerDateTime());
+            } catch (Exception e) {
+                LOGGER.error("Cannot parse date: {}", params.getLowerDateTime(), e);
             }
             if (lowerDateTime != null) {
                 for (int i = studies.size() - 1; i >= 0; i--) {
@@ -142,8 +142,8 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
             Date upperDateTime = null;
             try {
                 upperDateTime = javax.xml.bind.DatatypeConverter.parseDateTime(params.getUpperDateTime()).getTime();
-            } catch (Throwable e) {
-                LOGGER.error("Cannot parse date: {}", params.getUpperDateTime());
+            } catch (Exception e) {
+                LOGGER.error("Cannot parse date: {}", params.getUpperDateTime(), e);
             }
             if (upperDateTime != null) {
                 for (int i = studies.size() - 1; i >= 0; i--) {
@@ -314,8 +314,8 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                         fillInstance(seriesDataset, study);
                     }
                 }
-            } catch (Throwable t) {
-                LOGGER.error("DICOM query Error of {}", getArchiveConfigName(), t);
+            } catch (Exception e) {
+                LOGGER.error("DICOM query Error of {}", getArchiveConfigName(), e);
             }
         }
     }
@@ -355,10 +355,10 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                         }
                     }
                 }
-            } catch (Throwable t) {
+            } catch (Exception e) {
                 String msg = "DICOM query Error of {}" + getArchiveConfigName();
-                LOGGER.error(msg, t);
-                getWadoMessages().add(new WadoMessage(msg, t.getMessage(), WadoMessage.eLevel.ERROR));
+                LOGGER.error(msg, e);
+                getWadoMessages().add(new WadoMessage(msg, e.getMessage(), WadoMessage.eLevel.ERROR));
             }
         }
     }
@@ -374,8 +374,8 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                     fillSeries(studyDataSet);
                 }
             }
-        } catch (Throwable t) {
-            LOGGER.error("DICOM query Error of {}", getArchiveConfigName(), t);
+        } catch (Exception e) {
+            LOGGER.error("DICOM query Error of {}", getArchiveConfigName(), e);
         }
     }
 

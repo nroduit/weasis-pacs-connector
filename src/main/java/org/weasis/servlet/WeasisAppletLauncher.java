@@ -112,12 +112,12 @@ public class WeasisAppletLauncher extends HttpServlet {
                 .getRequestDispatcher("/applet.jsp?jnlp=" + URLEncoder.encode(buf.toString(), "UTF-8") + manifestCmd);
             dispatcher.forward(request, response);
 
-        } catch (Throwable t) {
-            String msg = t.getMessage();
+        } catch (Exception e) {
+            LOGGER.error("Weasis Applet Servlet Launcher", e);
+            String msg = e.getMessage();
             if (StringUtil.hasText(msg) && msg.startsWith("Unautorized")) {
                 ServletUtil.sendResponseError(response, HttpServletResponse.SC_FORBIDDEN, msg);
             } else {
-                LOGGER.error("Weasis Applet Servlet Launcher", msg);
                 ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
             }
         }

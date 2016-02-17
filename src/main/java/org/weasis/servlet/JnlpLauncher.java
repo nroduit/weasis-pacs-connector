@@ -117,9 +117,9 @@ public class JnlpLauncher extends HttpServlet {
                 if (buf.length() > 0) {
                     request.setAttribute(ATTRIBUTE_UPLOADED_ARGUMENT, buf.toString());
                 }
-            } catch (Throwable t) {
-                LOGGER.error("Uploading jnlp", t);
-                ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, t.getMessage());
+            } catch (Exception e) {
+                LOGGER.error("Uploading jnlp", e);
+                ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
             }
         }
 
@@ -184,9 +184,9 @@ public class JnlpLauncher extends HttpServlet {
         } catch (ServletErrorException e) {
             LOGGER.error("Build jnlp", e);
             ServletUtil.sendResponseError(response, e.responseErrorCode, e.getMessage());
-        } catch (Throwable t) {
-            LOGGER.error("Build jnlp", t);
-            ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, t.getMessage());
+        } catch (Exception e) {
+            LOGGER.error("Build jnlp", e);
+            ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
 

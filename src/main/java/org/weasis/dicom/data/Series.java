@@ -122,9 +122,10 @@ public class Series implements XmlDescription {
                     nubmer1 = Integer.parseInt(o1.getInstanceNumber());
                     nubmer2 = Integer.parseInt(o2.getInstanceNumber());
                 } catch (NumberFormatException e) {
+                    // Do nothing
                 }
 
-                return (nubmer1 < nubmer2 ? -1 : (nubmer1 == nubmer2 ? 0 : 1));
+                return nubmer1 < nubmer2 ? -1 : (nubmer1 == nubmer2 ? 0 : 1);
             }
         });
     }
