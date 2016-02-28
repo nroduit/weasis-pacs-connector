@@ -18,22 +18,15 @@
 
 	<repositories>
 		<repository>
-			<id>weasis</id>
-			<url>http://dicom.vital-it.ch:8087/nexus/content/groups/public</url>
+			<id>mvn-repo-master</id>
+			<url>https://raw.github.com/nroduit/mvn-repo/master/</url>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
 		</repository>
 	</repositories>
-	<!-- Maven server for deploying releases -->
-	<distributionManagement>
-		<repository>
-			<id>releases</id>
-			<url>http://dicom.vital-it.ch:8087/nexus/content/repositories/releases</url>
-		</repository>
-		<snapshotRepository>
-			<id>snapshots</id>
-			<uniqueVersion>false</uniqueVersion>
-			<url>http://dicom.vital-it.ch:8087/nexus/content/repositories/snapshots</url>
-		</snapshotRepository>
-	</distributionManagement>
+	
 	<build>
 		<plugins>
 			<plugin>
