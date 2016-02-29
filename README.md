@@ -11,6 +11,8 @@ This component gathers different services:
 * **/[name of the template]** (default template: /weasis.jnlp) building a jnlp file from a template (jnlp template path, jnlp properties and jnp arguments can be passed via URL parameters, see the [JNLP Builder documentation](JnlpBuilder))
 
 ## New features in weasis-pacs-connector 6 ##
+* Multi-PACS configuration (can be requested simultaneously or individually)
+* Allows to query the PACS through its database
 * Required Java 7
 
 ## New features in weasis-pacs-connector 5 ##
