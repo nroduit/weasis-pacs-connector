@@ -135,7 +135,7 @@ public class Series implements XmlDescription {
         StringBuilder result = new StringBuilder();
         if (seriesInstanceUID != null) {
             result.append("\n<");
-            result.append(TagW.DICOM_LEVEL.SERIES.name());
+            result.append(TagW.Level.SERIES);
             result.append(" ");
             TagUtil.addXmlAttribute(TagW.SeriesInstanceUID, seriesInstanceUID, result);
             TagUtil.addXmlAttribute(TagW.SeriesDescription, seriesDescription, result);
@@ -151,7 +151,7 @@ public class Series implements XmlDescription {
                 result.append(s.toXml());
             }
             result.append("\n</");
-            result.append(TagW.DICOM_LEVEL.SERIES.name());
+            result.append(TagW.Level.SERIES);
             result.append(">");
         }
         return result.toString();

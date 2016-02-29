@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.weasis.dicom.data.Patient;
 import org.weasis.dicom.data.xml.TagUtil;
+import org.weasis.dicom.wado.WadoParameters.HttpTag;
 import org.weasis.query.AbstractQueryConfiguration;
 
 public class WadoQuery implements XmlManifest {
@@ -45,8 +46,13 @@ public class WadoQuery implements XmlManifest {
     }
 
     @Override
-    public String xmlManifest() {
+    public String xmlManifest(String version) {
         manifest.append("<?xml version=\"1.0\" encoding=\"" + getCharsetEncoding() + "\" ?>");
+        
+        if(version != null && "1".equals(version.trim())){
+            return xmlManifest1();
+        }
+        
         manifest.append("\n<");
         manifest.append(WadoParameters.TAG_DOCUMENT_ROOT);
         manifest.append(" ");
@@ -54,7 +60,7 @@ public class WadoQuery implements XmlManifest {
         manifest.append(">");
 
         for (AbstractQueryConfiguration archive : archiveList) {
-            if (archive.getPatients().isEmpty() && archive.getWadoMessages().isEmpty()) {
+            if (archive.getPatients().isEmpty() && archive.getViewerMessage() == null) {
                 continue;
             }
             WadoParameters wadoParameters = archive.getWadoParameters();
@@ -72,42 +78,10 @@ public class WadoQuery implements XmlManifest {
             TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_OVERRIDE_TAGS, wadoParameters.getOverrideDicomTagsList(),
                 manifest);
             manifest.append(">");
-            if (wadoParameters.getHttpTaglist() != null) {
-                for (WadoParameters.HttpTag tag : wadoParameters.getHttpTaglist()) {
-                    manifest.append("\n<");
-                    manifest.append(WadoParameters.TAG_HTTP_TAG);
-                    manifest.append(" key=\"");
-                    manifest.append(tag.getKey());
-                    manifest.append("\" value=\"");
-                    manifest.append(tag.getValue());
-                    manifest.append("\" />");
-                }
-            }
 
-            for (WadoMessage wadoMessage : archive.getWadoMessages()) {
-                manifest.append("\n<");
-                manifest.append(TAG_DOCUMENT_MSG);
-                manifest.append(" ");
-                TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_TITLE, wadoMessage.title, manifest);
-                TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_DESC, wadoMessage.message, manifest);
-                TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_LEVEL, wadoMessage.level.name(), manifest);
-                manifest.append("/>");
-            }
-
-            List<Patient> patientList = archive.getPatients();
-            if (patientList != null) {
-                Collections.sort(patientList, new Comparator<Patient>() {
-
-                    @Override
-                    public int compare(Patient o1, Patient o2) {
-                        return o1.getPatientName().compareTo(o2.getPatientName());
-                    }
-                });
-
-                for (Patient patient : patientList) {
-                    manifest.append(patient.toXml());
-                }
-            }
+            buildHttpTags(wadoParameters.getHttpTaglist());
+            buildViewerMessage(archive.getViewerMessage());
+            buildPatient(archive);
 
             manifest.append("\n</");
             manifest.append(WadoParameters.TAG_WADO_QUERY);
@@ -116,12 +90,88 @@ public class WadoQuery implements XmlManifest {
 
         manifest.append("\n</");
         manifest.append(WadoParameters.TAG_DOCUMENT_ROOT);
-        manifest.append(">");
+        manifest.append(">\n"); // Requires end of line
 
         return manifest.toString();
     }
+    
+    public String xmlManifest1() {
+        for (AbstractQueryConfiguration archive : archiveList) {
+            if (archive.getPatients().isEmpty() && archive.getViewerMessage() == null) {
+                continue;
+            }
+            WadoParameters wadoParameters = archive.getWadoParameters();
+            manifest.append("\n<");
+            manifest.append(WadoParameters.TAG_WADO_QUERY);
+            manifest.append(" xmlns=\"http://www.weasis.org/xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
 
-    public static class WadoMessage {
+            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_URL, wadoParameters.getWadoURL(), manifest);
+            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_WEB_LOGIN, wadoParameters.getWebLogin(), manifest);
+            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_ONLY_SOP_UID, wadoParameters.isRequireOnlySOPInstanceUID(),
+                manifest);
+            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_ADDITIONNAL_PARAMETERS,
+                wadoParameters.getAdditionnalParameters(), manifest);
+            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_OVERRIDE_TAGS, wadoParameters.getOverrideDicomTagsList(),
+                manifest);
+            manifest.append(">");
+
+            buildHttpTags(wadoParameters.getHttpTaglist());
+            buildViewerMessage(archive.getViewerMessage());
+            buildPatient(archive);
+
+            manifest.append("\n</");
+            manifest.append(WadoParameters.TAG_WADO_QUERY);
+            manifest.append(">\n"); // Requires end of line
+            
+            break; // accept only one element
+        }     
+        return manifest.toString();
+    }
+    
+    private void buildPatient(AbstractQueryConfiguration archive){
+        List<Patient> patientList = archive.getPatients();
+        if (patientList != null) {
+            Collections.sort(patientList, new Comparator<Patient>() {
+
+                @Override
+                public int compare(Patient o1, Patient o2) {
+                    return o1.getPatientName().compareTo(o2.getPatientName());
+                }
+            });
+
+            for (Patient patient : patientList) {
+                manifest.append(patient.toXml());
+            }
+        }
+    }
+    
+    private void buildHttpTags(List<HttpTag> list){
+        if (list != null) {
+            for (WadoParameters.HttpTag tag : list) {
+                manifest.append("\n<");
+                manifest.append(WadoParameters.TAG_HTTP_TAG);
+                manifest.append(" key=\"");
+                manifest.append(tag.getKey());
+                manifest.append("\" value=\"");
+                manifest.append(tag.getValue());
+                manifest.append("\" />");
+            }
+        }
+    }
+    
+    private void buildViewerMessage(ViewerMessage message){
+        if (message != null) {
+            manifest.append("\n<");
+            manifest.append(TAG_DOCUMENT_MSG);
+            manifest.append(" ");
+            TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_TITLE, message.title, manifest);
+            TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_DESC, message.message, manifest);
+            TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_LEVEL, message.level.name(), manifest);
+            manifest.append("/>");
+        }
+    }
+
+    public static class ViewerMessage {
         public enum eLevel {
             INFO, WARN, ERROR;
         }
@@ -130,7 +180,7 @@ public class WadoQuery implements XmlManifest {
         private final String title;
         private final eLevel level;
 
-        public WadoMessage(String title, String message, eLevel level) {
+        public ViewerMessage(String title, String message, eLevel level) {
             this.title = title;
             this.message = message;
             this.level = level;

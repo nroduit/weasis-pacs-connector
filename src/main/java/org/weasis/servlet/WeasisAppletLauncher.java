@@ -51,7 +51,7 @@ public class WeasisAppletLauncher extends HttpServlet {
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         UploadXml manifest = WeasisLauncher.uploadManifest(request, response);
-        if (manifest != null && "INVALID".equals(manifest.xmlManifest())) {
+        if (manifest != null && "INVALID".equals(manifest.xmlManifest(null))) {
             return;
         }
 

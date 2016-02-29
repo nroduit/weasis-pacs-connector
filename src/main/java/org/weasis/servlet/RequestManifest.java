@@ -108,7 +108,9 @@ public class RequestManifest extends HttpServlet {
         }
 
         response.setCharacterEncoding(xml.getCharsetEncoding());
-        String wadoXmlGenerated = xml.xmlManifest();
+        ConnectorProperties connectorProperties =
+                        (ConnectorProperties) this.getServletContext().getAttribute("componentProperties");
+        String wadoXmlGenerated = xml.xmlManifest((String) connectorProperties.get("manifest.version"));
 
         Boolean gzip = request.getParameter(PARAM_NO_GZIP) == null;
 

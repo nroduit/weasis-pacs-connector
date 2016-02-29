@@ -12,8 +12,19 @@ package org.weasis.dicom.data;
 
 public class TagW {
 
-    public enum DICOM_LEVEL {
-        PATIENT, STUDY, SERIES, INSTANCE
+    public enum Level {
+        PATIENT("Patient"), STUDY("Study"), SERIES("Series"), INSTANCE("Instance");
+
+        private final String tag;
+
+        private Level(String tag) {
+           this.tag = tag;
+        }
+
+        @Override
+        public String toString() {
+            return tag;
+        }
     };
 
     public enum TagType {

@@ -11,7 +11,7 @@ public class UploadXml implements XmlManifest {
     }
 
     @Override
-    public String xmlManifest() {
+    public String xmlManifest(String version) {
         return xmlContent;
     }
 

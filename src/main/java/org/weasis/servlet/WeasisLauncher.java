@@ -61,7 +61,7 @@ public class WeasisLauncher extends HttpServlet {
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         UploadXml manifest = uploadManifest(request, response);
-        if (manifest != null && "INVALID".equals(manifest.xmlManifest())) {
+        if (manifest != null && "INVALID".equals(manifest.xmlManifest(null))) {
             return;
         }
 
@@ -173,7 +173,7 @@ public class WeasisLauncher extends HttpServlet {
             XmlManifest xml = future.get(ManifestManagerThread.MAX_LIFE_CYCLE, TimeUnit.MILLISECONDS);
 
             request.setAttribute(JnlpLauncher.ATTRIBUTE_UPLOADED_ARGUMENT,
-                "$dicom:get -i " + Base64.encodeBytes(xml.xmlManifest().getBytes(), Base64.GZIP));
+                "$dicom:get -i " + Base64.encodeBytes(xml.xmlManifest((String) connectorProperties.get("manifest.version")).getBytes(), Base64.GZIP));
             // Remove the builder as it has been retrieved without calling RequestManifest servlet
             final ConcurrentHashMap<Integer, ManifestBuilder> builderMap =
                 (ConcurrentHashMap<Integer, ManifestBuilder>) ctx.getAttribute("manifestBuilderMap");

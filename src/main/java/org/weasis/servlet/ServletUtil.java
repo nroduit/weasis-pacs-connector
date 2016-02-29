@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.Patient;
 import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.util.StringUtil.Suffix;
-import org.weasis.dicom.wado.WadoQuery.WadoMessage;
+import org.weasis.dicom.wado.WadoQuery.ViewerMessage;
 import org.weasis.dicom.wado.thread.ManifestBuilder;
 import org.weasis.query.AbstractQueryConfiguration;
 import org.weasis.query.CommonQueryParams;
@@ -181,8 +181,8 @@ public class ServletUtil {
                     }
                 } else {
                     LOGGER.error("Not ID found for STUDY request type: {}", requestType);
-                    params.addGeneralWadoMessage(new WadoMessage("Missing Study ID", "No study ID found in the request",
-                        WadoMessage.eLevel.ERROR));
+                    params.addGeneralViewerMessage(new ViewerMessage("Missing Study ID", "No study ID found in the request",
+                        ViewerMessage.eLevel.ERROR));
                 }
             } else if (PATIENT_LEVEL.equals(requestType) && isRequestIDAllowed(PATIENT_LEVEL, properties)) {
                 String patID = params.getReqPatientID();
@@ -194,8 +194,8 @@ public class ServletUtil {
                 }
             } else if (requestType != null) {
                 LOGGER.error("Not supported IID request type: {}", requestType);
-                params.addGeneralWadoMessage(new WadoMessage("Unexpected Request", "IID request type: " + requestType,
-                    WadoMessage.eLevel.ERROR));
+                params.addGeneralViewerMessage(new ViewerMessage("Unexpected Request", "IID request type: " + requestType,
+                    ViewerMessage.eLevel.ERROR));
             } else {
                 String[] pat = params.getReqPatientIDs();
                 String[] stu = params.getReqStudyUIDs();
@@ -235,8 +235,8 @@ public class ServletUtil {
             }
         } catch (Exception e) {
             LOGGER.error("Error when building the patient list", e);
-            params.addGeneralWadoMessage(new WadoMessage("Unexpected Error",
-                "Unexpected Error when building the manifest: " + e.getMessage(), WadoMessage.eLevel.ERROR));
+            params.addGeneralViewerMessage(new ViewerMessage("Unexpected Error",
+                "Unexpected Error when building the manifest: " + e.getMessage(), ViewerMessage.eLevel.ERROR));
         }
     }
 

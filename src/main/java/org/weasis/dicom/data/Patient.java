@@ -127,7 +127,7 @@ public class Patient implements XmlDescription {
         StringBuilder result = new StringBuilder();
         if (patientID != null && patientName != null) {
             result.append("\n<");
-            result.append(TagW.DICOM_LEVEL.PATIENT.name());
+            result.append(TagW.Level.PATIENT);
             result.append(" ");
 
             TagUtil.addXmlAttribute(TagW.PatientID, patientID, result);
@@ -143,7 +143,7 @@ public class Patient implements XmlDescription {
                 result.append(s.toXml());
             }
             result.append("\n</");
-            result.append(TagW.DICOM_LEVEL.PATIENT.name());
+            result.append(TagW.Level.PATIENT);
             result.append(">");
         }
 

@@ -23,7 +23,7 @@ import org.weasis.dicom.param.DicomState;
 import org.weasis.dicom.param.TlsOptions;
 import org.weasis.dicom.util.DateUtil;
 import org.weasis.dicom.util.StringUtil;
-import org.weasis.dicom.wado.WadoQuery.WadoMessage;
+import org.weasis.dicom.wado.WadoQuery.ViewerMessage;
 import org.weasis.query.AbstractQueryConfiguration;
 import org.weasis.query.CommonQueryParams;
 
@@ -358,7 +358,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
             } catch (Exception e) {
                 String msg = "DICOM query Error of {}" + getArchiveConfigName();
                 LOGGER.error(msg, e);
-                getWadoMessages().add(new WadoMessage(msg, e.getMessage(), WadoMessage.eLevel.ERROR));
+                setViewerMessage(new ViewerMessage(msg, e.getMessage(), ViewerMessage.eLevel.ERROR));
             }
         }
     }

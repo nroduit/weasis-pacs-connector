@@ -101,7 +101,7 @@ public class Study implements XmlDescription {
         StringBuilder result = new StringBuilder();
         if (studyInstanceUID != null) {
             result.append("\n<");
-            result.append(TagW.DICOM_LEVEL.STUDY.name());
+            result.append(TagW.Level.STUDY);
             result.append(" ");
             TagUtil.addXmlAttribute(TagW.StudyInstanceUID, studyInstanceUID, result);
             TagUtil.addXmlAttribute(TagW.StudyDescription, studyDescription, result);
@@ -139,7 +139,7 @@ public class Study implements XmlDescription {
             }
 
             result.append("\n</");
-            result.append(TagW.DICOM_LEVEL.STUDY.name());
+            result.append(TagW.Level.STUDY);
             result.append(">");
         }
         return result.toString();

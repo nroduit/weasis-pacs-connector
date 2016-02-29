@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.util.StringUtil;
-import org.weasis.dicom.wado.WadoQuery.WadoMessage;
+import org.weasis.dicom.wado.WadoQuery.ViewerMessage;
 import org.weasis.query.db.DbQueryConfiguration;
 import org.weasis.query.dicom.DicomQueryConfiguration;
 import org.weasis.servlet.ConnectorProperties;
@@ -133,9 +133,9 @@ public class CommonQueryParams {
         return archiveList;
     }
 
-    public void addGeneralWadoMessage(WadoMessage wadoMessage) {
+    public void addGeneralViewerMessage(ViewerMessage viewerMessage) {
         if (!archiveList.isEmpty()) {
-            archiveList.get(0).getWadoMessages().add(wadoMessage);
+            archiveList.get(0).setViewerMessage(viewerMessage);
         }
     }
 
