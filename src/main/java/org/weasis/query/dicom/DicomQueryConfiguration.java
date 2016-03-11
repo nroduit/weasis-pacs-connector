@@ -15,6 +15,7 @@ import org.weasis.dicom.data.Patient;
 import org.weasis.dicom.data.SOPInstance;
 import org.weasis.dicom.data.Series;
 import org.weasis.dicom.data.Study;
+import org.weasis.dicom.mf.ArcQuery.ViewerMessage;
 import org.weasis.dicom.op.CFind;
 import org.weasis.dicom.param.AdvancedParams;
 import org.weasis.dicom.param.DicomNode;
@@ -23,7 +24,6 @@ import org.weasis.dicom.param.DicomState;
 import org.weasis.dicom.param.TlsOptions;
 import org.weasis.dicom.util.DateUtil;
 import org.weasis.dicom.util.StringUtil;
-import org.weasis.dicom.wado.WadoQuery.ViewerMessage;
 import org.weasis.query.AbstractQueryConfiguration;
 import org.weasis.query.CommonQueryParams;
 

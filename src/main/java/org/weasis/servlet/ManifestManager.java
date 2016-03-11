@@ -25,8 +25,8 @@ import javax.servlet.http.HttpServlet;
 import org.jdom2.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.wado.thread.ManifestBuilder;
-import org.weasis.dicom.wado.thread.ManifestManagerThread;
+import org.weasis.dicom.mf.thread.ManifestBuilder;
+import org.weasis.dicom.mf.thread.ManifestManagerThread;
 
 public class ManifestManager extends HttpServlet {
 

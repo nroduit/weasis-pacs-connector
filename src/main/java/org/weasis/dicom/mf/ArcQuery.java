@@ -8,7 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  *******************************************************************************/
-package org.weasis.dicom.wado;
+package org.weasis.dicom.mf;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -16,23 +16,19 @@ import java.util.List;
 
 import org.weasis.dicom.data.Patient;
 import org.weasis.dicom.data.xml.TagUtil;
-import org.weasis.dicom.wado.WadoParameters.HttpTag;
 import org.weasis.query.AbstractQueryConfiguration;
 
-public class WadoQuery implements XmlManifest {
-
-    public static final String FILE_PREFIX = "wado_query";
-    public static final String FILE_EXTENSION = ".xml.gz";
+public class ArcQuery implements XmlManifest {
 
     public static final String TAG_DOCUMENT_MSG = "Message";
-    public static final String TAG_MSG_ATTRIBUTE_TITLE = "title";
-    public static final String TAG_MSG_ATTRIBUTE_DESC = "description";
-    public static final String TAG_MSG_ATTRIBUTE_LEVEL = "severity";
+    public static final String MSG_ATTRIBUTE_TITLE = "title";
+    public static final String MSG_ATTRIBUTE_DESC = "description";
+    public static final String MSG_ATTRIBUTE_LEVEL = "severity";
 
     private final List<AbstractQueryConfiguration> archiveList;
     private final StringBuilder manifest;
 
-    public WadoQuery(List<AbstractQueryConfiguration> list) {
+    public ArcQuery(List<AbstractQueryConfiguration> list) {
         if (list == null) {
             throw new IllegalArgumentException();
         }
@@ -48,15 +44,15 @@ public class WadoQuery implements XmlManifest {
     @Override
     public String xmlManifest(String version) {
         manifest.append("<?xml version=\"1.0\" encoding=\"" + getCharsetEncoding() + "\" ?>");
-        
-        if(version != null && "1".equals(version.trim())){
+
+        if (version != null && "1".equals(version.trim())) {
             return xmlManifest1();
         }
-        
+
         manifest.append("\n<");
-        manifest.append(WadoParameters.TAG_DOCUMENT_ROOT);
+        manifest.append(ArcParameters.TAG_DOCUMENT_ROOT);
         manifest.append(" ");
-        manifest.append(WadoParameters.TAG_SCHEMA);
+        manifest.append(ArcParameters.SCHEMA);
         manifest.append(">");
 
         for (AbstractQueryConfiguration archive : archiveList) {
@@ -65,18 +61,17 @@ public class WadoQuery implements XmlManifest {
             }
             WadoParameters wadoParameters = archive.getWadoParameters();
             manifest.append("\n<");
-            manifest.append(WadoParameters.TAG_WADO_QUERY);
+            manifest.append(ArcParameters.TAG_ARC_QUERY);
             manifest.append(" ");
 
-            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_ARCHIVE_ID, wadoParameters.getArchiveID(), manifest);
-            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_URL, wadoParameters.getWadoURL(), manifest);
-            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_WEB_LOGIN, wadoParameters.getWebLogin(), manifest);
-            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_ONLY_SOP_UID, wadoParameters.isRequireOnlySOPInstanceUID(),
+            TagUtil.addXmlAttribute(ArcParameters.ARCHIVE_ID, wadoParameters.getArchiveID(), manifest);
+            TagUtil.addXmlAttribute(ArcParameters.BASE_URL, wadoParameters.getBaseURL(), manifest);
+            TagUtil.addXmlAttribute(ArcParameters.WEB_LOGIN, wadoParameters.getWebLogin(), manifest);
+            TagUtil.addXmlAttribute(WadoParameters.WADO_ONLY_SOP_UID, wadoParameters.isRequireOnlySOPInstanceUID(),
                 manifest);
-            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_ADDITIONNAL_PARAMETERS,
-                wadoParameters.getAdditionnalParameters(), manifest);
-            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_OVERRIDE_TAGS, wadoParameters.getOverrideDicomTagsList(),
+            TagUtil.addXmlAttribute(ArcParameters.ADDITIONNAL_PARAMETERS, wadoParameters.getAdditionnalParameters(),
                 manifest);
+            TagUtil.addXmlAttribute(ArcParameters.OVERRIDE_TAGS, wadoParameters.getOverrideDicomTagsList(), manifest);
             manifest.append(">");
 
             buildHttpTags(wadoParameters.getHttpTaglist());
@@ -84,17 +79,17 @@ public class WadoQuery implements XmlManifest {
             buildPatient(archive);
 
             manifest.append("\n</");
-            manifest.append(WadoParameters.TAG_WADO_QUERY);
+            manifest.append(ArcParameters.TAG_ARC_QUERY);
             manifest.append(">");
         }
 
         manifest.append("\n</");
-        manifest.append(WadoParameters.TAG_DOCUMENT_ROOT);
+        manifest.append(ArcParameters.TAG_DOCUMENT_ROOT);
         manifest.append(">\n"); // Requires end of line
 
         return manifest.toString();
     }
-    
+
     public String xmlManifest1() {
         for (AbstractQueryConfiguration archive : archiveList) {
             if (archive.getPatients().isEmpty() && archive.getViewerMessage() == null) {
@@ -103,16 +98,16 @@ public class WadoQuery implements XmlManifest {
             WadoParameters wadoParameters = archive.getWadoParameters();
             manifest.append("\n<");
             manifest.append(WadoParameters.TAG_WADO_QUERY);
-            manifest.append(" xmlns=\"http://www.weasis.org/xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
+            manifest.append(
+                " xmlns=\"http://www.weasis.org/xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
 
-            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_URL, wadoParameters.getWadoURL(), manifest);
-            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_WEB_LOGIN, wadoParameters.getWebLogin(), manifest);
-            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_ONLY_SOP_UID, wadoParameters.isRequireOnlySOPInstanceUID(),
+            TagUtil.addXmlAttribute(WadoParameters.WADO_URL, wadoParameters.getBaseURL(), manifest);
+            TagUtil.addXmlAttribute(ArcParameters.WEB_LOGIN, wadoParameters.getWebLogin(), manifest);
+            TagUtil.addXmlAttribute(WadoParameters.WADO_ONLY_SOP_UID, wadoParameters.isRequireOnlySOPInstanceUID(),
                 manifest);
-            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_ADDITIONNAL_PARAMETERS,
-                wadoParameters.getAdditionnalParameters(), manifest);
-            TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_OVERRIDE_TAGS, wadoParameters.getOverrideDicomTagsList(),
+            TagUtil.addXmlAttribute(ArcParameters.ADDITIONNAL_PARAMETERS, wadoParameters.getAdditionnalParameters(),
                 manifest);
+            TagUtil.addXmlAttribute(ArcParameters.OVERRIDE_TAGS, wadoParameters.getOverrideDicomTagsList(), manifest);
             manifest.append(">");
 
             buildHttpTags(wadoParameters.getHttpTaglist());
@@ -122,13 +117,13 @@ public class WadoQuery implements XmlManifest {
             manifest.append("\n</");
             manifest.append(WadoParameters.TAG_WADO_QUERY);
             manifest.append(">\n"); // Requires end of line
-            
+
             break; // accept only one element
-        }     
+        }
         return manifest.toString();
     }
-    
-    private void buildPatient(AbstractQueryConfiguration archive){
+
+    private void buildPatient(AbstractQueryConfiguration archive) {
         List<Patient> patientList = archive.getPatients();
         if (patientList != null) {
             Collections.sort(patientList, new Comparator<Patient>() {
@@ -144,12 +139,12 @@ public class WadoQuery implements XmlManifest {
             }
         }
     }
-    
-    private void buildHttpTags(List<HttpTag> list){
+
+    private void buildHttpTags(List<ArcParameters.HttpTag> list) {
         if (list != null) {
             for (WadoParameters.HttpTag tag : list) {
                 manifest.append("\n<");
-                manifest.append(WadoParameters.TAG_HTTP_TAG);
+                manifest.append(ArcParameters.TAG_HTTP_TAG);
                 manifest.append(" key=\"");
                 manifest.append(tag.getKey());
                 manifest.append("\" value=\"");
@@ -158,15 +153,15 @@ public class WadoQuery implements XmlManifest {
             }
         }
     }
-    
-    private void buildViewerMessage(ViewerMessage message){
+
+    private void buildViewerMessage(ViewerMessage message) {
         if (message != null) {
             manifest.append("\n<");
             manifest.append(TAG_DOCUMENT_MSG);
             manifest.append(" ");
-            TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_TITLE, message.title, manifest);
-            TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_DESC, message.message, manifest);
-            TagUtil.addXmlAttribute(TAG_MSG_ATTRIBUTE_LEVEL, message.level.name(), manifest);
+            TagUtil.addXmlAttribute(MSG_ATTRIBUTE_TITLE, message.title, manifest);
+            TagUtil.addXmlAttribute(MSG_ATTRIBUTE_DESC, message.message, manifest);
+            TagUtil.addXmlAttribute(MSG_ATTRIBUTE_LEVEL, message.level.name(), manifest);
             manifest.append("/>");
         }
     }

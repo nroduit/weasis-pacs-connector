@@ -1,4 +1,4 @@
-package org.weasis.dicom.wado;
+package org.weasis.dicom.mf;
 
 public interface XmlManifest {
 

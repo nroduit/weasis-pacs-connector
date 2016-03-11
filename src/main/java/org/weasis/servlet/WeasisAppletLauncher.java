@@ -23,9 +23,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.dicom.mf.UploadXml;
+import org.weasis.dicom.mf.XmlManifest;
 import org.weasis.dicom.util.StringUtil;
-import org.weasis.dicom.wado.UploadXml;
-import org.weasis.dicom.wado.XmlManifest;
 
 public class WeasisAppletLauncher extends HttpServlet {
 

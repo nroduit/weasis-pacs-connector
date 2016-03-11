@@ -8,9 +8,9 @@ import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.weasis.dicom.mf.ArcQuery.ViewerMessage;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.util.StringUtil;
-import org.weasis.dicom.wado.WadoQuery.ViewerMessage;
 import org.weasis.query.db.DbQueryConfiguration;
 import org.weasis.query.dicom.DicomQueryConfiguration;
 import org.weasis.servlet.ConnectorProperties;
