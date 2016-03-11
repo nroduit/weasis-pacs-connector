@@ -8,7 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  *******************************************************************************/
-package org.weasis.dicom.wado.thread;
+package org.weasis.dicom.mf.thread;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -17,8 +17,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.wado.WadoQuery;
-import org.weasis.dicom.wado.XmlManifest;
+import org.weasis.dicom.mf.ArcQuery;
+import org.weasis.dicom.mf.XmlManifest;
 import org.weasis.query.CommonQueryParams;
 import org.weasis.servlet.ServletUtil;
 
@@ -79,7 +79,7 @@ public class ManifestBuilder implements Callable<XmlManifest> {
             if (!params.hasPatients() && !params.isAcceptNoImage()) {
                 throw new IllegalStateException("Empty Patient List");
             }
-            WadoQuery wadoQuery = new WadoQuery(params.getArchiveList());
+            ArcQuery wadoQuery = new ArcQuery(params.getArchiveList());
 
             LOGGER.info("Build Manifest in {} ms [id={}]", System.currentTimeMillis() - startTime, requestId);
             return wadoQuery;

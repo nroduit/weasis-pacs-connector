@@ -40,10 +40,10 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.Patient;
+import org.weasis.dicom.mf.ArcQuery.ViewerMessage;
+import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.dicom.util.StringUtil;
 import org.weasis.dicom.util.StringUtil.Suffix;
-import org.weasis.dicom.wado.WadoQuery.ViewerMessage;
-import org.weasis.dicom.wado.thread.ManifestBuilder;
 import org.weasis.query.AbstractQueryConfiguration;
 import org.weasis.query.CommonQueryParams;
 import org.weasis.util.EncryptUtils;
@@ -181,8 +181,8 @@ public class ServletUtil {
                     }
                 } else {
                     LOGGER.error("Not ID found for STUDY request type: {}", requestType);
-                    params.addGeneralViewerMessage(new ViewerMessage("Missing Study ID", "No study ID found in the request",
-                        ViewerMessage.eLevel.ERROR));
+                    params.addGeneralViewerMessage(new ViewerMessage("Missing Study ID",
+                        "No study ID found in the request", ViewerMessage.eLevel.ERROR));
                 }
             } else if (PATIENT_LEVEL.equals(requestType) && isRequestIDAllowed(PATIENT_LEVEL, properties)) {
                 String patID = params.getReqPatientID();
@@ -194,8 +194,8 @@ public class ServletUtil {
                 }
             } else if (requestType != null) {
                 LOGGER.error("Not supported IID request type: {}", requestType);
-                params.addGeneralViewerMessage(new ViewerMessage("Unexpected Request", "IID request type: " + requestType,
-                    ViewerMessage.eLevel.ERROR));
+                params.addGeneralViewerMessage(new ViewerMessage("Unexpected Request",
+                    "IID request type: " + requestType, ViewerMessage.eLevel.ERROR));
             } else {
                 String[] pat = params.getReqPatientIDs();
                 String[] stu = params.getReqStudyUIDs();
