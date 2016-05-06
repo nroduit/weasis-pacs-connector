@@ -18,7 +18,7 @@ public class TagW {
         private final String tag;
 
         private Level(String tag) {
-           this.tag = tag;
+            this.tag = tag;
         }
 
         @Override
@@ -29,9 +29,8 @@ public class TagW {
 
     public enum TagType {
         // Period is 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
-        STRING, STRING_ARRAY, URI, SEQUENCE, DATE, DATETIME, TIME, PERIOD, BOOLEAN, BYTEARRAY, INTEGER, INTEGERARRAY,
-        FLOAT, FLOATARRAY, DOUBLE, DOUBLE_ARRAY, COLOR, THUMBNAIL, LIST, OBJECT
-
+        STRING, STRING_ARRAY, URI, SEQUENCE, DATE, DATETIME, TIME, PERIOD, BOOLEAN, BYTE_ARRAY, INTEGER, INTEGER_ARRAY,
+        FLOAT, FLOAT_ARRAY, DOUBLE, DOUBLE_ARRAY, COLOR, THUMBNAIL, LIST, OBJECT
     };
 
     public static final TagW WadoCompressionRate = new TagW("Wado Compression Rate", TagType.INTEGER);
