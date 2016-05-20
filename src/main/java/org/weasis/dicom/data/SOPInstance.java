@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.dicom.data;
 
+import org.dcm4che3.data.Tag;
 import org.weasis.dicom.data.xml.TagUtil;
 import org.weasis.dicom.data.xml.XmlDescription;
 
@@ -59,13 +60,13 @@ public class SOPInstance implements XmlDescription {
     public String toXml() {
         StringBuilder result = new StringBuilder();
         result.append("\n<");
-        result.append(TagW.Level.INSTANCE);
+        result.append(TagUtil.Level.INSTANCE);
         result.append(" ");
-        TagUtil.addXmlAttribute(TagW.SOPInstanceUID, sopInstanceUID, result);
+        TagUtil.addXmlAttribute(Tag.SOPInstanceUID, sopInstanceUID, result);
         // file_tsuid DICOM Transfer Syntax UID (0002,0010)
-        TagUtil.addXmlAttribute(TagW.TransferSyntaxUID, transferSyntaxUID, result);
-        TagUtil.addXmlAttribute(TagW.InstanceNumber, instanceNumber, result);
-        TagUtil.addXmlAttribute(TagW.DirectDownloadFile, directDownloadFile, result);
+        TagUtil.addXmlAttribute(Tag.TransferSyntaxUID, transferSyntaxUID, result);
+        TagUtil.addXmlAttribute(Tag.InstanceNumber, instanceNumber, result);
+        TagUtil.addXmlAttribute(TagUtil.DirectDownloadFile, directDownloadFile, result);
         result.append("/>");
 
         return result.toString();

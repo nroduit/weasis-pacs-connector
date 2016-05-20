@@ -112,14 +112,13 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
                 patient.setPatientName(getString(resultSet, patientNameField));
 
                 if ("VARCHAR2".equals(patientBirthdateTypeField)) {
-                    patient.setPatientBirthDate(
-                        getDate(resultSet, patientBirthDateField, patientBirthdateFormatField, DateUtil.DATE_FORMAT));
+                    patient.setPatientBirthDate(getDate(resultSet, patientBirthDateField, patientBirthdateFormatField));
                 } else if ("DATE".equals(patientBirthdateTypeField)) {
-                    patient.setPatientBirthDate(getDate(resultSet, patientBirthDateField, DateUtil.DATE_FORMAT));
+                    patient.setPatientBirthDate(getDate(resultSet, patientBirthDateField));
                 }
 
                 if (patientBirthTimeField != null) {
-                    patient.setPatientBirthTime(getDate(resultSet, patientBirthTimeField, DateUtil.TIME_FORMAT));
+                    patient.setPatientBirthTime(getTime(resultSet, patientBirthTimeField));
                 }
 
                 patient.setPatientSex(getString(resultSet, patientSexField));
@@ -132,11 +131,11 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
                 study = new Study(getString(resultSet, studyIUIDField));
 
                 if ("DATE".equalsIgnoreCase(studyDateTypeField)) {
-                    study.setStudyDate(getDate(resultSet, studyDateField, DateUtil.DATE_FORMAT));
-                    study.setStudyTime(getDate(resultSet, studyDateField, DateUtil.TIME_FORMAT));
+                    study.setStudyDate(getDate(resultSet, studyDateField));
+                    study.setStudyTime(getTime(resultSet, studyDateField));
                 } else if ("TIMESTAMP".equalsIgnoreCase(studyDateTypeField)) {
-                    study.setStudyDate(getTimeStamp(resultSet, studyDateField, DateUtil.DATE_FORMAT));
-                    study.setStudyTime(getTimeStamp(resultSet, studyDateField, DateUtil.TIME_FORMAT));
+                    study.setStudyDate(getDateFromTimeStamp(resultSet, studyDateField));
+                    study.setStudyTime(getTimeFromTimeStamp(resultSet, studyDateField));
                 }
 
                 study.setAccessionNumber(getString(resultSet, accessionNumberField));
@@ -183,7 +182,15 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
         return null;
     }
 
-    private String getQueryString(String... strings) {
+    private String buildQuery(String clauseWhere) {
+        StringBuilder query = new StringBuilder();
+        query.append(properties.getProperty("arc.db.query.select"));
+        query.append(" where ").append(clauseWhere).append(" ");
+        query.append(properties.getProperty("arc.db.query.and"));
+        return query.toString();
+    }
+    
+    private static String getQueryString(String... strings) {
         StringBuilder queryString = new StringBuilder();
         for (String str : strings) {
             if (StringUtil.hasText(str)) {
@@ -198,43 +205,51 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
         return queryString.toString();
     }
 
-    private String buildQuery(String clauseWhere) {
-        StringBuilder query = new StringBuilder();
-        query.append(properties.getProperty("arc.db.query.select"));
-        query.append(" where ").append(clauseWhere).append(" ");
-        query.append(properties.getProperty("arc.db.query.and"));
-        return query.toString();
-    }
 
-    private String getString(ResultSet resultSet, String field) throws SQLException {
+    private static String getString(ResultSet resultSet, String field) throws SQLException {
         if (field != null) {
             return EscapeChars.forXML(resultSet.getString(field));
         }
         return null;
     }
 
-    private static String getTimeStamp(ResultSet resultSet, String field, String targetFormat) throws SQLException {
+    private static String getDateFromTimeStamp(ResultSet resultSet, String field) throws SQLException {
         Timestamp timestamp = resultSet.getTimestamp(field);
         if (timestamp != null) {
-            return new SimpleDateFormat(targetFormat).format(timestamp);
+            return DateUtil.formatDicomDate(timestamp);
         }
         return null;
     }
 
-    private static String getDate(ResultSet resultSet, String field, String targetFormat) throws SQLException {
+    private static String getTimeFromTimeStamp(ResultSet resultSet, String field) throws SQLException {
+        Timestamp timestamp = resultSet.getTimestamp(field);
+        if (timestamp != null) {
+            return DateUtil.formatDicomTime(timestamp);
+        }
+        return null;
+    }
+
+    private static String getDate(ResultSet resultSet, String field) throws SQLException {
         Date date = resultSet.getDate(field);
         if (date != null) {
-            return new SimpleDateFormat(targetFormat).format(date);
+            return DateUtil.formatDicomDate(date);
         }
         return null;
     }
 
-    private static String getDate(ResultSet resultSet, String field, String sourceFormat, String targetFormat)
-        throws SQLException {
+    private static String getTime(ResultSet resultSet, String field) throws SQLException {
+        Date date = resultSet.getDate(field);
+        if (date != null) {
+            return DateUtil.formatDicomTime(date);
+        }
+        return null;
+    }
+
+    private static String getDate(ResultSet resultSet, String field, String sourceFormat) throws SQLException {
         String dateStr = resultSet.getString(field);
         try {
             if (StringUtil.hasText(dateStr)) {
-                return new SimpleDateFormat(targetFormat).format(new SimpleDateFormat(sourceFormat).parse(dateStr));
+                return DateUtil.formatDicomDate(new SimpleDateFormat(sourceFormat).parse(dateStr));
             }
         } catch (ParseException e) {
             LOGGER.error("Format Error: error parsing the field [{}] - {}", field, e.getMessage());

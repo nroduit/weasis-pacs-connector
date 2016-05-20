@@ -15,11 +15,36 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.weasis.dicom.data.TagW;
+import org.dcm4che3.data.ElementDictionary;
+import org.dcm4che3.util.TagUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TagUtil {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TagUtil.class);
+
     private static final String DELIM_START = "${";
     private static final String DELIM_STOP = "}";
+
+    public enum Level {
+        PATIENT("Patient"), STUDY("Study"), SERIES("Series"), INSTANCE("Instance");
+
+        private final String tag;
+
+        private Level(String tag) {
+            this.tag = tag;
+        }
+
+        @Override
+        public String toString() {
+            return tag;
+        }
+    }
+
+    public static final String WadoCompressionRate = "WadoCompressionRate";
+    public static final String WadoTransferSyntaxUID = "WadoTransferSyntaxUID";
+    public static final String DirectDownloadFile = "DirectDownloadFile";
+    public static final String DirectDownloadThumbnail = "DirectDownloadThumbnail";
 
     private TagUtil() {
     }
@@ -71,12 +96,17 @@ public class TagUtil {
         return substVars(result, currentKey, map, configProps, extProps);
     }
 
-    public static void addXmlAttribute(TagW tag, String value, StringBuilder result) {
-        if (tag != null && value != null) {
-            result.append(tag.getTagName());
-            result.append("=\"");
-            result.append(EscapeChars.forXML(value));
-            result.append("\" ");
+    public static void addXmlAttribute(int tagID, String value, StringBuilder result) {
+        if (value != null) {
+            String key = ElementDictionary.getStandardElementDictionary().keywordOf(tagID);
+            if (key == null) {
+                LOGGER.error("Cannot find keyword of tagID {}", TagUtils.toString(tagID));
+            } else {
+                result.append(key);
+                result.append("=\"");
+                result.append(EscapeChars.forXML(value));
+                result.append("\" ");
+            }
         }
     }
 
