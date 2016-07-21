@@ -1,4 +1,4 @@
-package org.weasis.dicom.wado;
+package org.weasis.dicom.mf;
 
 public class UploadXml implements XmlManifest {
 
@@ -11,7 +11,7 @@ public class UploadXml implements XmlManifest {
     }
 
     @Override
-    public String xmlManifest() {
+    public String xmlManifest(String version) {
         return xmlContent;
     }
 

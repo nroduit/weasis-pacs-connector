@@ -25,10 +25,10 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.dicom.mf.XmlManifest;
+import org.weasis.dicom.mf.thread.ManifestBuilder;
+import org.weasis.dicom.mf.thread.ManifestManagerThread;
 import org.weasis.dicom.util.StringUtil;
-import org.weasis.dicom.wado.XmlManifest;
-import org.weasis.dicom.wado.thread.ManifestBuilder;
-import org.weasis.dicom.wado.thread.ManifestManagerThread;
 
 public class RequestManifest extends HttpServlet {
 
@@ -108,7 +108,9 @@ public class RequestManifest extends HttpServlet {
         }
 
         response.setCharacterEncoding(xml.getCharsetEncoding());
-        String wadoXmlGenerated = xml.xmlManifest();
+        ConnectorProperties connectorProperties =
+            (ConnectorProperties) this.getServletContext().getAttribute("componentProperties");
+        String wadoXmlGenerated = xml.xmlManifest((String) connectorProperties.get("manifest.version"));
 
         Boolean gzip = request.getParameter(PARAM_NO_GZIP) == null;
 

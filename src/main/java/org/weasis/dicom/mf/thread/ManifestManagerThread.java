@@ -8,7 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  *******************************************************************************/
-package org.weasis.dicom.wado.thread;
+package org.weasis.dicom.mf.thread;
 
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.wado.XmlManifest;
+import org.weasis.dicom.mf.XmlManifest;
 
 public class ManifestManagerThread extends Thread {
 

@@ -11,16 +11,16 @@ import org.weasis.dicom.data.Patient;
 import org.weasis.dicom.data.Series;
 import org.weasis.dicom.data.Study;
 import org.weasis.dicom.data.xml.Base64;
+import org.weasis.dicom.mf.WadoParameters;
+import org.weasis.dicom.mf.ArcQuery.ViewerMessage;
 import org.weasis.dicom.util.StringUtil;
-import org.weasis.dicom.wado.WadoParameters;
-import org.weasis.dicom.wado.WadoQuery.WadoMessage;
 import org.weasis.servlet.ConnectorProperties;
 
 public abstract class AbstractQueryConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractQueryConfiguration.class);
 
     protected final List<Patient> patients;
-    protected final List<WadoMessage> wadoMessages;
+    protected ViewerMessage viewerMessage;
     protected final Properties properties;
 
     public AbstractQueryConfiguration(Properties properties) {
@@ -29,7 +29,6 @@ public abstract class AbstractQueryConfiguration {
         }
         this.properties = properties;
         this.patients = new ArrayList<>();
-        this.wadoMessages = new ArrayList<>();
     }
 
     public abstract void buildFromPatientID(CommonQueryParams params, String... patientIDs);
@@ -136,8 +135,12 @@ public abstract class AbstractQueryConfiguration {
         return patients;
     }
 
-    public List<WadoMessage> getWadoMessages() {
-        return wadoMessages;
+    public ViewerMessage getViewerMessage() {
+        return viewerMessage;
+    }
+
+    public void setViewerMessage(ViewerMessage viewerMessage) {
+        this.viewerMessage = viewerMessage;
     }
 
     public Properties getProperties() {

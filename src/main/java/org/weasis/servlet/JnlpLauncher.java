@@ -417,7 +417,7 @@ public class JnlpLauncher extends HttpServlet {
     protected void handleRequestArgumentParameter(JnlpTemplate launcher) throws ServletErrorException {
         String[] argValues = ServletUtil.getParameters(launcher.parameterMap.remove(PARAM_ARGUMENT));
 
-        if (launcher != null && launcher.rootElt != null && argValues != null) {
+        if (launcher.rootElt != null && argValues != null) {
             try {
                 Element applicationDescElt = launcher.rootElt.getChild(JNLP_TAG_ELT_APPLICATION_DESC);
                 if (applicationDescElt == null) {
@@ -459,7 +459,7 @@ public class JnlpLauncher extends HttpServlet {
     protected void handleRequestPropertyParameter(JnlpTemplate launcher) throws ServletErrorException {
         String[] propValues = ServletUtil.getParameters(launcher.parameterMap.remove(PARAM_PROPERTY));
 
-        if (launcher != null && launcher.rootElt != null && propValues != null) {
+        if (launcher.rootElt != null && propValues != null) {
             try {
                 Element resourcesElt = launcher.rootElt.getChild(JNLP_TAG_ELT_RESOURCES);
 

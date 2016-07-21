@@ -75,16 +75,16 @@ public class DbQuery {
                     dbProperties.getProperty("arc.db.user"), dbProperties.getProperty("arc.db.password"));
                 statement = connection.createStatement();
 
-                long startQuery = System.nanoTime();
+                long startQuery = System.currentTimeMillis();
                 resultSet = statement.executeQuery(query);
 
-                long dbQueryTime = (System.nanoTime() - startQuery) / 1000000; // ms
-                if (dbQueryTime > 4000) { // to get LOG less verbose and trace only uncommon long time DB response
+                long dbQueryTime = System.currentTimeMillis() - startQuery;
+                if (dbQueryTime > 3000) { // to get LOG less verbose and trace only uncommon long time DB response
                     LOGGER.info("executeDBQuery - SQL request executed in {} ms :\n\t[{}]", dbQueryTime, query);
                 } else {
                     LOGGER.debug("executeDBQuery - SQL request executed in {} ms :\n\t[{}]", dbQueryTime, query);
                 }
-            } catch (Throwable e) {
+            } catch (SQLException e) {
                 // Ensure to close DB connection with any exception
                 DbQuery.safeClose(connection, resultSet, statement);
                 throw e;

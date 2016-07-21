@@ -29,11 +29,11 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.xml.Base64;
+import org.weasis.dicom.mf.UploadXml;
+import org.weasis.dicom.mf.XmlManifest;
+import org.weasis.dicom.mf.thread.ManifestBuilder;
+import org.weasis.dicom.mf.thread.ManifestManagerThread;
 import org.weasis.dicom.util.StringUtil;
-import org.weasis.dicom.wado.UploadXml;
-import org.weasis.dicom.wado.XmlManifest;
-import org.weasis.dicom.wado.thread.ManifestBuilder;
-import org.weasis.dicom.wado.thread.ManifestManagerThread;
 
 public class WeasisLauncher extends HttpServlet {
 
@@ -61,7 +61,7 @@ public class WeasisLauncher extends HttpServlet {
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         UploadXml manifest = uploadManifest(request, response);
-        if (manifest != null && "INVALID".equals(manifest.xmlManifest())) {
+        if (manifest != null && "INVALID".equals(manifest.xmlManifest(null))) {
             return;
         }
 
@@ -172,8 +172,8 @@ public class WeasisLauncher extends HttpServlet {
             Future<XmlManifest> future = builder.getFuture();
             XmlManifest xml = future.get(ManifestManagerThread.MAX_LIFE_CYCLE, TimeUnit.MILLISECONDS);
 
-            request.setAttribute(JnlpLauncher.ATTRIBUTE_UPLOADED_ARGUMENT,
-                "$dicom:get -i " + Base64.encodeBytes(xml.xmlManifest().getBytes(), Base64.GZIP));
+            request.setAttribute(JnlpLauncher.ATTRIBUTE_UPLOADED_ARGUMENT, "$dicom:get -i " + Base64.encodeBytes(
+                xml.xmlManifest((String) connectorProperties.get("manifest.version")).getBytes(), Base64.GZIP));
             // Remove the builder as it has been retrieved without calling RequestManifest servlet
             final ConcurrentHashMap<Integer, ManifestBuilder> builderMap =
                 (ConcurrentHashMap<Integer, ManifestBuilder>) ctx.getAttribute("manifestBuilderMap");

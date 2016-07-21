@@ -20,7 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.wado.thread.ManifestBuilder;
+import org.weasis.dicom.mf.thread.ManifestBuilder;
 
 public class BuildManifest extends HttpServlet {
 

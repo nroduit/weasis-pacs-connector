@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import org.dcm4che3.data.Tag;
 import org.weasis.dicom.data.xml.TagUtil;
 import org.weasis.dicom.data.xml.XmlDescription;
 import org.weasis.dicom.util.StringUtil;
@@ -101,15 +102,15 @@ public class Study implements XmlDescription {
         StringBuilder result = new StringBuilder();
         if (studyInstanceUID != null) {
             result.append("\n<");
-            result.append(TagW.DICOM_LEVEL.STUDY.name());
+            result.append(TagUtil.Level.STUDY);
             result.append(" ");
-            TagUtil.addXmlAttribute(TagW.StudyInstanceUID, studyInstanceUID, result);
-            TagUtil.addXmlAttribute(TagW.StudyDescription, studyDescription, result);
-            TagUtil.addXmlAttribute(TagW.StudyDate, studyDate, result);
-            TagUtil.addXmlAttribute(TagW.StudyTime, studyTime, result);
-            TagUtil.addXmlAttribute(TagW.AccessionNumber, accessionNumber, result);
-            TagUtil.addXmlAttribute(TagW.StudyID, studyID, result);
-            TagUtil.addXmlAttribute(TagW.ReferringPhysicianName, referringPhysicianName, result);
+            TagUtil.addXmlAttribute(Tag.StudyInstanceUID, studyInstanceUID, result);
+            TagUtil.addXmlAttribute(Tag.StudyDescription, studyDescription, result);
+            TagUtil.addXmlAttribute(Tag.StudyDate, studyDate, result);
+            TagUtil.addXmlAttribute(Tag.StudyTime, studyTime, result);
+            TagUtil.addXmlAttribute(Tag.AccessionNumber, accessionNumber, result);
+            TagUtil.addXmlAttribute(Tag.StudyID, studyID, result);
+            TagUtil.addXmlAttribute(Tag.ReferringPhysicianName, referringPhysicianName, result);
             result.append(">");
             Collections.sort(seriesList, new Comparator<Series>() {
 
@@ -139,7 +140,7 @@ public class Study implements XmlDescription {
             }
 
             result.append("\n</");
-            result.append(TagW.DICOM_LEVEL.STUDY.name());
+            result.append(TagUtil.Level.STUDY);
             result.append(">");
         }
         return result.toString();

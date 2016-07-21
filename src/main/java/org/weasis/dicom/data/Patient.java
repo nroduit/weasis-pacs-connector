@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.xml.TagUtil;
@@ -127,15 +128,15 @@ public class Patient implements XmlDescription {
         StringBuilder result = new StringBuilder();
         if (patientID != null && patientName != null) {
             result.append("\n<");
-            result.append(TagW.DICOM_LEVEL.PATIENT.name());
+            result.append(TagUtil.Level.PATIENT);
             result.append(" ");
 
-            TagUtil.addXmlAttribute(TagW.PatientID, patientID, result);
-            TagUtil.addXmlAttribute(TagW.IssuerOfPatientID, issuerOfPatientID, result);
-            TagUtil.addXmlAttribute(TagW.PatientName, patientName, result);
-            TagUtil.addXmlAttribute(TagW.PatientBirthDate, patientBirthDate, result);
-            TagUtil.addXmlAttribute(TagW.PatientBirthTime, patientBirthTime, result);
-            TagUtil.addXmlAttribute(TagW.PatientSex, patientSex, result);
+            TagUtil.addXmlAttribute(Tag.PatientID, patientID, result);
+            TagUtil.addXmlAttribute(Tag.IssuerOfPatientID, issuerOfPatientID, result);
+            TagUtil.addXmlAttribute(Tag.PatientName, patientName, result);
+            TagUtil.addXmlAttribute(Tag.PatientBirthDate, patientBirthDate, result);
+            TagUtil.addXmlAttribute(Tag.PatientBirthTime, patientBirthTime, result);
+            TagUtil.addXmlAttribute(Tag.PatientSex, patientSex, result);
             result.append(">");
 
             Collections.sort(studiesList, getStudyComparator());
@@ -143,7 +144,7 @@ public class Patient implements XmlDescription {
                 result.append(s.toXml());
             }
             result.append("\n</");
-            result.append(TagW.DICOM_LEVEL.PATIENT.name());
+            result.append(TagUtil.Level.PATIENT);
             result.append(">");
         }
 
@@ -157,14 +158,14 @@ public class Patient implements XmlDescription {
 
             @Override
             public int compare(Study o1, Study o2) {
-                Date date1 = DateUtil.getDate(o1.getStudyDate());
-                Date date2 = DateUtil.getDate(o2.getStudyDate());
+                Date date1 = DateUtil.getDicomDate(o1.getStudyDate());
+                Date date2 = DateUtil.getDicomDate(o2.getStudyDate());
                 if (date1 != null && date2 != null) {
                     // inverse time
                     int rep = date2.compareTo(date1);
                     if (rep == 0) {
-                        Date time1 = DateUtil.getTime(o1.getStudyTime());
-                        Date time2 = DateUtil.getTime(o2.getStudyTime());
+                        Date time1 = DateUtil.getDicomTime(o1.getStudyTime());
+                        Date time2 = DateUtil.getDicomTime(o2.getStudyTime());
                         if (time1 != null && time2 != null) {
                             // inverse time
                             return time2.compareTo(time1);

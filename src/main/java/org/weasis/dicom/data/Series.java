@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.xml.TagUtil;
@@ -135,15 +136,15 @@ public class Series implements XmlDescription {
         StringBuilder result = new StringBuilder();
         if (seriesInstanceUID != null) {
             result.append("\n<");
-            result.append(TagW.DICOM_LEVEL.SERIES.name());
+            result.append(TagUtil.Level.SERIES);
             result.append(" ");
-            TagUtil.addXmlAttribute(TagW.SeriesInstanceUID, seriesInstanceUID, result);
-            TagUtil.addXmlAttribute(TagW.SeriesDescription, seriesDescription, result);
-            TagUtil.addXmlAttribute(TagW.SeriesNumber, seriesNumber, result);
-            TagUtil.addXmlAttribute(TagW.Modality, modality, result);
-            TagUtil.addXmlAttribute(TagW.DirectDownloadThumbnail, thumbnail, result);
-            TagUtil.addXmlAttribute(TagW.WadoTransferSyntaxUID, wadoTransferSyntaxUID, result);
-            TagUtil.addXmlAttribute(TagW.WadoCompressionRate,
+            TagUtil.addXmlAttribute(Tag.SeriesInstanceUID, seriesInstanceUID, result);
+            TagUtil.addXmlAttribute(Tag.SeriesDescription, seriesDescription, result);
+            TagUtil.addXmlAttribute(Tag.SeriesNumber, seriesNumber, result);
+            TagUtil.addXmlAttribute(Tag.Modality, modality, result);
+            TagUtil.addXmlAttribute(TagUtil.DirectDownloadThumbnail, thumbnail, result);
+            TagUtil.addXmlAttribute(TagUtil.WadoTransferSyntaxUID, wadoTransferSyntaxUID, result);
+            TagUtil.addXmlAttribute(TagUtil.WadoCompressionRate,
                 wadoCompression < 1 ? null : Integer.toString(wadoCompression), result);
             result.append(">");
             sortByInstanceNumber();
@@ -151,7 +152,7 @@ public class Series implements XmlDescription {
                 result.append(s.toXml());
             }
             result.append("\n</");
-            result.append(TagW.DICOM_LEVEL.SERIES.name());
+            result.append(TagUtil.Level.SERIES);
             result.append(">");
         }
         return result.toString();

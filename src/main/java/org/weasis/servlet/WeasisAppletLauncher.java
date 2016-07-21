@@ -23,9 +23,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.dicom.mf.UploadXml;
+import org.weasis.dicom.mf.XmlManifest;
 import org.weasis.dicom.util.StringUtil;
-import org.weasis.dicom.wado.UploadXml;
-import org.weasis.dicom.wado.XmlManifest;
 
 public class WeasisAppletLauncher extends HttpServlet {
 
@@ -51,7 +51,7 @@ public class WeasisAppletLauncher extends HttpServlet {
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         UploadXml manifest = WeasisLauncher.uploadManifest(request, response);
-        if (manifest != null && "INVALID".equals(manifest.xmlManifest())) {
+        if (manifest != null && "INVALID".equals(manifest.xmlManifest(null))) {
             return;
         }
 
