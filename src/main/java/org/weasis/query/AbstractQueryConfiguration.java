@@ -41,11 +41,6 @@ public abstract class AbstractQueryConfiguration {
 
     public abstract void buildFromSopInstanceUID(CommonQueryParams params, String... sopInstanceUIDs);
 
-    public String getCharsetEncoding() {
-        // Not required with DICOM C-FIND (handle with attributes.getString(...))
-        return properties.getProperty("arc.db.encoding", "UTF-8");
-    }
-
     public WadoParameters getWadoParameters() {
         String wadoQueriesURL =
             properties.getProperty("arc.wado.url", properties.getProperty("server.base.url") + "/wado");

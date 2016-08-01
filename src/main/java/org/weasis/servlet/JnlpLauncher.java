@@ -12,7 +12,6 @@
 package org.weasis.servlet;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -235,6 +234,8 @@ public class JnlpLauncher extends HttpServlet {
                 }
             }
 
+            LOGGER.info("1 - templatePath = {}", templatePath);
+
             if (templatePath.endsWith("/")) {
                 templateFileName = DEFAULT_JNLP_TEMPLATE_NAME; // default value
             } else {
@@ -247,22 +248,15 @@ public class JnlpLauncher extends HttpServlet {
                 templatePath = templatePath.substring(0, templatePath.length() - 1);
             }
 
+            LOGGER.debug("locateLauncherTemplate() - String templatePath = {}", templatePath);
+            LOGGER.debug("locateLauncherTemplate() - String templateFileName = {}", templateFileName);
+
             if (templatePath.startsWith(serverPath + request.getContextPath())) {
-                /*
-                 * NOTE : resource has to be accessed through local File URL Connection otherwise the Servlet is called
-                 * again in loop trying reading the file.
-                 */
-
                 String uriTemplatePath = templatePath.replaceFirst(serverPath + request.getContextPath(), "");
-                String realPath = getServletContext().getRealPath(uriTemplatePath + templateFileName);
-                templateURL = new File(realPath).toURI();
-
+                templateURL = getServletContext().getResource("/" + uriTemplatePath + templateFileName).toURI();
             } else {
                 templateURL = new URI(templatePath + "/" + templateFileName);
             }
-
-            LOGGER.debug("locateLauncherTemplate() - String templatePath = {}", templatePath);
-            LOGGER.debug("locateLauncherTemplate() - String templateFileName = {}", templateFileName);
             LOGGER.debug("locateLauncherTemplate() - URL templateURL = {}", templateURL);
 
             // Check if launcher template resource exists
