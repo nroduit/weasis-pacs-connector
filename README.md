@@ -12,8 +12,9 @@ This component gathers different services:
 
 ## New features in weasis-pacs-connector 6 ##
 * Multi-PACS configuration (can be requested simultaneously or individually)
-* Allows to query the PACS through its database
-* Required Java 7
+* Allows to query the PACS through its database (not recommended)
+* Generates new manifest 2.5 (supported by Weasis 2.5)
+* Requires Java 7
 
 ## New features in weasis-pacs-connector 5 ##
 
@@ -33,7 +34,7 @@ This component gathers different services:
 
 ## Build weasis-pacs-connector ##
 
-Prerequisites: JDK 6 and Maven
+Prerequisites: JDK 7 and Maven
 
 * Execute the maven command `mvn clean package` in the root directory of the project and get the package from /target/weasis-pacs-connector.war. Official releases can be downloaded [here](http://sourceforge.net/projects/dcm4che/files/Weasis/weasis-pacs-connector/).
 
@@ -68,19 +69,28 @@ Note: with a snapshot version, it can be necessary to build first the library [w
 * http://localhost:8080/weasis-pacs-connector/viewer?patientID=97026728&containsInDescription=abdo,thorax  
   => only studies containing the string abdo or thorax (accent and case insensitive) in study description (from version 5.0.1) 
 * http://localhost:8080/weasis-pacs-connector/viewer?patientID=97026728&modalitiesInStudy=CT&upperDateTime=2010-01-01T12:00:00Z  
-  => only studies containing CT which are more recent than 2010-01-01 12:00:00  
+  => only studies containing CT which are more recent than 2010-01-01 12:00:00 (UTC time, do not use 'Z' if the store files don't have a time zone)  
 * http://localhost:8080/weasis-pacs-connector/viewer?studyUID=1.3.6.1.4.1.5962.1.2.2.20031208063649.855
 * http://localhost:8080/weasis-pacs-connector/viewer?accessionNumber=3224252
 * http://localhost:8080/weasis-pacs-connector/viewer?seriesUID=1.2.840.113704.1.111.4924.1273631010.17
 * http://localhost:8080/weasis-pacs-connector/viewer?objectUID=1.2.840.113704.1.111.3520.1273640118.5118
+
+Note: It is allowed to have multiple UIDs for patient, study, series and instance but within the same level. The [configuration file](src/main/resources/weasis-connector-default.properties) enables to set which ID is allowed and if a combination of UIDs is required. When using a combination of UIDs, the order is not relevant.
+
+##### Launch Weasis as an Applet in a web browser (not recommended as several browsers block Java plugin) #####
 * http://localhost:8080/weasis-pacs-connector/viewer-applet?patientID=97026728   
   => same as _/viewer_ but it can launch Weasis as Applet in a webpage.
+
+##### Upload the manifest via http POST #####
 * http://localhost:8080/weasis-pacs-connector/viewer?upload=manifest  
-  => upload the manifest via http POST with the parameter "Content-Type: text/xml; charset=UTF-8" and the manifest in the body of the POST request
+  => with the parameter "Content-Type: text/xml; charset=UTF-8" and the manifest in the body of the POST request
 * http://localhost:8080/weasis-pacs-connector/viewer?patientID=97026728&embedManifest   
   => embedManifest parameter will embed the manifest into the jnlp (in this case building manifest is executed before starting Weasis and the images can be always displayed via the jnlp file)
-  
-Note: It is allowed to have multiple UIDs for patient, study, series and instance but within the same level. The [configuration file](src/main/resources/weasis-connector-default.properties) enables to set which ID is allowed and if a combination of UIDs is required. When using a combination of UIDs, the order is not relevant.
+
+##### Launch with specific parameters #####
+* http://launcher-weasis.rhcloud.com/weasis-pacs-connector/viewer?studyUID=1.2.840.113619.2.176.2025.1499492.7409.1172755464.916&mhs=1024m   
+  => modify in jnlp the maximum memory used by the application (max-heap-size="1024m")   
+  => to inject other properties or arguments see the [JNLP Builder documentation](JnlpBuilder)   
 
 ### Getting the xml manifest ###
   
