@@ -90,6 +90,12 @@ public class ArcQuery implements XmlManifest {
         return manifest.toString();
     }
 
+    /**
+     * Use instead xmlManifest(String version)
+     * 
+     * @return
+     */
+    @Deprecated
     public String xmlManifest1() {
         for (AbstractQueryConfiguration archive : archiveList) {
             if (archive.getPatients().isEmpty() && archive.getViewerMessage() == null) {

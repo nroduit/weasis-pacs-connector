@@ -10,8 +10,8 @@ public class ArcParameters {
     public static final String SCHEMA =
         "xmlns=\"http://www.weasis.org/xsd/2.5\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"";
     public static final String TAG_ARC_QUERY = "arcQuery";
-    public static final String ARCHIVE_ID = "arc_id";
-    public static final String BASE_URL = "base_url";
+    public static final String ARCHIVE_ID = "arcId";
+    public static final String BASE_URL = "baseUrl";
 
     // Manifest 1
     public static final String TAG_HTTP_TAG = "httpTag";

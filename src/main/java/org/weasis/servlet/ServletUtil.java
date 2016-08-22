@@ -397,7 +397,7 @@ public class ServletUtil {
         }
     }
 
-    public static int copy(final InputStream in, final OutputStream out, final int bufSize) throws IOException {
+    private static int copy(final InputStream in, final OutputStream out, final int bufSize) throws IOException {
         final byte[] buffer = new byte[bufSize];
         int bytesCopied = 0;
         while (true) {
@@ -459,7 +459,6 @@ public class ServletUtil {
         } catch (IOException e) {
             LOGGER.error("Cannot send http response message!", e);
         }
-
     }
 
 }

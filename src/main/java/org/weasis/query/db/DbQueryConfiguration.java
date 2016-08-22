@@ -30,7 +30,7 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
 
     @Override
     public void buildFromPatientID(CommonQueryParams params, String... patientIDs) {
-        // TODO implement this method
+        throw new IllegalStateException("Request by patientID into a DB is not implemented!");
     }
 
     @Override
