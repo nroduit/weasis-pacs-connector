@@ -84,13 +84,19 @@ Note: It is allowed to have multiple UIDs for patient, study, series and instanc
 ##### Upload the manifest via http POST #####
 * http://localhost:8080/weasis-pacs-connector/viewer?upload=manifest  
   => with the parameter "Content-Type: text/xml; charset=UTF-8" and the manifest in the body of the POST request
+  
+##### Embed the manifest into the jnlp #####
 * http://localhost:8080/weasis-pacs-connector/viewer?patientID=97026728&embedManifest   
   => embedManifest parameter will embed the manifest into the jnlp (in this case building manifest is executed before starting Weasis and the images can be always displayed via the jnlp file)
 
+##### Open non DICOM images #####  
+* http://launcher-weasis.rhcloud.com/?arg=$image:get%20-u%20https://dcm4che.atlassian.net/wiki/download/attachments/3670024/weasis-mpr.png     
+  => open image from an URL (from weasis 2.5)
+
 ##### Launch with specific parameters #####
 * http://launcher-weasis.rhcloud.com/weasis-pacs-connector/viewer?studyUID=1.2.840.113619.2.176.2025.1499492.7409.1172755464.916&mhs=1024m   
-  => modify in jnlp the maximum memory used by the application (max-heap-size="1024m")   
-  => to inject other properties or arguments see the [JNLP Builder documentation](JnlpBuilder)   
+  => modify in jnlp the maximum memory used by the application (max-heap-size="1024m")    
+  => to inject other properties or arguments see the [JNLP Builder documentation](JnlpBuilder)
 
 ### Getting the xml manifest ###
   
