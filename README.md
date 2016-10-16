@@ -114,7 +114,7 @@ See the [JNLP Builder documentation](JnlpBuilder)
 
 ### Installation ###
 
-It requires a web application container like JBoss or Tomcat.
+It requires a web application container like Tomcat or JBoss.
 
 Go [here](https://sourceforge.net/projects/dcm4che/files/Weasis/) and download these Weasis files.
 * From the folder with the latest version number:  
@@ -138,6 +138,10 @@ To add properties or arguments in the JNLP there are two possibilities:
 1. Add parameters via the URL, see the [JNLP Builder documentation](JnlpBuilder) (arg, prop, and src)
 2. Change the [default template](src/main/webapp/weasis.jnlp), see _jnlp.default.name_ in [weasis-connector-default.properties](src/main/resources/weasis-connector-default.properties)
 
+Note: weasis-pacs-connector 6.1 generates new manifests and requires Weasis 2.5 and superior. However it is possible to run previous version of Weasis by modifying the [weasis-connector-default.properties](src/main/resources/weasis-connector-default.properties):    
+1. Set the property _manifest.version=1_
+2. Uncomment the property _jnlp.default.name=weasis1.jnlp_
+3. Uncomment the property _jnlp.applet.name=weasisApplet1.jnlp_
 
 For [dcm4chee-arc](https://github.com/dcm4che/dcm4chee-arc-cdi):
 

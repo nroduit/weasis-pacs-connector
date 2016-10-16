@@ -10,8 +10,10 @@
  *******************************************************************************/
 package org.weasis.servlet;
 
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -29,9 +31,11 @@ import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.dicom.mf.thread.ManifestManagerThread;
 
 public class ManifestManager extends HttpServlet {
-
     private static final long serialVersionUID = -3980526826815714220L;
     private static final Logger LOGGER = LoggerFactory.getLogger(ManifestManager.class);
+
+    public static final String DEFAULT_TEMPLATE = "weasis.jnlp";
+    public static final String DEFAULT_APPLET_TEMPLATE = "weasisApplet.jnlp";
 
     private final ConcurrentHashMap<Integer, ManifestBuilder> manifestBuilderMap = new ConcurrentHashMap<>();
     private final transient ManifestManagerThread manifestManagerThread = new ManifestManagerThread(manifestBuilderMap);
@@ -44,7 +48,7 @@ public class ManifestManager extends HttpServlet {
             LOGGER.error(
                 "A manifest manager thread is already running in the servlet context! The new one won't be started.");
         } else {
-            LOGGER.debug("init() - getServletContext: {} ", getServletConfig().getServletContext());
+            LOGGER.debug("init() - getServletContext: {} ", getServletConfig().getServletContext().getServerInfo());
             LOGGER.debug("init() - getRealPath: {}", getServletConfig().getServletContext().getRealPath("/"));
 
             final ConnectorProperties properties = new ConnectorProperties();
@@ -59,6 +63,7 @@ public class ManifestManager extends HttpServlet {
 
                 if (config != null) {
                     properties.load(config.openStream());
+                    
                     String requests = properties.getProperty("request.ids");
                     String requestIID = properties.getProperty("request.IID.level");
                     if (requests == null) {
@@ -96,14 +101,11 @@ public class ManifestManager extends HttpServlet {
                     LOGGER.error("Cannot find  a configuration file for weasis-pacs-connector");
                 }
 
-                String jnlpName = properties.getProperty("jnlp.default.name");
-                if (jnlpName != null) {
-                    URL jnlpTemplate = this.getClass().getResource("/" + jnlpName);
-                    if (jnlpTemplate != null) {
-                        LOGGER.info("External Weasis jnlp template: {}", jnlpTemplate);
-                        properties.put("weasis.default.jnlp", jnlpTemplate.toString());
-                    }
-                }
+                loadTemplate(properties.getProperty("jnlp.default.name", DEFAULT_TEMPLATE), "weasis.default.jnlp",
+                    properties);
+                loadTemplate(properties.getProperty("jnlp.applet.name", DEFAULT_APPLET_TEMPLATE), "weasis.applet.jnlp",
+                    properties);
+
             } catch (Exception e) {
                 LOGGER.error("Error on initialization of ManifestManager", e);
             }
@@ -131,6 +133,25 @@ public class ManifestManager extends HttpServlet {
 
         manifestManagerThread.interrupt();
     }
+
+    private void loadTemplate(String jnlpName, String property, Hashtable<Object, Object> properties) {
+        if (jnlpName != null) {
+            URL jnlpTemplate = this.getClass().getResource("/" + jnlpName);
+            if (jnlpTemplate == null) {
+                try {
+                    jnlpTemplate = getServletConfig().getServletContext().getResource("/" + jnlpName);
+                } catch (MalformedURLException e) {
+                    LOGGER.error("Error on getting template", e);
+                }
+            }
+
+            if (jnlpTemplate != null) {
+                properties.put(property, jnlpTemplate.toString());
+                LOGGER.info("Default jnlp template: {}", jnlpTemplate);
+            }
+        }
+    }
+    
 
     // Get map where the oldest entry when the limit size is reached
     public static <K, V> Map<K, V> createLRUMap(final int maxEntries) {

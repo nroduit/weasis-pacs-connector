@@ -47,7 +47,6 @@ public class JnlpLauncher extends HttpServlet {
     private static final long serialVersionUID = 5979263846495591025L;
     private static final Logger LOGGER = LoggerFactory.getLogger(JnlpLauncher.class);
 
-    public static final String DEFAULT_JNLP_TEMPLATE_NAME = "weasis.jnlp";
     public static final String JNLP_EXTENSION = ".jnlp";
     public static final String JNLP_MIME_TYPE = "application/x-java-jnlp-file";
 
@@ -217,7 +216,7 @@ public class JnlpLauncher extends HttpServlet {
 
         String templatePath = null;
         String templateFileName = null;
-        URI templateURL = null;
+        URI templateURI = null;
         String codeBasePath = null;
         String codeBaseExtPath = null;
         Map<String, Object> queryParameterMap = null;
@@ -237,7 +236,7 @@ public class JnlpLauncher extends HttpServlet {
             LOGGER.info("1 - templatePath = {}", templatePath);
 
             if (templatePath.endsWith("/")) {
-                templateFileName = DEFAULT_JNLP_TEMPLATE_NAME; // default value
+                templateFileName = ManifestManager.DEFAULT_TEMPLATE; // default value
             } else {
                 int fileNameBeginIndex = templatePath.lastIndexOf("/") + 1;
                 templateFileName = templatePath.substring(fileNameBeginIndex);
@@ -253,21 +252,24 @@ public class JnlpLauncher extends HttpServlet {
 
             if (templatePath.startsWith(serverPath + request.getContextPath())) {
                 String uriTemplatePath = templatePath.replaceFirst(serverPath + request.getContextPath(), "");
-                templateURL = getServletContext().getResource("/" + uriTemplatePath + templateFileName).toURI();
+                templateURI = getServletContext().getResource("/" + uriTemplatePath + templateFileName).toURI();
             } else {
-                templateURL = new URI(templatePath + "/" + templateFileName);
+                if (!StringUtil.hasText(templatePath)) {
+                    templateURI = getServletContext().getResource("/" + templateFileName).toURI();
+                } else {
+                    templateURI = new URI(templatePath + "/" + templateFileName);
+                }
             }
-            LOGGER.debug("locateLauncherTemplate() - URL templateURL = {}", templateURL);
+            LOGGER.debug("locateLauncherTemplate() - URL templateURL = {}", templateURI);
 
             // Check if launcher template resource exists
-            URLConnection launcherTemplateConnection = templateURL.toURL().openConnection();
+            URLConnection launcherTemplateConnection = templateURI.toURL().openConnection();
             if (launcherTemplateConnection instanceof HttpURLConnection) {
                 if (((HttpURLConnection) launcherTemplateConnection).getResponseCode() != HttpURLConnection.HTTP_OK) {
-                    throw new IllegalStateException("HttpURLConnection not accessible : " + templateURL);
+                    throw new IllegalStateException("HttpURLConnection not accessible: " + templateURI);
                 }
             } else if (launcherTemplateConnection.getContentLength() <= 0) {
-                throw new IllegalStateException(
-                    "URLConnection  not accessible : " + templatePath + "/" + templateFileName);
+                throw new IllegalStateException("URLConnection  not accessible: " + templateURI);
             }
 
             // Get codebase path
@@ -335,7 +337,7 @@ public class JnlpLauncher extends HttpServlet {
             throw new ServletErrorException(HttpServletResponse.SC_NOT_FOUND, "", e);
         }
 
-        return new JnlpTemplate(templateFileName, templateURL, queryParameterMap);
+        return new JnlpTemplate(templateFileName, templateURI, queryParameterMap);
     }
 
     public class ServletErrorException extends Exception {

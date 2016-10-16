@@ -12,7 +12,10 @@ import org.weasis.dicom.data.xml.TagUtil;
 import org.weasis.dicom.util.StringUtil;
 
 public class ConnectorProperties extends Properties {
+    private static final long serialVersionUID = -1461425609157253501L;
+    
     public static final String CONFIG_FILENAME = "config.filename";
+    public static final String MANIFEST_VERSION = "mfv";
 
     private final List<Properties> list;
 
@@ -98,6 +101,12 @@ public class ConnectorProperties extends Properties {
                     TagUtil.substVars(dynProps.getProperty(name), name, null, dynProps, extProps));
             }
         }
+        
+        String manifestVersion =  request.getParameter(MANIFEST_VERSION);
+        if (manifestVersion != null) {
+            dynamicProps.put("manifest.version", manifestVersion);
+        }
+        
         return dynamicProps;
 
     }

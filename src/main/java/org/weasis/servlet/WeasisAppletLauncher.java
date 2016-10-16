@@ -85,29 +85,17 @@ public class WeasisAppletLauncher extends HttpServlet {
             String serverPath = props.getProperty("server.base.url");
             StringBuilder buf = new StringBuilder(serverPath);
             buf.append(request.getContextPath());
-            // TODO servlet parameter
-            buf.append("/weasisApplet.jnlp");
 
-            WeasisLauncher.builRequest(request, buf, props);
-
-            // TODO should transmit codebase ext, props and args
-
-            /*
-             * Issue when setting directly in the jnlp building url into jnlp_href. It seems some characters must be
-             * escaped.
-             */
-            // buf.append("&#38;");
-            // buf.append(JnlpLauncher.PARAM_ARGUMENT);
-            // buf.append("=commands=$dicom:get -w ");
-            // buf.append(wadoQueryUrl);
+            WeasisLauncher.builRequest(request, buf, props, props.getProperty("weasis.applet.jnlp"));
 
             String addparams = props.getProperty("request.addparams", null);
             if (addparams != null) {
                 buf.append(addparams);
             }
 
-            String manifestCmd = embeddedManifest ? "" : "&commands=$dicom:get -w " + wadoQueryUrl;
-
+            String manifestCmd =
+                embeddedManifest ? "" : "&commands=" + URLEncoder.encode("$dicom:get -w " +wadoQueryUrl, "UTF-8");
+            // Do not transmit codebase ext, props and args
             RequestDispatcher dispatcher = request
                 .getRequestDispatcher("/applet.jsp?jnlp=" + URLEncoder.encode(buf.toString(), "UTF-8") + manifestCmd);
             dispatcher.forward(request, response);

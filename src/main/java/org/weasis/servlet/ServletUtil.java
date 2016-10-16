@@ -371,6 +371,15 @@ public class ServletUtil {
         buf.append(RequestManifest.PARAM_ID);
         buf.append('=');
         buf.append(builder.getRequestId());
+        
+        String manifestVersion =  props.getProperty("manifest.version");
+        if (manifestVersion != null) {
+            buf.append('&');
+            buf.append(ConnectorProperties.MANIFEST_VERSION);
+            buf.append('=');
+            buf.append(manifestVersion);
+        }
+        
         if (!gzip) {
             buf.append('&');
             buf.append(RequestManifest.PARAM_NO_GZIP);
