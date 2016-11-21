@@ -89,8 +89,8 @@ Note: It is allowed to have multiple UIDs for patient, study, series and instanc
 * http://localhost:8080/weasis-pacs-connector/viewer?patientID=97026728&embedManifest   
   => embedManifest parameter will embed the manifest into the jnlp (in this case building manifest is executed before starting Weasis and the images can be always displayed via the jnlp file)
 
-##### Open non DICOM images #####  
-* http://launcher-weasis.rhcloud.com/?arg=$image:get%20-u%20https://dcm4che.atlassian.net/wiki/download/attachments/3670024/weasis-mpr.png     
+##### Open non DICOM images #####
+* http://launcher-weasis.rhcloud.com/weasis-pacs-connector/viewer?arg=$image:get%20-u%20https://dcm4che.atlassian.net/wiki/download/attachments/3670024/weasis-mpr.png     
   => open image from an URL (from weasis 2.5)
 
 ##### Launch with specific parameters #####
@@ -119,10 +119,10 @@ It requires a web application container like Tomcat or JBoss.
 Go [here](https://sourceforge.net/projects/dcm4che/files/Weasis/) and download these Weasis files.
 * From the folder with the latest version number:  
 	- [weasis.war] Weasis Web distribution which run with Java Web Start.
-	- [weasis-ext.war] Optional package for exporting the images to build an ISO image for CD/DVD
+	- [weasis-ext.war] Optional package for additional plug-ins (e.g. exporting the images to build an ISO image for CD/DVD)
 	- [weasis-i18n.war] Optional package for Weasis translations
 * From weasis-pacs-connector folder:  
-	- [weasis-pacs-connector.war]
+	- [weasis-pacs-connector.war] Connector between the archive and the viewer
 	- [dcm4chee-web-weasis.jar] Optional package for [dcm4che-web3](http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHEE)
 
 ## Configuration of weasis-pacs-connector ##
@@ -138,14 +138,18 @@ To add properties or arguments in the JNLP there are two possibilities:
 1. Add parameters via the URL, see the [JNLP Builder documentation](JnlpBuilder) (arg, prop, and src)
 2. Change the [default template](src/main/webapp/weasis.jnlp), see _jnlp.default.name_ in [weasis-connector-default.properties](src/main/resources/weasis-connector-default.properties)
 
-Note: weasis-pacs-connector 6.1 generates new manifests and requires Weasis 2.5 and superior. However it is possible to run previous version of Weasis by modifying the [weasis-connector-default.properties](src/main/resources/weasis-connector-default.properties):    
+weasis-pacs-connector 6.1 generates new manifests and requires Weasis 2.5 and superior. However it is possible to run previous version of Weasis by modifying the [weasis-connector-default.properties](src/main/resources/weasis-connector-default.properties):    
 1. Set the property _manifest.version=1_
 2. Uncomment the property _jnlp.default.name=weasis1.jnlp_
 3. Uncomment the property _jnlp.applet.name=weasisApplet1.jnlp_
 
-For [dcm4chee-arc](https://github.com/dcm4che/dcm4chee-arc-cdi):
+Note: when multiple archives are configured, only the references of the first archive containing images will be incorporated in the manifest 1.0. Multiple archives can only work with Weasis 2.5.
 
-* change the configuration of the wado server property to **pacs.wado.url=${server.base.url}/dcm4chee-arc/wado/DCM4CHEE**
+For [dcm4chee-arc-light](https://github.com/dcm4che/dcm4chee-arc-light):
+
+* change the configuration of the wado server property to **pacs.wado.url=${server.base.url}/dcm4chee-arc/aets/DCM4CHEE/wado**
+
+
 * in JBoss WildFly 8.x place the file named weasis-pacs-connector.properties into _/modules/org/weasis/weasis-pacs-connector/main_
 * create a file _module.xml_ and place it in the same directory. The content of this file is:
 
