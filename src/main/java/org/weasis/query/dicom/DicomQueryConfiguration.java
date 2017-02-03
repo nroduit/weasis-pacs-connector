@@ -8,6 +8,7 @@ import java.util.Properties;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.net.QueryOption;
 import org.dcm4che3.net.service.QueryRetrieveLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -287,6 +288,9 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
 
     @Override
     public void buildFromSeriesInstanceUID(CommonQueryParams params, String... seriesInstanceUIDs) {
+        AdvancedParams advParams = advancedParams == null ? new AdvancedParams(): advancedParams;
+        advParams.getQueryOptions().add(QueryOption.RELATIONAL);
+        
         for (String seriesInstanceUID : seriesInstanceUIDs) {
             if (!StringUtil.hasText(seriesInstanceUID)) {
                 continue;
@@ -303,7 +307,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
 
             try {
                 DicomState state =
-                    CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.SERIES, keysSeries);
+                    CFind.process(advParams, callingNode, calledNode, 0, QueryRetrieveLevel.SERIES, keysSeries);
 
                 List<Attributes> series = state.getDicomRSP();
                 if (series != null && !series.isEmpty()) {
@@ -322,6 +326,9 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
 
     @Override
     public void buildFromSopInstanceUID(CommonQueryParams params, String... sopInstanceUIDs) {
+        AdvancedParams advParams = advancedParams == null ? new AdvancedParams(): advancedParams;
+        advParams.getQueryOptions().add(QueryOption.RELATIONAL);
+        
         for (String sopInstanceUID : sopInstanceUIDs) {
             if (!StringUtil.hasText(sopInstanceUID)) {
                 continue;
@@ -338,7 +345,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
 
             try {
                 DicomState state =
-                    CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.IMAGE, keysInstance);
+                    CFind.process(advParams, callingNode, calledNode, 0, QueryRetrieveLevel.IMAGE, keysInstance);
 
                 List<Attributes> instances = state.getDicomRSP();
                 if (instances != null && !instances.isEmpty()) {
