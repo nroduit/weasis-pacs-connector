@@ -57,7 +57,7 @@ public class ManifestManager extends HttpServlet {
 
             final ConnectorProperties properties = new ConnectorProperties();
             try {
-                String configDir = System.getProperty("jboss.server.config.dir" , "");
+                String configDir = System.getProperty("jboss.server.config.dir", "");
                 configDir += "/";
                 URL config = readConfigURL(configDir, "weasis-pacs-connector.properties");
                 if (config == null) {
@@ -140,18 +140,19 @@ public class ManifestManager extends HttpServlet {
         String val = config.toString();
         return val.substring(0, val.lastIndexOf("/") + 1);
     }
-    
+
     private URL readConfigURL(String configDir, String name) throws IOException {
         try {
             File file = new File(configDir + name);
-            if(file.canRead()) {
+            if (file.canRead()) {
                 return file.toURI().toURL();
             }
         } catch (Exception e) {
+            // Do nothing
         }
-        return null;
+        return this.getClass().getResource("/" + name);
     }
-    
+
     private Properties readArchiveURL(String baseConfigDir, String configDir, String name) throws IOException {
         Properties archiveProps = new Properties();
         try {
