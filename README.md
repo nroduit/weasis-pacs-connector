@@ -127,10 +127,11 @@ Go [here](https://sourceforge.net/projects/dcm4che/files/Weasis/) and download t
 
 ## Configuration of weasis-pacs-connector ##
 
-The default configurations works directly with [dcm4che-web3](http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHEE). To override the configuration of weasis-pacs-connector, download [weasis-connector-default.properties](src/main/resources/weasis-connector-default.properties) and rename it weasis-pacs-connector.properties. This file named weasis-pacs-connector.properties must be placed in the classpath of the application:
+The default configurations works directly with [dcm4che-web3](http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHEE). To override the configuration of weasis-pacs-connector, download [weasis-connector-default.properties](src/main/resources/weasis-connector-default.properties) and rename it **weasis-pacs-connector.properties**. This file named **weasis-pacs-connector.properties** and **[dicom-dcm4chee.properties](src/main/resources/dicom-dcm4chee.properties)** must be placed in the classpath of the application:
 
 * In JBoss inferior to version 7, the best location would be "/server/default/conf/"
 * In JBoss 7.2 and 8.x, see [here](https://developer.jboss.org/wiki/HowToPutAnExternalFileInTheClasspath)
+* In JBoss Wildfly 10, the location is wildfly/standalone/configuration
 * In Tomcat just specify the directory in shared.loader property of /conf/catalina.properties
 
 To add properties or arguments in the JNLP there are two possibilities:
@@ -147,20 +148,9 @@ Note: when multiple archives are configured, only the references of the first ar
 
 For [dcm4chee-arc-light](https://github.com/dcm4che/dcm4chee-arc-light):
 
-* change the configuration of the wado server property to **pacs.wado.url=${server.base.url}/dcm4chee-arc/aets/DCM4CHEE/wado**
+* Change the configuration of the WADO server property in dicom-dcm4chee.properties: **pacs.wado.url=${server.base.url}/dcm4chee-arc/aets/DCM4CHEE/wado**
 
 
-* in JBoss WildFly 8.x place the file named weasis-pacs-connector.properties into _/modules/org/weasis/weasis-pacs-connector/main_
-* create a file _module.xml_ and place it in the same directory. The content of this file is:
-
-```xml
-    <?xml version="1.0" encoding="UTF-8"?>
-    <module xmlns="urn:jboss:module:1.1" name="org.weasis.weasis-pacs-connector">
-        <resources>
-            <resource-root path="."/>
-        </resources>
-    </module>
-```
 
 ## Security ##
 
