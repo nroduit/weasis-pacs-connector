@@ -152,6 +152,24 @@ For [dcm4chee-arc-light](https://github.com/dcm4che/dcm4chee-arc-light):
 
 * Change the configuration of the WADO server property in dicom-dcm4chee.properties: **pacs.wado.url=${server.base.url}/dcm4chee-arc/aets/DCM4CHEE/wado**
 
+## New way to launch jnlp ##
+
+An alternative way to launch Java Webstart (JWS) by changing the scheme of URL:
+* [jnlp://launcher-weasis.rhcloud.com/weasis-pacs-connector/viewer?studyUID=2.16.756.5.5.100.397184556.14391.1373576413.1508](jnlp://launcher-weasis.rhcloud.com/weasis-pacs-connector/viewer?studyUID=2.16.756.5.5.100.397184556.14391.1373576413.1508)
+* [jnlps://launcher-weasis.rhcloud.com/weasis-pacs-connector/viewer?studyUID=2.16.756.5.5.100.397184556.14391.1373576413.1508](jnlps://launcher-weasis.rhcloud.com/weasis-pacs-connector/viewer?studyUID=2.16.756.5.5.100.397184556.14391.1373576413.1508) (SSL connection)
+
+Advantages of jnlp protocol:
+* Works at the system level (association of a MIME type with an application: jnlp => JWS)
+* Works with most of browsers
+* Browsers do not download jnlp anymore. JWS reads directly the URL (do not show the popup "This application will run with unrestricted access" at every launch)
+* Works with other applications which are requesting the default system application for the jnlp protocol
+* No change is required at the client side or at the server side, only replacing the scheme of the jnlp URL is enough
+* Works out of box on Windows from JRE 8_111. On Mac OS should work from JRE 8_152 and Java 9.
+* An implementation has be done on [IcedTea-WEB](http://icedtea.classpath.org/wiki/IcedTea-Web) (alternative of the Oracle JWS) and it should be available in the next release.
+
+For more informations:
+* [Oracle JWS documentation](https://docs.oracle.com/javase/9/deploy/overview.htm)
+* [About the configuration in dcm4chee](http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHE)
 
 
 ## Security ##
