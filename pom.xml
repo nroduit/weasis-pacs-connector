@@ -7,6 +7,10 @@
 	<packaging>war</packaging>
 	<name>Weasis PACS Connector</name>
 	<version>6.1.0</version>
+	<prerequisites>
+		<maven>3.0</maven>
+	</prerequisites>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
@@ -26,13 +30,13 @@
 			</snapshots>
 		</repository>
 	</repositories>
-	
+
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.2</version>
+				<version>3.5.1</version>
 				<configuration>
 					<source>1.7</source>
 					<target>1.7</target>
@@ -41,7 +45,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-war-plugin</artifactId>
-				<version>2.6</version>
+				<version>3.0.0</version>
 				<configuration>
 					<packagingExcludes>WEB-INF/lib/dcm4che-dict-*</packagingExcludes>
 					<warName>weasis-pacs-connector</warName>
@@ -58,7 +62,7 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-compiler-plugin</artifactId>
-						<version>3.2</version>
+						<version>3.5.1</version>
 						<configuration>
 							<source>1.7</source>
 							<target>1.7</target>
@@ -67,7 +71,7 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-war-plugin</artifactId>
-						<version>2.6</version>
+						<version>3.0.0</version>
 						<configuration>
 							<packagingExcludes>WEB-INF/lib/dcm4che-dict-*,WEB-INF/lib/log4j*,WEB-INF/lib/slf4j*</packagingExcludes>
 							<warName>weasis-pacs-connector</warName>
@@ -94,7 +98,7 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.11</version>
+			<version>4.12</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -119,7 +123,7 @@
 					<artifactId>dcm4che-image</artifactId>
 				</exclusion>
 			</exclusions>
-			<version>1.0.0</version>
+			<version>1.0.3</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>

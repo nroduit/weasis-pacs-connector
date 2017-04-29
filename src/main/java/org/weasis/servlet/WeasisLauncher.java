@@ -37,6 +37,7 @@ import org.weasis.dicom.mf.XmlManifest;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.dicom.mf.thread.ManifestManagerThread;
 import org.weasis.dicom.util.StringUtil;
+import org.weasis.query.CommonQueryParams;
 
 public class WeasisLauncher extends HttpServlet {
 
@@ -98,11 +99,11 @@ public class WeasisLauncher extends HttpServlet {
             StringBuilder buf = new StringBuilder("/");
             builRequest(request, buf, props, props.getProperty("weasis.default.jnlp"));
 
-            if (!embeddedManifest) {
+            if (!embeddedManifest && StringUtil.hasText(wadoQueryUrl)) {
                 buf.append("&");
                 buf.append(JnlpLauncher.PARAM_ARGUMENT);
                 buf.append("=");
-                buf.append(URLEncoder.encode("$dicom:get -w " + wadoQueryUrl, "UTF-8") );
+                buf.append(URLEncoder.encode("$dicom:get -w " + wadoQueryUrl, "UTF-8"));
             }
 
             String addparams = props.getProperty("request.addparams", null);
@@ -173,31 +174,33 @@ public class WeasisLauncher extends HttpServlet {
 
     static String buildManifest(HttpServletRequest request, XmlManifest manifest)
         throws InterruptedException, ExecutionException, TimeoutException, IOException {
-        ServletContext ctx = request.getSession().getServletContext();
-        ConnectorProperties connectorProperties = (ConnectorProperties) ctx.getAttribute("componentProperties");
-        ConnectorProperties props = connectorProperties.getResolveConnectorProperties(request);
+        if (manifest !=null || CommonQueryParams.isManifestRequest(request.getParameterMap())) {
+            ServletContext ctx = request.getSession().getServletContext();
+            ConnectorProperties connectorProperties = (ConnectorProperties) ctx.getAttribute("componentProperties");
+            ConnectorProperties props = connectorProperties.getResolveConnectorProperties(request);
 
-        boolean embeddedManifest = request.getParameterMap().containsKey(PARAM_EMBED);
+            boolean embeddedManifest = request.getParameterMap().containsKey(PARAM_EMBED);
 
-        ManifestBuilder builder;
-        if (manifest == null) {
-            builder = ServletUtil.buildManifest(request, props);
-        } else {
-            builder = ServletUtil.buildManifest(request, new ManifestBuilder(manifest));
-        }
-        if (embeddedManifest) {
-            Future<XmlManifest> future = builder.getFuture();
-            XmlManifest xml = future.get(ManifestManagerThread.MAX_LIFE_CYCLE, TimeUnit.MILLISECONDS);
+            ManifestBuilder builder;
+            if (manifest == null) {
+                builder = ServletUtil.buildManifest(request, props);
+            } else {
+                builder = ServletUtil.buildManifest(request, new ManifestBuilder(manifest));
+            }
+            if (embeddedManifest) {
+                Future<XmlManifest> future = builder.getFuture();
+                XmlManifest xml = future.get(ManifestManagerThread.MAX_LIFE_CYCLE, TimeUnit.MILLISECONDS);
 
-            request.setAttribute(JnlpLauncher.ATTRIBUTE_UPLOADED_ARGUMENT, "$dicom:get -i " + Base64.encodeBytes(
-                xml.xmlManifest((String) props.get("manifest.version")).getBytes(), Base64.GZIP));
-            // Remove the builder as it has been retrieved without calling RequestManifest servlet
-            final ConcurrentHashMap<Integer, ManifestBuilder> builderMap =
-                (ConcurrentHashMap<Integer, ManifestBuilder>) ctx.getAttribute("manifestBuilderMap");
-            builderMap.remove(builder.getRequestId());
-            LOGGER.info("Embedding a ManifestBuilder with key={}", builder.getRequestId());
-        } else {
-            return ServletUtil.buildManifestURL(request, builder, props, true);
+                request.setAttribute(JnlpLauncher.ATTRIBUTE_UPLOADED_ARGUMENT, "$dicom:get -i " + Base64
+                    .encodeBytes(xml.xmlManifest((String) props.get("manifest.version")).getBytes(), Base64.GZIP));
+                // Remove the builder as it has been retrieved without calling RequestManifest servlet
+                final ConcurrentHashMap<Integer, ManifestBuilder> builderMap =
+                    (ConcurrentHashMap<Integer, ManifestBuilder>) ctx.getAttribute("manifestBuilderMap");
+                builderMap.remove(builder.getRequestId());
+                LOGGER.info("Embedding a ManifestBuilder with key={}", builder.getRequestId());
+            } else {
+                return ServletUtil.buildManifestURL(request, builder, props, true);
+            }
         }
         return "";
     }

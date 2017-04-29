@@ -94,9 +94,11 @@ Note: It is allowed to have multiple UIDs for patient, study, series and instanc
   => open image from an URL (from weasis 2.5)
 
 ##### Launch with specific parameters #####
-* http://launcher-weasis.rhcloud.com/weasis-pacs-connector/viewer?studyUID=1.2.840.113619.2.176.2025.1499492.7409.1172755464.916&mhs=1024m   
-  => modify in jnlp the maximum memory used by the application (max-heap-size="1024m")    
-  => to inject other properties or arguments see the [JNLP Builder documentation](JnlpBuilder)
+* http://launcher-weasis.rhcloud.com/weasis-pacs-connector/viewer?studyUID=1.3.6.1.4.1.5962.1.2.2.20031208063649.855&mhs=1024m   
+  => modify in jnlp the maximum memory used by the application (max-heap-size="1024m")
+* http://localhost:8080/weasis-pacs-connector/viewer?studyUID=1.3.6.1.4.1.5962.1.2.2.20031208063649.855&mfv=1    
+  => modify the manifest version (default is 2.5, old one is 1 - required by Weasis lesser than 2.5)
+* to inject other properties or arguments see the [JNLP Builder documentation](JnlpBuilder)
 
 ### Getting the xml manifest ###
   
@@ -158,7 +160,8 @@ There are different ways to treat the security aspects. Here are some:
 
 * Make a proxy servlet (URL forwarding) to handle authentication and authorization you want and configure weasis-pacs-connector to be called only by the proxy server (hosts.allow=serverhostname)
 * Configure weasis-pacs-connector for UIDs encryption in the URL with a paraphrase (encrypt.key=paraphraseForIDs: just uncomment and set a new key). It works by default with dcm4chee-web3. For other web interface it requires to use the same [algorithm](src/main/java/org/weasis/util/EncryptUtils.java) with the same key. 
-* Configure weasis-pacs-connector for accepting only request with a combination of several UIDs
+* Configure weasis-pacs-connector for accepting only limited IP/host
+* Configure weasis-pacs-connector for accepting only requests with a combination of several UIDs
 
 ## Architecture of weasis-pacs-connector ##
 

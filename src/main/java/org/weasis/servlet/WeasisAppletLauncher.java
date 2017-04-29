@@ -93,8 +93,8 @@ public class WeasisAppletLauncher extends HttpServlet {
                 buf.append(addparams);
             }
 
-            String manifestCmd =
-                embeddedManifest ? "" : "&commands=" + URLEncoder.encode("$dicom:get -w " +wadoQueryUrl, "UTF-8");
+            String manifestCmd = !embeddedManifest && StringUtil.hasText(wadoQueryUrl)
+                ? "&commands=" + URLEncoder.encode("$dicom:get -w " + wadoQueryUrl, "UTF-8") : "";
             // Do not transmit codebase ext, props and args
             RequestDispatcher dispatcher = request
                 .getRequestDispatcher("/applet.jsp?jnlp=" + URLEncoder.encode(buf.toString(), "UTF-8") + manifestCmd);

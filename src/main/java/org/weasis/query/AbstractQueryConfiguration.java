@@ -11,8 +11,8 @@ import org.weasis.dicom.data.Patient;
 import org.weasis.dicom.data.Series;
 import org.weasis.dicom.data.Study;
 import org.weasis.dicom.data.xml.Base64;
-import org.weasis.dicom.mf.WadoParameters;
 import org.weasis.dicom.mf.ArcQuery.ViewerMessage;
+import org.weasis.dicom.mf.WadoParameters;
 import org.weasis.dicom.util.StringUtil;
 import org.weasis.servlet.ConnectorProperties;
 
