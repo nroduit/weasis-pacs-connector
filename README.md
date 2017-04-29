@@ -155,8 +155,8 @@ For [dcm4chee-arc-light](https://github.com/dcm4che/dcm4chee-arc-light):
 ## New way to launch jnlp ##
 
 An alternative way to launch Java Webstart (JWS) by changing the scheme of URL:
-* [jnlp://launcher-weasis.rhcloud.com/weasis-pacs-connector/viewer?studyUID=2.16.756.5.5.100.397184556.14391.1373576413.1508](jnlp://launcher-weasis.rhcloud.com/weasis-pacs-connector/viewer?studyUID=2.16.756.5.5.100.397184556.14391.1373576413.1508)
-* [jnlps://launcher-weasis.rhcloud.com/weasis-pacs-connector/viewer?studyUID=2.16.756.5.5.100.397184556.14391.1373576413.1508](jnlps://launcher-weasis.rhcloud.com/weasis-pacs-connector/viewer?studyUID=2.16.756.5.5.100.397184556.14391.1373576413.1508) (SSL connection)
+* jnlp://localhost:8080/weasis-pacs-connector/viewer?patientID=9702672
+* jnlps://localhost:8080/weasis-pacs-connector/viewer?patientID=9702672 (SSL connection)
 
 Advantages of jnlp protocol:
 * Works at the system level (association of a MIME type with an application: jnlp => JWS)
