@@ -51,7 +51,7 @@ public class JnlpLauncher extends HttpServlet {
     public static final String JNLP_MIME_TYPE = "application/x-java-jnlp-file";
 
     static final String INITIAL_HEAP_SIZE = "128m";
-    static final String MAX_HEAP_SIZE = "512m";
+    static final String MAX_HEAP_SIZE = "768m";
 
     protected static final String PARAM_ARGUMENT = "arg";
     protected static final String PARAM_PROPERTY = "pro";
