@@ -169,7 +169,7 @@ Advantages of jnlp protocol:
 
 For more informations:
 * [Oracle JWS documentation](https://docs.oracle.com/javase/9/deploy/overview.htm)
-* [About the configuration in dcm4chee](http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHE)
+* [About the configuration in dcm4chee](http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHEE)
 
 
 ## Security ##
