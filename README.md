@@ -160,16 +160,19 @@ An alternative way to launch Java Webstart (JWS) by changing the scheme of URL:
 
 Advantages of jnlp protocol:
 * Works at the system level (association of a MIME type with an application: jnlp => JWS)
-* Works with most of browsers
+* Works with most of browsers (Chrome, IE, Firefox, Safari, Opera...)
 * Browsers do not download jnlp anymore. JWS reads directly the URL (do not show the popup "This application will run with unrestricted access" at every launch)
 * Works with other applications which are requesting the default system application for the jnlp protocol
 * No change is required at the client side or at the server side, only replacing the scheme of the jnlp URL is enough
-* Works out of box on Windows from JRE 8_111. On Mac OS should work from JRE 8_152 and Java 9.
-* An implementation has be done on [IcedTea-WEB](http://icedtea.classpath.org/wiki/IcedTea-Web) (alternative of the Oracle JWS) and it should be available in the next release.
+* Registration of jnlp handler is available in Oracle Java Runtime installer from JRE 8_111 and in the Java 9 installer.
+  * Works out of box on Windows
+  * On Mac OS X, it could be necessary to run once Java Webstart to register the jnlp handler (/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Resources/javawslauncher.app)
+  * On Linux, a [configuration](https://docs.oracle.com/javase/9/deploy/overview.htm#JSDPG-GUID-BC1669F9-7238-462D-80AA-3D42BAF99FA7) is required
+* An implementation has be done on [IcedTea-WEB](http://icedtea.classpath.org/wiki/IcedTea-Web) (alternative of the Oracle JWS) and it will be available in the next release (1.7).
 
 For more informations:
 * [Oracle JWS documentation](https://docs.oracle.com/javase/9/deploy/overview.htm)
-* [About the configuration in dcm4chee](http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHE)
+* [About the configuration in dcm4chee](http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHEE)
 
 
 ## Security ##
