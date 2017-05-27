@@ -58,7 +58,6 @@ public class ManifestManager extends HttpServlet {
             final ConnectorProperties properties = new ConnectorProperties();
             try {
                 String configDir = System.getProperty("jboss.server.config.dir", "");
-                configDir += "/";
                 URL config = readConfigURL(configDir, "weasis-pacs-connector.properties");
                 if (config == null) {
                     config = this.getClass().getResource("/weasis-connector-default.properties");
@@ -66,6 +65,7 @@ public class ManifestManager extends HttpServlet {
                 } else {
                     LOGGER.info("External weasis-pacs-connector configuration: {}", config);
                 }
+                configDir += "/";
 
                 if (config != null) {
                     String baseConfigDir = getBaseConfigURL(config);
@@ -143,12 +143,12 @@ public class ManifestManager extends HttpServlet {
 
     private URL readConfigURL(String configDir, String name) throws IOException {
         try {
-            File file = new File(configDir + name);
+            File file = new File(configDir, name);
             if (file.canRead()) {
                 return file.toURI().toURL();
             }
         } catch (Exception e) {
-            // Do nothing
+            LOGGER.error("Get url of {}", name, e);
         }
         return this.getClass().getResource("/" + name);
     }
@@ -162,6 +162,7 @@ public class ManifestManager extends HttpServlet {
                 LOGGER.info("Archive configuration: {}", url.toString());
             }
         } catch (Exception e) {
+            LOGGER.debug("Get template", e);
             URL arcConfigFile = this.getClass().getResource(configDir + name);
             if (arcConfigFile != null) {
                 archiveProps.load(arcConfigFile.openStream());
@@ -184,6 +185,7 @@ public class ManifestManager extends HttpServlet {
                 LOGGER.info("Default jnlp template: {}", url);
             }
         } catch (Exception e) {
+            LOGGER.debug("Get template", e);
             URL jnlpTemplate = this.getClass().getResource(configDir + jnlpName);
             if (jnlpTemplate == null) {
                 try {

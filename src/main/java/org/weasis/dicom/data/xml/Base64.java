@@ -16,7 +16,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -638,7 +637,7 @@ public class Base64 {
             throw e;
         } // end catch
         finally {
-            FileUtil.safeClose((Closeable) oos);
+            FileUtil.safeClose(oos);
             FileUtil.safeClose(gzos);
         }
     }
@@ -1201,13 +1200,13 @@ public class Base64 {
 
             // If no custom class loader is provided, use Java's builtin OIS.
             if (loader == null) {
-                ois = new java.io.ObjectInputStream(bais);
+                ois = new ObjectInputStream(bais);
             }
 
             // Else make a customized object input stream that uses
             // the provided class loader.
             else {
-                ois = new java.io.ObjectInputStream(bais) {
+                ois = new ObjectInputStream(bais) {
                     @Override
                     public Class<?> resolveClass(java.io.ObjectStreamClass streamClass)
                         throws IOException, ClassNotFoundException {
@@ -1395,7 +1394,7 @@ public class Base64 {
         String encoded = Base64.encodeFromFile(infile);
 
         try (FileOutputStream outStream = new FileOutputStream(outfile);
-                        BufferedOutputStream out = new java.io.BufferedOutputStream(outStream);) {
+                        BufferedOutputStream out = new BufferedOutputStream(outStream);) {
             out.write(encoded.getBytes("US-ASCII")); // Strict, 7-bit output. //$NON-NLS-1$
         } catch (IOException e) {
             throw e;
