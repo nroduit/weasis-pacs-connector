@@ -13,6 +13,7 @@ package org.weasis.dicom.data;
 import org.dcm4che3.data.Tag;
 import org.weasis.dicom.data.xml.TagUtil;
 import org.weasis.dicom.data.xml.XmlDescription;
+import org.weasis.dicom.util.StringUtil;
 
 public class SOPInstance implements XmlDescription {
 
@@ -45,7 +46,7 @@ public class SOPInstance implements XmlDescription {
     }
 
     public void setInstanceNumber(String instanceNumber) {
-        this.instanceNumber = instanceNumber == null ? null : instanceNumber.trim();
+        this.instanceNumber = StringUtil.hasText(instanceNumber) ? instanceNumber.trim() : null;
     }
 
     public String getDirectDownloadFile() {
