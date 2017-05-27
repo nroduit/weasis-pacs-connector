@@ -1,5 +1,7 @@
 # weasis-pacs-connector #
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/916cb1c21eba438483a373b9580007b5)](https://www.codacy.com/app/nicolas.roduit/weasis-pacs-connector?utm_source=github.com&utm_medium=referral&utm_content=nroduit/weasis-pacs-connector&utm_campaign=badger)
+
 weasis-pacs-connector provides the easiest way to launch Weasis from a web context (see URL examples below) and to connect Weasis to any PACS supporting WADO.
 
 This component gathers different services:   
