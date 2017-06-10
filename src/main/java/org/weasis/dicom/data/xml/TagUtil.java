@@ -19,6 +19,7 @@ import org.dcm4che3.data.ElementDictionary;
 import org.dcm4che3.util.TagUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.dicom.util.StringUtil;
 
 public class TagUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(TagUtil.class);
@@ -97,7 +98,7 @@ public class TagUtil {
     }
 
     public static void addXmlAttribute(int tagID, String value, StringBuilder result) {
-        if (value != null) {
+        if (StringUtil.hasText(value)) {
             String key = ElementDictionary.getStandardElementDictionary().keywordOf(tagID);
             if (key == null) {
                 LOGGER.error("Cannot find keyword of tagID {}", TagUtils.toString(tagID));
@@ -111,7 +112,7 @@ public class TagUtil {
     }
 
     public static void addXmlAttribute(String tag, String value, StringBuilder result) {
-        if (tag != null && value != null) {
+        if (tag != null && StringUtil.hasText(value)) {
             result.append(tag);
             result.append("=\"");
             result.append(EscapeChars.forXML(value));
