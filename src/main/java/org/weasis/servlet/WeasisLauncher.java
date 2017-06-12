@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Base64;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -31,13 +32,13 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.data.xml.Base64;
 import org.weasis.dicom.mf.UploadXml;
 import org.weasis.dicom.mf.XmlManifest;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.dicom.mf.thread.ManifestManagerThread;
 import org.weasis.dicom.util.StringUtil;
 import org.weasis.query.CommonQueryParams;
+import org.weasis.util.GzipManager;
 
 public class WeasisLauncher extends HttpServlet {
 
@@ -190,9 +191,10 @@ public class WeasisLauncher extends HttpServlet {
             if (embeddedManifest) {
                 Future<XmlManifest> future = builder.getFuture();
                 XmlManifest xml = future.get(ManifestManagerThread.MAX_LIFE_CYCLE, TimeUnit.MILLISECONDS);
-
-                request.setAttribute(JnlpLauncher.ATTRIBUTE_UPLOADED_ARGUMENT, "$dicom:get -i " + Base64
-                    .encodeBytes(xml.xmlManifest((String) props.get("manifest.version")).getBytes(), Base64.GZIP));
+                StringBuilder buf = new StringBuilder("$dicom:get -i ");
+                buf.append(Base64.getEncoder().encode(GzipManager.gzipCompressToByte(xml.xmlManifest((String) props.get("manifest.version")).getBytes())));
+                
+                request.setAttribute(JnlpLauncher.ATTRIBUTE_UPLOADED_ARGUMENT, buf.toString());
                 // Remove the builder as it has been retrieved without calling RequestManifest servlet
                 final ConcurrentHashMap<Integer, ManifestBuilder> builderMap =
                     (ConcurrentHashMap<Integer, ManifestBuilder>) ctx.getAttribute("manifestBuilderMap");

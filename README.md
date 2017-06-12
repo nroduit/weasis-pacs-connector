@@ -4,6 +4,8 @@ weasis-pacs-connector provides the easiest way to launch Weasis from a web conte
 
 [![CircleCI](https://circleci.com/gh/nroduit/weasis-pacs-connector.svg?style=svg&circle-token=290c4516d1daa4aed30f25ef20d4f55de3428020)](https://circleci.com/gh/nroduit/weasis-pacs-connector) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/916cb1c21eba438483a373b9580007b5)](https://www.codacy.com/app/nicolas.roduit/weasis-pacs-connector?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nroduit/weasis-pacs-connector&amp;utm_campaign=Badge_Grade)
 
+The master branch requires Java 8+ and the 6.x branch requires Java 7+.
+
 This component gathers different services:   
 
 * **/viewer** launching Weasis with the patient ID, study UID... (can be configured to use a combination of UIDs or to hide some of them)
@@ -11,6 +13,10 @@ This component gathers different services:
 * **/viewer-applet** same as _/viewer_ but it can launch Weasis as Applet in a web page (the service returns an html page). This method is not recommended as several browsers block Java plugin.
 * **/manifest** building the xml manifest (containing the necessary UIDs) consumed by Weasis to retrieve all the images by WADO requests
 * **/[name of the template]** (default template: /weasis.jnlp) building a jnlp file from a template (jnlp template path, jnlp properties and jnp arguments can be passed via URL parameters, see the [JNLP Builder documentation](JnlpBuilder))
+
+## New features in weasis-pacs-connector 7 ##
+* Requires Java 8 and Servlet 3.1
+
 
 ## New features in weasis-pacs-connector 6 ##
 * Multi-PACS configuration (can be requested simultaneously or individually)
