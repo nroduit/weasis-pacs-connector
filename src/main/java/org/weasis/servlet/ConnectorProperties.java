@@ -3,16 +3,20 @@ package org.weasis.servlet;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.weasis.dicom.data.xml.TagUtil;
-import org.weasis.dicom.util.StringUtil;
+import org.weasis.core.api.util.LangUtil;
 
 public class ConnectorProperties extends Properties {
     private static final long serialVersionUID = -1461425609157253501L;
+
+    private static final String DELIM_START = "${";
+    private static final String DELIM_STOP = "}";
 
     public static final String CONFIG_FILENAME = "config.filename";
     public static final String MANIFEST_VERSION = "mfv";
@@ -81,14 +85,14 @@ public class ConnectorProperties extends Properties {
     public ConnectorProperties getResolveConnectorProperties(HttpServletRequest request) {
         Properties extProps = new Properties();
         extProps.put("server.base.url", ServletUtil.getBaseURL(request,
-            StringUtil.getNULLtoFalse(this.getProperty("server.canonical.hostname.mode"))));
+            LangUtil.getNULLtoFalse(this.getProperty("server.canonical.hostname.mode"))));
 
         ConnectorProperties dynamicProps = getDeepCopy();
 
         // Perform variable substitution for system properties.
         for (Enumeration<?> e = this.propertyNames(); e.hasMoreElements();) {
             String name = (String) e.nextElement();
-            dynamicProps.setProperty(name, TagUtil.substVars(this.getProperty(name), name, null, this, extProps));
+            dynamicProps.setProperty(name, substVars(this.getProperty(name), name, null, this, extProps));
         }
 
         dynamicProps.putAll(extProps);
@@ -97,8 +101,7 @@ public class ConnectorProperties extends Properties {
             // Perform variable substitution for system properties.
             for (Enumeration<?> e = dynProps.propertyNames(); e.hasMoreElements();) {
                 String name = (String) e.nextElement();
-                dynProps.setProperty(name,
-                    TagUtil.substVars(dynProps.getProperty(name), name, null, dynProps, extProps));
+                dynProps.setProperty(name, substVars(dynProps.getProperty(name), name, null, dynProps, extProps));
             }
         }
 
@@ -109,5 +112,52 @@ public class ConnectorProperties extends Properties {
 
         return dynamicProps;
 
+    }
+
+    static String substVars(String val, String currentKey, Map<String, String> cycleMap, Properties configProps,
+        Properties extProps) {
+
+        Map<String, String> map = cycleMap == null ? new HashMap<>() : cycleMap;
+        map.put(currentKey, currentKey);
+
+        int stopDelim = -1;
+        int startDelim;
+
+        do {
+            stopDelim = val.indexOf(DELIM_STOP, stopDelim + 1);
+            if (stopDelim < 0) {
+                return val;
+            }
+            startDelim = val.indexOf(DELIM_START);
+            if (startDelim < 0) {
+                return val;
+            }
+            while (stopDelim >= 0) {
+                int idx = val.indexOf(DELIM_START, startDelim + DELIM_START.length());
+                if ((idx < 0) || (idx > stopDelim)) {
+                    break;
+                } else if (idx < stopDelim) {
+                    startDelim = idx;
+                }
+            }
+        } while ((startDelim > stopDelim) && (stopDelim >= 0));
+
+        String variable = val.substring(startDelim + DELIM_START.length(), stopDelim);
+
+        if (map.get(variable) != null) {
+            throw new IllegalArgumentException("recursive variable reference: " + variable);
+        }
+        String substValue = System.getProperty(variable);
+        if (substValue == null) {
+            substValue = configProps == null ? null : configProps.getProperty(variable, null);
+            if (substValue == null) {
+                substValue = extProps == null ? null : extProps.getProperty(variable, null);
+            }
+        }
+
+        map.remove(variable);
+        String result =
+            val.substring(0, startDelim) + substValue + val.substring(stopDelim + DELIM_STOP.length(), val.length());
+        return substVars(result, currentKey, map, configProps, extProps);
     }
 }

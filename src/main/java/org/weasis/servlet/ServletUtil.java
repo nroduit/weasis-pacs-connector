@@ -39,11 +39,12 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.data.Patient;
+import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.StringUtil.Suffix;
 import org.weasis.dicom.mf.ArcQuery.ViewerMessage;
+import org.weasis.dicom.mf.Patient;
+import org.weasis.dicom.mf.QueryResult;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
-import org.weasis.dicom.util.StringUtil;
-import org.weasis.dicom.util.StringUtil.Suffix;
 import org.weasis.query.AbstractQueryConfiguration;
 import org.weasis.query.CommonQueryParams;
 import org.weasis.util.EncryptUtils;
@@ -291,7 +292,7 @@ public class ServletUtil {
                 }
 
                 // Remove Patient without study
-                for (AbstractQueryConfiguration arcConfig : params.getArchiveList()) {
+                for (QueryResult arcConfig : params.getArchiveList()) {
                     List<Patient> patients = arcConfig.getPatients();
                     for (int i = patients.size() - 1; i >= 0; i--) {
                         if (patients.get(i).isEmpty()) {

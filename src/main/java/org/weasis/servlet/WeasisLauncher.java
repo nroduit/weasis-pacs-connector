@@ -32,13 +32,13 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.util.GzipManager;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.mf.UploadXml;
 import org.weasis.dicom.mf.XmlManifest;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.dicom.mf.thread.ManifestManagerThread;
-import org.weasis.dicom.util.StringUtil;
 import org.weasis.query.CommonQueryParams;
-import org.weasis.util.GzipManager;
 
 public class WeasisLauncher extends HttpServlet {
 
@@ -175,7 +175,7 @@ public class WeasisLauncher extends HttpServlet {
 
     static String buildManifest(HttpServletRequest request, XmlManifest manifest)
         throws InterruptedException, ExecutionException, TimeoutException, IOException {
-        if (manifest !=null || CommonQueryParams.isManifestRequest(request.getParameterMap())) {
+        if (manifest != null || CommonQueryParams.isManifestRequest(request.getParameterMap())) {
             ServletContext ctx = request.getSession().getServletContext();
             ConnectorProperties connectorProperties = (ConnectorProperties) ctx.getAttribute("componentProperties");
             ConnectorProperties props = connectorProperties.getResolveConnectorProperties(request);
@@ -192,8 +192,9 @@ public class WeasisLauncher extends HttpServlet {
                 Future<XmlManifest> future = builder.getFuture();
                 XmlManifest xml = future.get(ManifestManagerThread.MAX_LIFE_CYCLE, TimeUnit.MILLISECONDS);
                 StringBuilder buf = new StringBuilder("$dicom:get -i ");
-                buf.append(Base64.getEncoder().encode(GzipManager.gzipCompressToByte(xml.xmlManifest((String) props.get("manifest.version")).getBytes())));
-                
+                buf.append(Base64.getEncoder().encode(GzipManager
+                    .gzipCompressToByte(xml.xmlManifest((String) props.get("manifest.version")).getBytes())));
+
                 request.setAttribute(JnlpLauncher.ATTRIBUTE_UPLOADED_ARGUMENT, buf.toString());
                 // Remove the builder as it has been retrieved without calling RequestManifest servlet
                 final ConcurrentHashMap<Integer, ManifestBuilder> builderMap =

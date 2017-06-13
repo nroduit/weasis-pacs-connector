@@ -7,15 +7,17 @@ import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.data.Patient;
-import org.weasis.dicom.data.Series;
-import org.weasis.dicom.data.Study;
+import org.weasis.core.api.util.LangUtil;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.mf.ArcQuery.ViewerMessage;
+import org.weasis.dicom.mf.Patient;
+import org.weasis.dicom.mf.QueryResult;
+import org.weasis.dicom.mf.Series;
+import org.weasis.dicom.mf.Study;
 import org.weasis.dicom.mf.WadoParameters;
-import org.weasis.dicom.util.StringUtil;
 import org.weasis.servlet.ConnectorProperties;
 
-public abstract class AbstractQueryConfiguration {
+public abstract class AbstractQueryConfiguration implements QueryResult {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractQueryConfiguration.class);
 
     protected final List<Patient> patients;
@@ -40,10 +42,11 @@ public abstract class AbstractQueryConfiguration {
 
     public abstract void buildFromSopInstanceUID(CommonQueryParams params, String... sopInstanceUIDs);
 
+    @Override
     public WadoParameters getWadoParameters() {
         String wadoQueriesURL =
             properties.getProperty("arc.wado.url", properties.getProperty("server.base.url") + "/wado");
-        boolean onlysopuid = StringUtil.getNULLtoFalse(properties.getProperty("wado.onlysopuid"));
+        boolean onlysopuid = LangUtil.getNULLtoFalse(properties.getProperty("wado.onlysopuid"));
         String addparams = properties.getProperty("wado.addparams", "");
         String overrideTags = properties.getProperty("wado.override.tags");
         // If the web server requires an authentication (arc.web.login=user:pwd)
@@ -66,6 +69,7 @@ public abstract class AbstractQueryConfiguration {
         return wado;
     }
 
+    @Override
     public void removePatientId(List<String> patientIdList) {
         if (patientIdList != null && !patientIdList.isEmpty()) {
             for (int i = patients.size() - 1; i >= 0; i--) {
@@ -76,6 +80,7 @@ public abstract class AbstractQueryConfiguration {
         }
     }
 
+    @Override
     public void removeStudyUid(List<String> studyUidList) {
         if (studyUidList != null && !studyUidList.isEmpty()) {
             for (Patient p : patients) {
@@ -89,6 +94,7 @@ public abstract class AbstractQueryConfiguration {
         }
     }
 
+    @Override
     public void removeAccessionNumber(List<String> accessionNumberList) {
         if (accessionNumberList != null && !accessionNumberList.isEmpty()) {
             for (Patient p : patients) {
@@ -102,6 +108,7 @@ public abstract class AbstractQueryConfiguration {
         }
     }
 
+    @Override
     public void removeSeriesUid(List<String> seriesUidList) {
         if (seriesUidList != null && !seriesUidList.isEmpty()) {
             for (Patient p : patients) {
@@ -121,14 +128,17 @@ public abstract class AbstractQueryConfiguration {
         }
     }
 
+    @Override
     public List<Patient> getPatients() {
         return patients;
     }
 
+    @Override
     public ViewerMessage getViewerMessage() {
         return viewerMessage;
     }
 
+    @Override
     public void setViewerMessage(ViewerMessage viewerMessage) {
         this.viewerMessage = viewerMessage;
     }
