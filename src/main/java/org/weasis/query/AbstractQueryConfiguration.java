@@ -1,7 +1,7 @@
 package org.weasis.query;
 
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Properties;
 
@@ -10,9 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.Patient;
 import org.weasis.dicom.data.Series;
 import org.weasis.dicom.data.Study;
-import org.weasis.dicom.data.xml.Base64;
-import org.weasis.dicom.mf.WadoParameters;
 import org.weasis.dicom.mf.ArcQuery.ViewerMessage;
+import org.weasis.dicom.mf.WadoParameters;
 import org.weasis.dicom.util.StringUtil;
 import org.weasis.servlet.ConnectorProperties;
 
@@ -49,12 +48,8 @@ public abstract class AbstractQueryConfiguration {
         String overrideTags = properties.getProperty("wado.override.tags");
         // If the web server requires an authentication (arc.web.login=user:pwd)
         String webLogin = properties.getProperty("arc.web.login");
-        if (webLogin != null) {
-            try {
-                webLogin = Base64.encodeBytes(webLogin.trim().getBytes());
-            } catch (IOException e) {
-                LOGGER.error("Error on encoding webLogin", e);
-            }
+        if (StringUtil.hasText(webLogin)) {
+            webLogin = Base64.getEncoder().encodeToString(webLogin.trim().getBytes()); 
         }
         String httpTags = properties.getProperty("wado.httpTags");
 

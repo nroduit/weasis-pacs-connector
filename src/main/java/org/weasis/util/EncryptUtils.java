@@ -10,10 +10,8 @@
  *******************************************************************************/
 package org.weasis.util;
 
-import java.io.IOException;
 import java.util.Arrays;
-
-import org.weasis.dicom.data.xml.Base64;
+import java.util.Base64;
 
 public class EncryptUtils {
     private static final char START = '~';
@@ -30,11 +28,7 @@ public class EncryptUtils {
             throw new IllegalArgumentException(ERROR_MSG);
         }
         String result = xorMessage(message.trim(), key);
-        try {
-            return Base64.encodeBytes(result.getBytes(), Base64.URL_SAFE);
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
+        return Base64.getUrlEncoder().encodeToString(result.getBytes());
     }
 
     private static String xorMessage(String message, String key) {
@@ -69,12 +63,7 @@ public class EncryptUtils {
         if (message == null || key == null) {
             throw new IllegalArgumentException(ERROR_MSG);
         }
-        String result = null;
-        try {
-            result = new String(Base64.decode(message.trim(), Base64.URL_SAFE));
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
+        String result = new String(Base64.getUrlDecoder().decode(message.trim()));
         return unXorMessage(result, key);
     }
 

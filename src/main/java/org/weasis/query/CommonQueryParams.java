@@ -250,4 +250,12 @@ public class CommonQueryParams {
         return requestMap.get(OBJECT_UID);
     }
 
+    public static boolean isManifestRequest(Map<String, String[]> map) {
+        if (map == null) {
+            return false;
+        }
+        return map.get(REQUEST_TYPE) != null || map.get(PATIENT_ID) != null || map.get(STUDY_UID) != null
+            || map.get(ACCESSION_NUMBER) != null || map.get(SERIES_UID) != null || map.get(OBJECT_UID) != null;
+    }
+
 }

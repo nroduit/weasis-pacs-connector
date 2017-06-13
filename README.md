@@ -1,6 +1,10 @@
 # weasis-pacs-connector #
 
-weasis-pacs-connector provides the easiest way to launch Weasis from a web context (see URL examples below) and to connect Weasis to any PACS supporting WADO.
+weasis-pacs-connector provides the easiest way to launch Weasis from a web context (see URL examples below) and to connect Weasis to any PACS supporting WADO or to a WEB API.
+
+[![CircleCI](https://circleci.com/gh/nroduit/weasis-pacs-connector.svg?style=svg&circle-token=290c4516d1daa4aed30f25ef20d4f55de3428020)](https://circleci.com/gh/nroduit/weasis-pacs-connector) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/916cb1c21eba438483a373b9580007b5)](https://www.codacy.com/app/nicolas.roduit/weasis-pacs-connector?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nroduit/weasis-pacs-connector&amp;utm_campaign=Badge_Grade)
+
+The master branch requires Java 8+ and the 6.x branch requires Java 7+.
 
 This component gathers different services:   
 
@@ -9,6 +13,10 @@ This component gathers different services:
 * **/viewer-applet** same as _/viewer_ but it can launch Weasis as Applet in a web page (the service returns an html page). This method is not recommended as several browsers block Java plugin.
 * **/manifest** building the xml manifest (containing the necessary UIDs) consumed by Weasis to retrieve all the images by WADO requests
 * **/[name of the template]** (default template: /weasis.jnlp) building a jnlp file from a template (jnlp template path, jnlp properties and jnp arguments can be passed via URL parameters, see the [JNLP Builder documentation](JnlpBuilder))
+
+## New features in weasis-pacs-connector 7 ##
+* Requires Java 8 and Servlet 3.1
+
 
 ## New features in weasis-pacs-connector 6 ##
 * Multi-PACS configuration (can be requested simultaneously or individually)
@@ -84,13 +92,21 @@ Note: It is allowed to have multiple UIDs for patient, study, series and instanc
 ##### Upload the manifest via http POST #####
 * http://localhost:8080/weasis-pacs-connector/viewer?upload=manifest  
   => with the parameter "Content-Type: text/xml; charset=UTF-8" and the manifest in the body of the POST request
+  
+##### Embed the manifest into the jnlp #####
 * http://localhost:8080/weasis-pacs-connector/viewer?patientID=97026728&embedManifest   
   => embedManifest parameter will embed the manifest into the jnlp (in this case building manifest is executed before starting Weasis and the images can be always displayed via the jnlp file)
 
+##### Open non DICOM images #####
+* http://launcher-weasis.rhcloud.com/weasis-pacs-connector/viewer?arg=$image:get%20-u%20https://dcm4che.atlassian.net/wiki/download/attachments/3670024/weasis-mpr.png     
+  => open image from an URL (from weasis 2.5)
+
 ##### Launch with specific parameters #####
-* http://launcher-weasis.rhcloud.com/weasis-pacs-connector/viewer?studyUID=1.2.840.113619.2.176.2025.1499492.7409.1172755464.916&mhs=1024m   
-  => modify in jnlp the maximum memory used by the application (max-heap-size="1024m")   
-  => to inject other properties or arguments see the [JNLP Builder documentation](JnlpBuilder)   
+* http://launcher-weasis.rhcloud.com/weasis-pacs-connector/viewer?studyUID=1.3.6.1.4.1.5962.1.2.2.20031208063649.855&mhs=1024m   
+  => modify in jnlp the maximum memory used by the application (max-heap-size="1024m")
+* http://localhost:8080/weasis-pacs-connector/viewer?studyUID=1.3.6.1.4.1.5962.1.2.2.20031208063649.855&mfv=1    
+  => modify the manifest version (default is 2.5, old one is 1 - required by Weasis lesser than 2.5)
+* to inject other properties or arguments see the [JNLP Builder documentation](JnlpBuilder)
 
 ### Getting the xml manifest ###
   
@@ -108,23 +124,24 @@ See the [JNLP Builder documentation](JnlpBuilder)
 
 ### Installation ###
 
-It requires a web application container like JBoss or Tomcat.
+It requires a web application container like Tomcat or JBoss.
 
 Go [here](https://sourceforge.net/projects/dcm4che/files/Weasis/) and download these Weasis files.
 * From the folder with the latest version number:  
 	- [weasis.war] Weasis Web distribution which run with Java Web Start.
-	- [weasis-ext.war] Optional package for exporting the images to build an ISO image for CD/DVD
+	- [weasis-ext.war] Optional package for additional plug-ins (e.g. exporting the images to build an ISO image for CD/DVD)
 	- [weasis-i18n.war] Optional package for Weasis translations
 * From weasis-pacs-connector folder:  
-	- [weasis-pacs-connector.war]
+	- [weasis-pacs-connector.war] Connector between the archive and the viewer
 	- [dcm4chee-web-weasis.jar] Optional package for [dcm4che-web3](http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHEE)
 
 ## Configuration of weasis-pacs-connector ##
 
-The default configurations works directly with [dcm4che-web3](http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHEE). To override the configuration of weasis-pacs-connector, download [weasis-connector-default.properties](src/main/resources/weasis-connector-default.properties) and rename it weasis-pacs-connector.properties. This file named weasis-pacs-connector.properties must be placed in the classpath of the application:
+The default configurations works directly with [dcm4che-web3](http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHEE). To override the configuration of weasis-pacs-connector, download [weasis-connector-default.properties](src/main/resources/weasis-connector-default.properties) and rename it **weasis-pacs-connector.properties**. This file named **weasis-pacs-connector.properties** and **[dicom-dcm4chee.properties](src/main/resources/dicom-dcm4chee.properties)** must be placed in the classpath of the application:
 
 * In JBoss inferior to version 7, the best location would be "/server/default/conf/"
 * In JBoss 7.2 and 8.x, see [here](https://developer.jboss.org/wiki/HowToPutAnExternalFileInTheClasspath)
+* In JBoss Wildfly 10, the location is wildfly/standalone/configuration
 * In Tomcat just specify the directory in shared.loader property of /conf/catalina.properties
 
 To add properties or arguments in the JNLP there are two possibilities:
@@ -132,21 +149,39 @@ To add properties or arguments in the JNLP there are two possibilities:
 1. Add parameters via the URL, see the [JNLP Builder documentation](JnlpBuilder) (arg, prop, and src)
 2. Change the [default template](src/main/webapp/weasis.jnlp), see _jnlp.default.name_ in [weasis-connector-default.properties](src/main/resources/weasis-connector-default.properties)
 
+weasis-pacs-connector 6.1 generates new manifests and requires Weasis 2.5 and superior. However it is possible to run previous version of Weasis by modifying the [weasis-connector-default.properties](src/main/resources/weasis-connector-default.properties):    
+1. Set the property _manifest.version=1_
+2. Uncomment the property _jnlp.default.name=weasis1.jnlp_
+3. Uncomment the property _jnlp.applet.name=weasisApplet1.jnlp_
 
-For [dcm4chee-arc](https://github.com/dcm4che/dcm4chee-arc-cdi):
+Note: when multiple archives are configured, only the references of the first archive containing images will be incorporated in the manifest 1.0. Multiple archives can only work with Weasis 2.5.
 
-* change the configuration of the wado server property to **pacs.wado.url=${server.base.url}/dcm4chee-arc/wado/DCM4CHEE**
-* in JBoss WildFly 8.x place the file named weasis-pacs-connector.properties into _/modules/org/weasis/weasis-pacs-connector/main_
-* create a file _module.xml_ and place it in the same directory. The content of this file is:
+For [dcm4chee-arc-light](https://github.com/dcm4che/dcm4chee-arc-light):
 
-```xml
-    <?xml version="1.0" encoding="UTF-8"?>
-    <module xmlns="urn:jboss:module:1.1" name="org.weasis.weasis-pacs-connector">
-        <resources>
-            <resource-root path="."/>
-        </resources>
-    </module>
-```
+* Change the configuration of the WADO server property in dicom-dcm4chee.properties: **pacs.wado.url=${server.base.url}/dcm4chee-arc/aets/DCM4CHEE/wado**
+
+## New way to launch jnlp ##
+
+An alternative way to launch Java Webstart (JWS) by changing the scheme of URL:
+* jnlp://localhost:8080/weasis-pacs-connector/viewer?patientID=9702672
+* jnlps://localhost:8443/weasis-pacs-connector/viewer?patientID=9702672 (SSL connection)
+
+Advantages of jnlp protocol:
+* Works at the system level (association of a MIME type with an application: jnlp => JWS)
+* Works with most of browsers (Chrome, IE, Firefox, Safari, Opera...)
+* Browsers do not download jnlp anymore. JWS reads directly the URL (do not show the popup "This application will run with unrestricted access" at every launch)
+* Works with other applications which are requesting the default system application for the jnlp protocol
+* No change is required at the client side or at the server side, only replacing the scheme of the jnlp URL is enough
+* Registration of jnlp handler is available in Oracle Java Runtime installer from JRE 8_111 and in the Java 9 installer.
+  * Works out of box on Windows
+  * On Mac OS X, it could be necessary to run once Java Webstart to register the jnlp handler (/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Resources/javawslauncher.app)
+  * On Linux, a [configuration](https://docs.oracle.com/javase/9/deploy/overview.htm#JSDPG-GUID-BC1669F9-7238-462D-80AA-3D42BAF99FA7) is required
+* An implementation has be done on [IcedTea-WEB](http://icedtea.classpath.org/wiki/IcedTea-Web) (alternative of the Oracle JWS) and it will be available in the next release (1.7).
+
+For more informations:
+* [Oracle JWS documentation](https://docs.oracle.com/javase/9/deploy/overview.htm)
+* [About the configuration in dcm4chee](http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHEE)
+
 
 ## Security ##
 
@@ -154,7 +189,8 @@ There are different ways to treat the security aspects. Here are some:
 
 * Make a proxy servlet (URL forwarding) to handle authentication and authorization you want and configure weasis-pacs-connector to be called only by the proxy server (hosts.allow=serverhostname)
 * Configure weasis-pacs-connector for UIDs encryption in the URL with a paraphrase (encrypt.key=paraphraseForIDs: just uncomment and set a new key). It works by default with dcm4chee-web3. For other web interface it requires to use the same [algorithm](src/main/java/org/weasis/util/EncryptUtils.java) with the same key. 
-* Configure weasis-pacs-connector for accepting only request with a combination of several UIDs
+* Configure weasis-pacs-connector for accepting only limited IP/host
+* Configure weasis-pacs-connector for accepting only requests with a combination of several UIDs
 
 ## Architecture of weasis-pacs-connector ##
 

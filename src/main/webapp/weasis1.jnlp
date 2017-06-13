@@ -17,9 +17,10 @@
 	</security>
 
 	<resources>
-		<!-- Requires Java SE 8 for Weasis 2.5 and superior -->
-		<j2se version="1.8+" href="http://java.sun.com/products/autodl/j2se" initial-heap-size="${ihs}" max-heap-size="${mhs}" />
-		<j2se version="1.8+" initial-heap-size="${ihs}" max-heap-size="${mhs}" />
+		<!-- Requires Java SE 6 update 10 release for jnlp extension without codebase (substance.jnlp) -->
+		<j2se version="1.6.0_10+" href="http://java.sun.com/products/autodl/j2se" initial-heap-size="${ihs}"
+			max-heap-size="${mhs}" />
+		<j2se version="1.6.0_10+" initial-heap-size="${ihs}" max-heap-size="${mhs}" />
 
 		<jar href="${cdb}/weasis-launcher.jar" main="true" />
 		<jar href="${cdb}/felix.jar" />

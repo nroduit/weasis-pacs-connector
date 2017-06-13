@@ -8,6 +8,7 @@ import java.util.Properties;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.net.QueryOption;
 import org.dcm4che3.net.service.QueryRetrieveLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,14 +105,15 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
             try {
                 DicomState state =
                     CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.STUDY, keysStudies);
-
+                LOGGER.debug("C-FIND with PatientID {}", state.getMessage());
+                
                 List<Attributes> studies = state.getDicomRSP();
                 if (studies != null && !studies.isEmpty()) {
                     Collections.sort(studies, getStudyComparator());
                     applyAllFilters(params, studies);
                 }
-            } catch (Exception t) {
-                LOGGER.error("DICOM query Error of {}", getArchiveConfigName(), t);
+            } catch (Exception e) {
+                LOGGER.error("DICOM query Error of {}", getArchiveConfigName(), e);
             }
         }
     }
@@ -287,6 +289,9 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
 
     @Override
     public void buildFromSeriesInstanceUID(CommonQueryParams params, String... seriesInstanceUIDs) {
+        AdvancedParams advParams = advancedParams == null ? new AdvancedParams(): advancedParams;
+        advParams.getQueryOptions().add(QueryOption.RELATIONAL);
+        
         for (String seriesInstanceUID : seriesInstanceUIDs) {
             if (!StringUtil.hasText(seriesInstanceUID)) {
                 continue;
@@ -303,8 +308,9 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
 
             try {
                 DicomState state =
-                    CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.SERIES, keysSeries);
-
+                    CFind.process(advParams, callingNode, calledNode, 0, QueryRetrieveLevel.SERIES, keysSeries);
+                LOGGER.debug("C-FIND with SeriesInstanceUID {}", state.getMessage());
+                
                 List<Attributes> series = state.getDicomRSP();
                 if (series != null && !series.isEmpty()) {
                     Attributes dataset = series.get(0);
@@ -322,6 +328,9 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
 
     @Override
     public void buildFromSopInstanceUID(CommonQueryParams params, String... sopInstanceUIDs) {
+        AdvancedParams advParams = advancedParams == null ? new AdvancedParams(): advancedParams;
+        advParams.getQueryOptions().add(QueryOption.RELATIONAL);
+        
         for (String sopInstanceUID : sopInstanceUIDs) {
             if (!StringUtil.hasText(sopInstanceUID)) {
                 continue;
@@ -338,7 +347,8 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
 
             try {
                 DicomState state =
-                    CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.IMAGE, keysInstance);
+                    CFind.process(advParams, callingNode, calledNode, 0, QueryRetrieveLevel.IMAGE, keysInstance);
+                LOGGER.debug("C-FIND with sopInstanceUID {}", state.getMessage());
 
                 List<Attributes> instances = state.getDicomRSP();
                 if (instances != null && !instances.isEmpty()) {
@@ -367,7 +377,8 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
         try {
             DicomState state =
                 CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.STUDY, keysStudies);
-
+            LOGGER.debug("C-FIND at study level {}", state.getMessage());
+            
             List<Attributes> studies = state.getDicomRSP();
             if (studies != null) {
                 for (Attributes studyDataSet : studies) {
@@ -391,7 +402,8 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
 
             DicomState state =
                 CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.SERIES, keysSeries);
-
+            LOGGER.debug("C-FIND with StudyInstanceUID {}", state.getMessage());
+            
             List<Attributes> series = state.getDicomRSP();
             if (series != null && !series.isEmpty()) {
                 // Get patient from each study in case IssuerOfPatientID is different
@@ -415,6 +427,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                 CFind.SOPInstanceUID, CFind.InstanceNumber };
             DicomState state =
                 CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.IMAGE, keysInstance);
+            LOGGER.debug("C-FIND with SeriesInstanceUID {}", state.getMessage());
 
             List<Attributes> instances = state.getDicomRSP();
             if (instances != null && !instances.isEmpty()) {
@@ -466,12 +479,14 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                 }
                 DicomParam[] keysSeries = {
                     // Matching Keys
-                    new DicomParam(Tag.SeriesInstanceUID, patientDataset.getString(Tag.SeriesInstanceUID)),
+                    new DicomParam(Tag.SeriesInstanceUID, seriesInstanceUID),
                     // Return Keys
                     CFind.StudyInstanceUID, CFind.Modality, CFind.SeriesNumber, CFind.SeriesDescription };
 
                 DicomState state =
                     CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.SERIES, keysSeries);
+                LOGGER.debug("C-FIND with SeriesInstanceUID {}", state.getMessage());
+                
                 List<Attributes> series = state.getDicomRSP();
                 if (series.isEmpty()) {
                     throw new IllegalStateException("Get empty C-Find reply at Series level for " + seriesInstanceUID);
@@ -493,6 +508,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
 
             DicomState state =
                 CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.STUDY, keysStudies);
+            LOGGER.debug("C-FIND with StudyInstanceUID {}", state.getMessage());
 
             List<Attributes> studies = state.getDicomRSP();
             if (studies.isEmpty()) {

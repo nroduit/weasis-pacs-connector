@@ -10,8 +10,13 @@
  *******************************************************************************/
 package org.weasis.servlet;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.Hashtable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -27,11 +32,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.dicom.mf.thread.ManifestManagerThread;
+import org.weasis.util.NetworkUtil;
 
 public class ManifestManager extends HttpServlet {
-
     private static final long serialVersionUID = -3980526826815714220L;
     private static final Logger LOGGER = LoggerFactory.getLogger(ManifestManager.class);
+
+    public static final String DEFAULT_TEMPLATE = "weasis.jnlp";
+    public static final String DEFAULT_APPLET_TEMPLATE = "weasisApplet.jnlp";
 
     private final ConcurrentHashMap<Integer, ManifestBuilder> manifestBuilderMap = new ConcurrentHashMap<>();
     private final transient ManifestManagerThread manifestManagerThread = new ManifestManagerThread(manifestBuilderMap);
@@ -44,21 +52,25 @@ public class ManifestManager extends HttpServlet {
             LOGGER.error(
                 "A manifest manager thread is already running in the servlet context! The new one won't be started.");
         } else {
-            LOGGER.debug("init() - getServletContext: {} ", getServletConfig().getServletContext());
+            LOGGER.debug("init() - getServletContext: {} ", getServletConfig().getServletContext().getServerInfo());
             LOGGER.debug("init() - getRealPath: {}", getServletConfig().getServletContext().getRealPath("/"));
 
             final ConnectorProperties properties = new ConnectorProperties();
             try {
-                URL config = this.getClass().getResource("/weasis-pacs-connector.properties");
+                String configDir = System.getProperty("jboss.server.config.dir", "");
+                URL config = readConfigURL(configDir, "weasis-pacs-connector.properties");
                 if (config == null) {
                     config = this.getClass().getResource("/weasis-connector-default.properties");
-                    LOGGER.info("Default configuration file: {}", config);
+                    LOGGER.info("Default configuration: {}", config);
                 } else {
-                    LOGGER.info("External weasis-pacs-connector configuration file: {}", config);
+                    LOGGER.info("External weasis-pacs-connector configuration: {}", config);
                 }
+                configDir += "/";
 
                 if (config != null) {
+                    String baseConfigDir = getBaseConfigURL(config);
                     properties.load(config.openStream());
+
                     String requests = properties.getProperty("request.ids");
                     String requestIID = properties.getProperty("request.IID.level");
                     if (requests == null) {
@@ -81,29 +93,21 @@ public class ManifestManager extends HttpServlet {
                     String arcConfigList = properties.getProperty("arc.config.list");
                     if (arcConfigList != null) {
                         for (String arc : arcConfigList.split(",")) {
-                            URL arcConfigFile = this.getClass().getResource("/" + arc.trim());
-                            if (arcConfigFile != null) {
-                                Properties archiveProps = new Properties();
-                                archiveProps.load(arcConfigFile.openStream());
-                                archiveProps.setProperty(ConnectorProperties.CONFIG_FILENAME, arc.trim());
-                                properties.addArchiveProperties(archiveProps);
-                                LOGGER.info("Archive configuration: {}", arcConfigFile);
-                            }
+                            properties.addArchiveProperties(readArchiveURL(baseConfigDir, configDir, arc.trim()));
                         }
                     }
+
+                    loadTemplate(baseConfigDir, configDir,
+                        properties.getProperty("jnlp.default.name", DEFAULT_TEMPLATE), "weasis.default.jnlp",
+                        properties);
+                    loadTemplate(baseConfigDir, configDir,
+                        properties.getProperty("jnlp.applet.name", DEFAULT_APPLET_TEMPLATE), "weasis.applet.jnlp",
+                        properties);
 
                 } else {
                     LOGGER.error("Cannot find  a configuration file for weasis-pacs-connector");
                 }
 
-                String jnlpName = properties.getProperty("jnlp.default.name");
-                if (jnlpName != null) {
-                    URL jnlpTemplate = this.getClass().getResource("/" + jnlpName);
-                    if (jnlpTemplate != null) {
-                        LOGGER.info("External Weasis jnlp template: {}", jnlpTemplate);
-                        properties.put("weasis.default.jnlp", jnlpTemplate.toString());
-                    }
-                }
             } catch (Exception e) {
                 LOGGER.error("Error on initialization of ManifestManager", e);
             }
@@ -130,6 +134,74 @@ public class ManifestManager extends HttpServlet {
         LOGGER.info("Stop the manifest manager servlet");
 
         manifestManagerThread.interrupt();
+    }
+
+    private static String getBaseConfigURL(URL config) {
+        String val = config.toString();
+        return val.substring(0, val.lastIndexOf("/") + 1);
+    }
+
+    private URL readConfigURL(String configDir, String name) throws IOException {
+        try {
+            File file = new File(configDir, name);
+            if (file.canRead()) {
+                return file.toURI().toURL();
+            }
+        } catch (Exception e) {
+            LOGGER.error("Get url of {}", name, e);
+        }
+        return this.getClass().getResource("/" + name);
+    }
+
+    private Properties readArchiveURL(String baseConfigDir, String configDir, String name) throws IOException {
+        Properties archiveProps = new Properties();
+        try {
+            URL url = new URL(baseConfigDir + name);
+            try (InputStream inputStream = NetworkUtil.getUrlInputStream(url.openConnection())) {
+                archiveProps.load(inputStream);
+                LOGGER.info("Archive configuration: {}", url.toString());
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Get template", e);
+            URL arcConfigFile = this.getClass().getResource(configDir + name);
+            if (arcConfigFile != null) {
+                archiveProps.load(arcConfigFile.openStream());
+                LOGGER.info("Archive configuration: {}", arcConfigFile);
+            } else {
+                throw new IOException("Cannot find archive configuration");
+            }
+        }
+        archiveProps.setProperty(ConnectorProperties.CONFIG_FILENAME, name);
+        return archiveProps;
+    }
+
+    private void loadTemplate(String baseConfigDir, String configDir, String jnlpName, String property,
+        Hashtable<Object, Object> properties) throws IOException {
+
+        try {
+            URL url = new URL(baseConfigDir + jnlpName);
+            try (InputStream inputStream = NetworkUtil.getUrlInputStream(url.openConnection())) {
+                properties.put(property, url.toString());
+                LOGGER.info("Default jnlp template: {}", url);
+            }
+        } catch (Exception e) {
+            LOGGER.debug("Get template", e);
+            URL jnlpTemplate = this.getClass().getResource(configDir + jnlpName);
+            if (jnlpTemplate == null) {
+                try {
+                    jnlpTemplate = getServletConfig().getServletContext().getResource("/" + jnlpName);
+                } catch (MalformedURLException ex) {
+                    LOGGER.error("Error on getting template", ex);
+                }
+            }
+
+            if (jnlpTemplate != null) {
+                properties.put(property, jnlpTemplate.toString());
+                LOGGER.info("Default jnlp template: {}", jnlpTemplate);
+            } else {
+                throw new IOException("Cannot find template configuration");
+            }
+        }
     }
 
     // Get map where the oldest entry when the limit size is reached
