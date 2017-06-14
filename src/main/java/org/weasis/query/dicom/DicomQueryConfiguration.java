@@ -12,19 +12,19 @@ import org.dcm4che3.net.QueryOption;
 import org.dcm4che3.net.service.QueryRetrieveLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.data.Patient;
-import org.weasis.dicom.data.SOPInstance;
-import org.weasis.dicom.data.Series;
-import org.weasis.dicom.data.Study;
+import org.weasis.core.api.util.LangUtil;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.mf.ArcQuery.ViewerMessage;
+import org.weasis.dicom.mf.Patient;
+import org.weasis.dicom.mf.SOPInstance;
+import org.weasis.dicom.mf.Series;
+import org.weasis.dicom.mf.Study;
 import org.weasis.dicom.op.CFind;
 import org.weasis.dicom.param.AdvancedParams;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomParam;
 import org.weasis.dicom.param.DicomState;
 import org.weasis.dicom.param.TlsOptions;
-import org.weasis.dicom.util.DateUtil;
-import org.weasis.dicom.util.StringUtil;
 import org.weasis.query.AbstractQueryConfiguration;
 import org.weasis.query.CommonQueryParams;
 
@@ -48,11 +48,11 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
     }
 
     private AdvancedParams buildAdvancedParams() {
-        boolean tls = StringUtil.getNULLtoFalse(properties.getProperty("arc.tls.mode"));
+        boolean tls = LangUtil.getNULLtoFalse(properties.getProperty("arc.tls.mode"));
         AdvancedParams params = null;
         if (tls) {
             TlsOptions tlsOptions =
-                new TlsOptions(StringUtil.getNULLtoFalse(properties.getProperty("arc.tlsNeedClientAuth")),
+                new TlsOptions(LangUtil.getNULLtoFalse(properties.getProperty("arc.tlsNeedClientAuth")),
                     properties.getProperty("arc.keystoreURL"), properties.getProperty("arc.keystoreType", "JKS"),
                     properties.getProperty("arc.keystorePass"),
                     properties.getProperty("arc.keyPass", properties.getProperty("arc.keystorePass")),
@@ -129,7 +129,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
             if (lowerDateTime != null) {
                 for (int i = studies.size() - 1; i >= 0; i--) {
                     Attributes s = studies.get(i);
-                    Date date = DateUtil.dateTime(s.getDate(Tag.StudyDate), s.getDate(Tag.StudyTime));
+                    Date date = s.getDate(Tag.StudyDateAndTime);
                     if (date != null) {
                         int rep = date.compareTo(lowerDateTime);
                         if (rep > 0) {
@@ -150,7 +150,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
             if (upperDateTime != null) {
                 for (int i = studies.size() - 1; i >= 0; i--) {
                     Attributes s = studies.get(i);
-                    Date date = DateUtil.dateTime(s.getDate(Tag.StudyDate), s.getDate(Tag.StudyTime));
+                    Date date = s.getDate(Tag.StudyDateAndTime);
                     if (date != null) {
                         int rep = date.compareTo(upperDateTime);
                         if (rep < 0) {

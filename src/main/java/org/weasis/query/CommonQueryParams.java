@@ -8,9 +8,11 @@ import java.util.Properties;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.weasis.core.api.util.LangUtil;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.mf.ArcQuery.ViewerMessage;
+import org.weasis.dicom.mf.QueryResult;
 import org.weasis.dicom.param.DicomNode;
-import org.weasis.dicom.util.StringUtil;
 import org.weasis.query.db.DbQueryConfiguration;
 import org.weasis.query.dicom.DicomQueryConfiguration;
 import org.weasis.servlet.ConnectorProperties;
@@ -98,7 +100,7 @@ public class CommonQueryParams {
             }
         } else {
             for (Properties p : properties.getArchivePropertiesList()) {
-                if (StringUtil.getNULLtoFalse(p.getProperty("arc.activate"))) {
+                if (LangUtil.getNULLtoFalse(p.getProperty("arc.activate"))) {
                     if (p.getProperty("arc.aet") != null) {
                         this.archiveList.add(new DicomQueryConfiguration(p, callingNode));
                     } else if (p.getProperty("arc.db.driver") != null) {
@@ -122,7 +124,7 @@ public class CommonQueryParams {
     }
 
     public boolean isAcceptNoImage() {
-        return StringUtil.getNULLtoFalse(properties.getProperty("accept.noimage"));
+        return LangUtil.getNULLtoFalse(properties.getProperty("accept.noimage"));
     }
 
     public ConnectorProperties getProperties() {
@@ -140,7 +142,7 @@ public class CommonQueryParams {
     }
 
     public boolean hasPatients() {
-        for (AbstractQueryConfiguration arcConfig : archiveList) {
+        for (QueryResult arcConfig : archiveList) {
             if (!arcConfig.getPatients().isEmpty()) {
                 return true;
             }
@@ -149,31 +151,31 @@ public class CommonQueryParams {
     }
 
     public void clearAllPatients() {
-        for (AbstractQueryConfiguration arcConfig : archiveList) {
+        for (QueryResult arcConfig : archiveList) {
             arcConfig.getPatients().clear();
         }
     }
 
     public void removePatientId(List<String> patientIdList) {
-        for (AbstractQueryConfiguration arcConfig : archiveList) {
+        for (QueryResult arcConfig : archiveList) {
             arcConfig.removePatientId(patientIdList);
         }
     }
 
     public void removeStudyUid(List<String> studyUidList) {
-        for (AbstractQueryConfiguration arcConfig : archiveList) {
+        for (QueryResult arcConfig : archiveList) {
             arcConfig.removeStudyUid(studyUidList);
         }
     }
 
     public void removeAccessionNumber(List<String> accessionNumberList) {
-        for (AbstractQueryConfiguration arcConfig : archiveList) {
+        for (QueryResult arcConfig : archiveList) {
             arcConfig.removeAccessionNumber(accessionNumberList);
         }
     }
 
     public void removeSeriesUid(List<String> seriesUidList) {
-        for (AbstractQueryConfiguration arcConfig : archiveList) {
+        for (QueryResult arcConfig : archiveList) {
             arcConfig.removeSeriesUid(seriesUidList);
         }
     }

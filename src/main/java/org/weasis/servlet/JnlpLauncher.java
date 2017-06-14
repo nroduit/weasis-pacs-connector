@@ -40,8 +40,8 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.util.FileUtil;
-import org.weasis.dicom.util.StringUtil;
+import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.StringUtil;
 
 public class JnlpLauncher extends HttpServlet {
     private static final long serialVersionUID = 5979263846495591025L;

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.dicom.mf.thread;
 
+import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -17,7 +18,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.dicom.mf.ArcQuery;
+import org.weasis.dicom.mf.QueryResult;
 import org.weasis.dicom.mf.XmlManifest;
 import org.weasis.query.CommonQueryParams;
 import org.weasis.servlet.ServletUtil;
@@ -79,7 +82,8 @@ public class ManifestBuilder implements Callable<XmlManifest> {
             if (!params.hasPatients() && !params.isAcceptNoImage()) {
                 throw new IllegalStateException("Empty Patient List");
             }
-            ArcQuery wadoQuery = new ArcQuery(params.getArchiveList());
+            ArcQuery wadoQuery = new ArcQuery(LangUtil.convertCollectionType(params.getArchiveList(),
+                new ArrayList<QueryResult>(), QueryResult.class));
 
             LOGGER.info("Build Manifest in {} ms [id={}]", System.currentTimeMillis() - startTime, requestId);
             return wadoQuery;

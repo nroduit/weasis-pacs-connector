@@ -30,9 +30,9 @@ import javax.servlet.http.HttpServlet;
 import org.jdom2.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.dicom.mf.thread.ManifestManagerThread;
-import org.weasis.util.NetworkUtil;
 
 public class ManifestManager extends HttpServlet {
     private static final long serialVersionUID = -3980526826815714220L;

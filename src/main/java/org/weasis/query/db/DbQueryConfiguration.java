@@ -3,20 +3,21 @@ package org.weasis.query.db;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.data.Patient;
-import org.weasis.dicom.data.SOPInstance;
-import org.weasis.dicom.data.Series;
-import org.weasis.dicom.data.Study;
-import org.weasis.dicom.data.xml.EscapeChars;
-import org.weasis.dicom.util.DateUtil;
-import org.weasis.dicom.util.StringUtil;
+import org.weasis.core.api.util.EscapeChars;
+import org.weasis.core.api.util.StringUtil;
+import org.weasis.dicom.mf.Patient;
+import org.weasis.dicom.mf.SOPInstance;
+import org.weasis.dicom.mf.Series;
+import org.weasis.dicom.mf.Study;
+import org.weasis.dicom.tool.DateUtil;
 import org.weasis.query.AbstractQueryConfiguration;
 import org.weasis.query.CommonQueryParams;
 
@@ -118,7 +119,7 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
                 }
 
                 if (patientBirthTimeField != null) {
-                    patient.setPatientBirthTime(getTime(resultSet, patientBirthTimeField));
+                    patient.setPatientBirthTime(getTimeFromTimeStamp(resultSet, patientBirthTimeField));
                 }
 
                 patient.setPatientSex(getString(resultSet, patientSexField));
@@ -130,12 +131,12 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
             if (study == null) {
                 study = new Study(getString(resultSet, studyIUIDField));
 
-                if ("DATE".equalsIgnoreCase(studyDateTypeField)) {
-                    study.setStudyDate(getDate(resultSet, studyDateField));
-                    study.setStudyTime(getTime(resultSet, studyDateField));
-                } else if ("TIMESTAMP".equalsIgnoreCase(studyDateTypeField)) {
-                    study.setStudyDate(getDateFromTimeStamp(resultSet, studyDateField));
-                    study.setStudyTime(getTimeFromTimeStamp(resultSet, studyDateField));
+                if (studyDateField != null) {
+                    LocalDateTime dateTime = getLocalDateTimeFromTimeStamp(resultSet, studyDateField);
+                    if (dateTime != null) {
+                        study.setStudyDate(DateUtil.formatDicomDate(dateTime.toLocalDate()));
+                        study.setStudyTime(DateUtil.formatDicomTime(dateTime.toLocalTime()));
+                    }
                 }
 
                 study.setAccessionNumber(getString(resultSet, accessionNumberField));
@@ -189,7 +190,7 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
         query.append(properties.getProperty("arc.db.query.and"));
         return query.toString();
     }
-    
+
     private static String getQueryString(String... strings) {
         StringBuilder queryString = new StringBuilder();
         for (String str : strings) {
@@ -205,7 +206,6 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
         return queryString.toString();
     }
 
-
     private static String getString(ResultSet resultSet, String field) throws SQLException {
         if (field != null) {
             return EscapeChars.forXML(resultSet.getString(field));
@@ -213,10 +213,18 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
         return null;
     }
 
+    private static LocalDateTime getLocalDateTimeFromTimeStamp(ResultSet resultSet, String field) throws SQLException {
+        Timestamp timestamp = resultSet.getTimestamp(field);
+        if (timestamp != null) {
+            return timestamp.toLocalDateTime();
+        }
+        return null;
+    }
+
     private static String getDateFromTimeStamp(ResultSet resultSet, String field) throws SQLException {
         Timestamp timestamp = resultSet.getTimestamp(field);
         if (timestamp != null) {
-            return DateUtil.formatDicomDate(timestamp);
+            return DateUtil.formatDicomDate(timestamp.toLocalDateTime().toLocalDate());
         }
         return null;
     }
@@ -224,23 +232,15 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
     private static String getTimeFromTimeStamp(ResultSet resultSet, String field) throws SQLException {
         Timestamp timestamp = resultSet.getTimestamp(field);
         if (timestamp != null) {
-            return DateUtil.formatDicomTime(timestamp);
+            return DateUtil.formatDicomTime(timestamp.toLocalDateTime().toLocalTime());
         }
         return null;
     }
 
     private static String getDate(ResultSet resultSet, String field) throws SQLException {
-        Date date = resultSet.getDate(field);
+        java.sql.Date date = resultSet.getDate(field);
         if (date != null) {
-            return DateUtil.formatDicomDate(date);
-        }
-        return null;
-    }
-
-    private static String getTime(ResultSet resultSet, String field) throws SQLException {
-        Date date = resultSet.getDate(field);
-        if (date != null) {
-            return DateUtil.formatDicomTime(date);
+            return DateUtil.formatDicomDate(date.toLocalDate());
         }
         return null;
     }
@@ -249,9 +249,9 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
         String dateStr = resultSet.getString(field);
         try {
             if (StringUtil.hasText(dateStr)) {
-                return DateUtil.formatDicomDate(new SimpleDateFormat(sourceFormat).parse(dateStr));
+                return DateUtil.formatDicomDate(LocalDate.parse(dateStr, DateTimeFormatter.ofPattern(sourceFormat)));
             }
-        } catch (ParseException e) {
+        } catch (DateTimeParseException e) {
             LOGGER.error("Format Error: error parsing the field [{}] - {}", field, e.getMessage());
         }
         return null;
