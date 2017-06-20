@@ -18,7 +18,6 @@ import java.util.List;
 import org.dcm4che3.data.Tag;
 import org.weasis.dicom.data.xml.TagUtil;
 import org.weasis.dicom.data.xml.XmlDescription;
-import org.weasis.dicom.util.StringUtil;
 
 public class Study implements XmlDescription {
 
@@ -116,22 +115,29 @@ public class Study implements XmlDescription {
 
                 @Override
                 public int compare(Series o1, Series o2) {
-                    int nubmer1 = 0;
-                    int nubmer2 = 0;
-                    try {
-                        if (StringUtil.hasText(o1.getSeriesNumber())) {
-                            nubmer1 = Integer.parseInt(o1.getSeriesNumber());
+                    Integer val1 = Series.getInteger(o1.getSeriesNumber());
+                    Integer val2 = Series.getInteger(o2.getSeriesNumber());
+
+                    int c = -1;
+                    if (val1 != null && val2 != null) {
+                        c = val1.compareTo(val2);
+                        if (c != 0) {
+                            return c;
                         }
-                        if (StringUtil.hasText(o2.getSeriesNumber())) {
-                            nubmer2 = Integer.parseInt(o2.getSeriesNumber());
+                    }
+
+                    if (c == 0 || (val1 == null && val2 == null)) {
+                        return o1.getSeriesInstanceUID().compareTo(o2.getSeriesInstanceUID());
+                    } else {
+                        if (val1 == null) {
+                            // Add o1 after o2
+                            return 1;
                         }
-                    } catch (NumberFormatException e) {
-                        // Do nothing
+                        if (val2 == null) {
+                            return -1;
+                        }
                     }
-                    int rep = nubmer1 < nubmer2 ? -1 : (nubmer1 == nubmer2 ? 0 : 1);
-                    if (rep != 0) {
-                        return rep;
-                    }
+
                     return o1.getSeriesInstanceUID().compareTo(o2.getSeriesInstanceUID());
                 }
             });

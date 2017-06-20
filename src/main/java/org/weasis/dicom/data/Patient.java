@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.dicom.data;
 
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -158,33 +159,45 @@ public class Patient implements XmlDescription {
 
             @Override
             public int compare(Study o1, Study o2) {
-                Date date1 = DateUtil.getDicomDate(o1.getStudyDate());
-                Date date2 = DateUtil.getDicomDate(o2.getStudyDate());
+                Date date1 = DateUtil.dateTime(DateUtil.getDicomDate(o1.getStudyDate()),
+                    DateUtil.getDicomTime(o1.getStudyTime()));
+                Date date2 = DateUtil.dateTime(DateUtil.getDicomDate(o2.getStudyDate()),
+                    DateUtil.getDicomTime(o2.getStudyTime()));
+
+                int c = -1;
                 if (date1 != null && date2 != null) {
                     // inverse time
-                    int rep = date2.compareTo(date1);
-                    if (rep == 0) {
-                        Date time1 = DateUtil.getDicomTime(o1.getStudyTime());
-                        Date time2 = DateUtil.getDicomTime(o2.getStudyTime());
-                        if (time1 != null && time2 != null) {
-                            // inverse time
-                            return time2.compareTo(time1);
-                        }
-                    } else {
-                        return rep;
+                    c = date2.compareTo(date1);
+                    if (c != 0) {
+                        return c;
                     }
                 }
-                if (date1 == null && date2 == null) {
-                    return o1.getStudyInstanceUID().compareTo(o2.getStudyInstanceUID());
+
+                if (c == 0 || (date1 == null && date2 == null)) {
+                    String d1 = o1.getStudyDescription();
+                    String d2 = o2.getStudyDescription();
+                    if (d1 != null && d2 != null) {
+                        c = Collator.getInstance(Locale.getDefault()).compare(d1, d2);
+                        if (c != 0) {
+                            return c;
+                        }
+                    }
+                    if (d1 == null) {
+                        // Add o1 after o2
+                        return d2 == null ? 0 : 1;
+                    }
+                    // Add o2 after o1
+                    return -1;
                 } else {
                     if (date1 == null) {
+                        // Add o1 after o2
                         return 1;
                     }
                     if (date2 == null) {
                         return -1;
                     }
                 }
-                return 0;
+                return o1.getStudyInstanceUID().compareTo(o2.getStudyInstanceUID());
             }
         };
     }

@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.data.xml.TagUtil;
 import org.weasis.dicom.data.xml.XmlDescription;
+import org.weasis.dicom.util.StringUtil;
 
 public class Series implements XmlDescription {
     private static final Logger LOGGER = LoggerFactory.getLogger(Series.class);
@@ -55,7 +56,7 @@ public class Series implements XmlDescription {
     }
 
     public void setSeriesNumber(String seriesNumber) {
-        this.seriesNumber = seriesNumber == null ? null : seriesNumber.trim();
+        this.seriesNumber = StringUtil.hasText(seriesNumber) ? seriesNumber.trim() : null;
     }
 
     public String getWadoTransferSyntaxUID() {
@@ -117,16 +118,30 @@ public class Series implements XmlDescription {
 
             @Override
             public int compare(SOPInstance o1, SOPInstance o2) {
-                int nubmer1 = 0;
-                int nubmer2 = 0;
-                try {
-                    nubmer1 = Integer.parseInt(o1.getInstanceNumber());
-                    nubmer2 = Integer.parseInt(o2.getInstanceNumber());
-                } catch (NumberFormatException e) {
-                    // Do nothing
+                Integer val1 = Series.getInteger(o1.getInstanceNumber());
+                Integer val2 = Series.getInteger(o2.getInstanceNumber());
+
+                int c = -1;
+                if (val1 != null && val2 != null) {
+                    c = val1.compareTo(val2);
+                    if (c != 0) {
+                        return c;
+                    }
                 }
 
-                return nubmer1 < nubmer2 ? -1 : (nubmer1 == nubmer2 ? 0 : 1);
+                if (c == 0 || (val1 == null && val2 == null)) {
+                    return o1.getSOPInstanceIUID().compareTo(o2.getSOPInstanceIUID());
+                } else {
+                    if (val1 == null) {
+                        // Add o1 after o2
+                        return 1;
+                    }
+                    if (val2 == null) {
+                        return -1;
+                    }
+                }
+
+                return o1.getSOPInstanceIUID().compareTo(o2.getSOPInstanceIUID());
             }
         });
     }
@@ -161,4 +176,16 @@ public class Series implements XmlDescription {
     public boolean isEmpty() {
         return sopInstancesList.isEmpty();
     }
+    
+    public static Integer getInteger(String val) {
+        if (StringUtil.hasText(val)) {
+            try {
+                return Integer.parseInt(val.trim());
+            } catch (NumberFormatException e) {
+                LOGGER.warn("Cannot parse {} to Integer", val); //$NON-NLS-1$
+            }
+        }
+        return null;
+    }
+    
 }
