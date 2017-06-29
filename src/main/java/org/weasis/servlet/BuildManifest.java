@@ -14,6 +14,7 @@ package org.weasis.servlet;
 import java.io.IOException;
 
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -22,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 
+@WebServlet(urlPatterns = "/manifest")
 public class BuildManifest extends HttpServlet {
 
     private static final long serialVersionUID = 575795035231900320L;

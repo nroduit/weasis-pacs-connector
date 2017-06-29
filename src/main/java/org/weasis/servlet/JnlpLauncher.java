@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -43,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 
+@WebServlet(urlPatterns = "/")
 public class JnlpLauncher extends HttpServlet {
     private static final long serialVersionUID = 5979263846495591025L;
     private static final Logger LOGGER = LoggerFactory.getLogger(JnlpLauncher.class);
