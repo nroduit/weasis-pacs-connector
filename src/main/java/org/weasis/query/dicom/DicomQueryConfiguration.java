@@ -48,11 +48,11 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
     }
 
     private AdvancedParams buildAdvancedParams() {
-        boolean tls = LangUtil.getNULLtoFalse(properties.getProperty("arc.tls.mode"));
+        boolean tls = LangUtil.getEmptytoFalse(properties.getProperty("arc.tls.mode"));
         AdvancedParams params = null;
         if (tls) {
             TlsOptions tlsOptions =
-                new TlsOptions(LangUtil.getNULLtoFalse(properties.getProperty("arc.tlsNeedClientAuth")),
+                new TlsOptions(LangUtil.getEmptytoFalse(properties.getProperty("arc.tlsNeedClientAuth")),
                     properties.getProperty("arc.keystoreURL"), properties.getProperty("arc.keystoreType", "JKS"),
                     properties.getProperty("arc.keystorePass"),
                     properties.getProperty("arc.keyPass", properties.getProperty("arc.keystorePass")),

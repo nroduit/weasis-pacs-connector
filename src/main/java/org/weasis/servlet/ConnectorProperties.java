@@ -85,7 +85,7 @@ public class ConnectorProperties extends Properties {
     public ConnectorProperties getResolveConnectorProperties(HttpServletRequest request) {
         Properties extProps = new Properties();
         extProps.put("server.base.url", ServletUtil.getBaseURL(request,
-            LangUtil.getNULLtoFalse(this.getProperty("server.canonical.hostname.mode"))));
+            LangUtil.getEmptytoFalse(this.getProperty("server.canonical.hostname.mode"))));
 
         ConnectorProperties dynamicProps = getDeepCopy();
 

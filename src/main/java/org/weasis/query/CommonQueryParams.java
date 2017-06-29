@@ -100,7 +100,7 @@ public class CommonQueryParams {
             }
         } else {
             for (Properties p : properties.getArchivePropertiesList()) {
-                if (LangUtil.getNULLtoFalse(p.getProperty("arc.activate"))) {
+                if (LangUtil.getEmptytoFalse(p.getProperty("arc.activate"))) {
                     if (p.getProperty("arc.aet") != null) {
                         this.archiveList.add(new DicomQueryConfiguration(p, callingNode));
                     } else if (p.getProperty("arc.db.driver") != null) {
@@ -124,7 +124,7 @@ public class CommonQueryParams {
     }
 
     public boolean isAcceptNoImage() {
-        return LangUtil.getNULLtoFalse(properties.getProperty("accept.noimage"));
+        return LangUtil.getEmptytoFalse(properties.getProperty("accept.noimage"));
     }
 
     public ConnectorProperties getProperties() {
