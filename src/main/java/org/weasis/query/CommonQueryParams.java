@@ -77,7 +77,7 @@ public class CommonQueryParams {
                             buildConfig = true;
                         } else {
                             String oldIDs = p.getProperty("arc.inherit.ids");
-                            if (StringUtil.hasText(oldIDs) && archiveID.equals(id)) {
+                            if (StringUtil.hasText(oldIDs)) {
                                 for (String s : oldIDs.split(",")) {
                                     if (archiveID.equals(s.trim())) {
                                         buildConfig = true;
