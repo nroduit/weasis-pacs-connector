@@ -46,7 +46,7 @@ public abstract class AbstractQueryConfiguration implements QueryResult {
     public WadoParameters getWadoParameters() {
         String wadoQueriesURL =
             properties.getProperty("arc.wado.url", properties.getProperty("server.base.url") + "/wado");
-        boolean onlysopuid = LangUtil.getNULLtoFalse(properties.getProperty("wado.onlysopuid"));
+        boolean onlysopuid = LangUtil.getEmptytoFalse(properties.getProperty("wado.onlysopuid"));
         String addparams = properties.getProperty("wado.addparams", "");
         String overrideTags = properties.getProperty("wado.override.tags");
         // If the web server requires an authentication (arc.web.login=user:pwd)

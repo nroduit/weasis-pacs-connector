@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -30,6 +31,7 @@ import org.weasis.dicom.mf.XmlManifest;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.dicom.mf.thread.ManifestManagerThread;
 
+@WebServlet(urlPatterns = "/RequestManifest")
 public class RequestManifest extends HttpServlet {
 
     private static final long serialVersionUID = 3012016354418267374L;

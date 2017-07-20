@@ -26,6 +26,7 @@ import java.util.concurrent.TimeoutException;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -40,6 +41,7 @@ import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.dicom.mf.thread.ManifestManagerThread;
 import org.weasis.query.CommonQueryParams;
 
+@WebServlet(urlPatterns = {"/viewer", "/IHEInvokeImageDisplay"} )
 public class WeasisLauncher extends HttpServlet {
 
     private static final long serialVersionUID = 7933047406409849509L;

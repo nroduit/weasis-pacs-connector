@@ -17,6 +17,7 @@ import java.net.URLEncoder;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -27,6 +28,8 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.mf.UploadXml;
 import org.weasis.dicom.mf.XmlManifest;
 
+
+@WebServlet(urlPatterns = "/viewer-applet")
 public class WeasisAppletLauncher extends HttpServlet {
 
     private static final long serialVersionUID = -9044908938729820195L;

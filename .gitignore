@@ -1,10 +1,25 @@
-# Ignore the eclipse configuration files
+# IntelliJ project files 
+*.iml
+*.iws
+*.ipr
+.idea/
+
+# eclipse project file
+.settings/
 .classpath
 .project
-.settings/
+
+# NetBeans specific
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+nbactions.xml
+nb-configuration.xml
 
 # Ignore Maven files
 target/
-
-# Other source repository archive directories (protects when importing)
-.svn/
+release.properties
+pom.xml.releaseBackup
+pom.xml.tag
