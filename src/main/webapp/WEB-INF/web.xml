@@ -29,6 +29,10 @@
 		<servlet-name>RequestManifest</servlet-name>
 		<servlet-class>org.weasis.servlet.RequestManifest</servlet-class>
 	</servlet>
+	<servlet>
+		<servlet-name>GetJnlpProtocol</servlet-name>
+		<servlet-class>org.weasis.servlet.GetJnlpProtocol</servlet-class>
+	</servlet>
 	<servlet-mapping>
 		<servlet-name>JnlpLauncher</servlet-name>
 		<url-pattern>/</url-pattern>
@@ -52,5 +56,9 @@
 	<servlet-mapping>
 		<servlet-name>RequestManifest</servlet-name>
 		<url-pattern>/RequestManifest</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>GetJnlpProtocol</servlet-name>
+		<url-pattern>/getJnlpScheme/*</url-pattern>
 	</servlet-mapping>
 </web-app>
