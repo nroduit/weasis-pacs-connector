@@ -16,7 +16,8 @@ This component gathers different services:
 
 ## New features in weasis-pacs-connector 7 ##
 * Requires Java 8 and Servlet 3.1
-
+* Redirection for getting jnlp protocol from a http request
+* Support Java 9 in jnlp templates
 
 ## New features in weasis-pacs-connector 6 ##
 * Multi-PACS configuration (can be requested simultaneously or individually)

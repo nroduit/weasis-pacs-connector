@@ -17,7 +17,7 @@ import org.weasis.dicom.mf.Patient;
 import org.weasis.dicom.mf.SOPInstance;
 import org.weasis.dicom.mf.Series;
 import org.weasis.dicom.mf.Study;
-import org.weasis.dicom.tool.DateUtil;
+import org.weasis.dicom.util.DateUtil;
 import org.weasis.query.AbstractQueryConfiguration;
 import org.weasis.query.CommonQueryParams;
 
