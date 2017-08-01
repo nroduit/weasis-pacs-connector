@@ -42,7 +42,7 @@ public class ManifestManager extends HttpServlet {
     public static final String DEFAULT_APPLET_TEMPLATE = "weasisApplet.jnlp";
 
     private final ConcurrentHashMap<Integer, ManifestBuilder> manifestBuilderMap = new ConcurrentHashMap<>();
-    private final transient ManifestManagerThread manifestManagerThread = new ManifestManagerThread(manifestBuilderMap);
+    private final ManifestManagerThread manifestManagerThread = new ManifestManagerThread(manifestBuilderMap);
     private final Map<URI, Element> jnlpTemplates = ManifestManager.<URI, Element> createLRUMap(20);
 
     @Override
@@ -159,7 +159,7 @@ public class ManifestManager extends HttpServlet {
             URL url = new URL(baseConfigDir + name);
             try (InputStream inputStream = NetworkUtil.getUrlInputStream(url.openConnection())) {
                 archiveProps.load(inputStream);
-                LOGGER.info("Archive configuration: {}", url.toString());
+                LOGGER.info("Archive configuration: {}", url);
             }
         } catch (Exception e) {
             LOGGER.debug("Get template", e);
