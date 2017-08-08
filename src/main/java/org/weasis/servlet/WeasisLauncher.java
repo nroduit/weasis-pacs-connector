@@ -106,7 +106,7 @@ public class WeasisLauncher extends HttpServlet {
                 buf.append("&");
                 buf.append(JnlpLauncher.PARAM_ARGUMENT);
                 buf.append("=");
-                buf.append(URLEncoder.encode("$dicom:get -w " + wadoQueryUrl, "UTF-8"));
+                buf.append(URLEncoder.encode("$dicom:get -w \"" + wadoQueryUrl + "\"", "UTF-8"));
             }
 
             String addparams = props.getProperty("request.addparams", null);
@@ -156,7 +156,7 @@ public class WeasisLauncher extends HttpServlet {
         buf.append(JnlpLauncher.PARAM_SOURCE);
         buf.append("=");
         if (queryLauncherPath != null) {
-            if (queryLauncherPath.indexOf("/") == -1 || queryLauncherPath.startsWith("/")) {
+            if (queryLauncherPath.indexOf('/') == -1 || queryLauncherPath.startsWith("/")) {
                 String path = queryLauncherPath.startsWith("/") ? queryLauncherPath : "/" + queryLauncherPath;
                 URL url = request.getClass().getResource(path);
                 if (url == null) {
