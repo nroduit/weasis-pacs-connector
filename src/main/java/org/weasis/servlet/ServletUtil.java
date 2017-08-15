@@ -147,20 +147,6 @@ public class ServletUtil {
         logger.debug("HttpServletRequest - getServletPath: {}", request.getServletPath());
     }
 
-    public static String getFilename(List<Patient> patients) {
-        StringBuilder buffer = new StringBuilder();
-
-        if (!patients.isEmpty()) {
-            for (Patient patient : patients) {
-                buffer.append(
-                    StringUtil.hasText(patient.getPatientName()) ? patient.getPatientName() : patient.getPatientID());
-                buffer.append(",");
-            }
-            buffer.deleteCharAt(buffer.length() - 1);
-        }
-        return StringUtil.getTruncatedString(buffer.toString(), 30, Suffix.NO);
-    }
-
     public static void fillPatientList(CommonQueryParams params) {
         try {
             Properties properties = params.getProperties();
