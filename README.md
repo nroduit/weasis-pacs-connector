@@ -10,14 +10,21 @@ This component gathers different services:
 
 * **/viewer** launching Weasis with the patient ID, study UID... (can be configured to use a combination of UIDs or to hide some of them)
 * **/IHEInvokeImageDisplay** launching Weasis at Patient and Study level, compliant to the [IHE IID profile](http://www.ihe.net/Technical_Framework/upload/IHE_RAD_Suppl_IID.pdf)
-* **/viewer-applet** same as _/viewer_ but it can launch Weasis as Applet in a web page (the service returns an html page). This method is not recommended as several browsers block Java plugin.
+* **/viewer-applet** same as _/viewer_ but it can launch Weasis as Applet in a web page (the service returns an html page). This method is not recommended as most of browsers block Java plugin.
 * **/manifest** building the xml manifest (containing the necessary UIDs) consumed by Weasis to retrieve all the images by WADO requests
 * **/[name of the template]** (default template: /weasis.jnlp) building a jnlp file from a template (jnlp template path, jnlp properties and jnp arguments can be passed via URL parameters, see the [JNLP Builder documentation](JnlpBuilder))
+
 
 ## New features in weasis-pacs-connector 7 ##
 * Requires Java 8 and Servlet 3.1
 * Redirection for getting jnlp protocol from a http request
-* Support Java 9 in jnlp templates
+* Support of Java 9
+
+## New features in weasis-pacs-connector 6.1.2 ##
+* Enable running Weasis on Java 9
+* Getting jnlp protocol by redirection (see [launching jnlp](#new-way-to-launch-jnlp))
+* Allow the configuration of the default max memory size of Weasis
+* Add double quotes for command parameters in jnlp (requires by Weasis 2.5.4 and later)
 
 ## New features in weasis-pacs-connector 6 ##
 * Multi-PACS configuration (can be requested simultaneously or individually)
@@ -86,7 +93,7 @@ Note: with a snapshot version, it can be necessary to build first the library [w
 
 Note: It is allowed to have multiple UIDs for patient, study, series and instance but within the same level. The [configuration file](src/main/resources/weasis-connector-default.properties) enables to set which ID is allowed and if a combination of UIDs is required. When using a combination of UIDs, the order is not relevant.
 
-##### Launch Weasis as an Applet in a web browser (not recommended as several browsers block Java plugin) #####
+##### Launch Weasis as an Applet in a web browser (not recommended as most of browsers block Java plugin) #####
 * http://localhost:8080/weasis-pacs-connector/viewer-applet?patientID=97026728   
   => same as _/viewer_ but it can launch Weasis as Applet in a webpage.
 
@@ -96,11 +103,13 @@ Note: It is allowed to have multiple UIDs for patient, study, series and instanc
   
 ##### Embed the manifest into the jnlp #####
 * http://localhost:8080/weasis-pacs-connector/viewer?patientID=97026728&embedManifest   
-  => embedManifest parameter will embed the manifest into the jnlp (in this case building manifest is executed before starting Weasis and the images can be always displayed via the jnlp file)
+  => embedManifest parameter will embed the manifest into the jnlp   
+  Note: in this case building manifest is executed before starting Weasis (otherwise it is done in parallel) and the images can be always displayed via the jnlp file (could be a security issue when jnlp has been downloaded or kept by Java cache)
 
 ##### Open non DICOM images #####
-* http://launcher-weasis.rhcloud.com/weasis-pacs-connector/viewer?arg=$image:get%20-u%20https://dcm4che.atlassian.net/wiki/download/attachments/3670024/weasis-mpr.png     
-  => open image from an URL (from weasis 2.5)
+* http://launcher-weasis.rhcloud.com/weasis-pacs-connector/getJnlpScheme/viewer?arg=%24image%3Aget%20-u%20%22https%3A%2F%2Fdcm4che.atlassian.net%2Fwiki%2Fdownload%2Fattachments%2F3670024%2Fweasis-mpr.png%22     
+  => open image from an URL (from weasis 2.5)   
+  Note: the jnlp argument must be encoded as URL encoding ($image:get -u "https://dcm4che.atlassian.net/wiki/download/attachments/3670024/weasis-mpr.png")
 
 ##### Launch with specific parameters #####
 * http://launcher-weasis.rhcloud.com/weasis-pacs-connector/viewer?studyUID=1.3.6.1.4.1.5962.1.2.2.20031208063649.855&mhs=1024m   
@@ -110,7 +119,6 @@ Note: It is allowed to have multiple UIDs for patient, study, series and instanc
 * to inject other properties or arguments see the [JNLP Builder documentation](JnlpBuilder)
 
 ### Getting the xml manifest ###
-  
 Build an XML file containing the UIDs of the images which will be retrieved in Weasis. There is an [XLS schema](https://github.com/nroduit/Weasis/blob/master/weasis-dicom/weasis-dicom-explorer/src/main/resources/config/wado_query.xsd) to validate the content of xml. This file can be either compressed in gzip or uncompressed. Here are examples:  
 
 * http://localhost:8080/weasis-pacs-connector/manifest?studyUID=1.3.6.1.4.1.5962.1.2.2.20031208063649.855
@@ -166,6 +174,12 @@ For [dcm4chee-arc-light](https://github.com/dcm4che/dcm4chee-arc-light):
 An alternative way to launch Java Webstart (JWS) by changing the scheme of URL:
 * jnlp://localhost:8080/weasis-pacs-connector/viewer?patientID=9702672
 * jnlps://localhost:8443/weasis-pacs-connector/viewer?patientID=9702672 (SSL connection)
+
+or from weasis-pacs-connector 6.1.2 by adding "getJnlpScheme" in the web context:
+* http://launcher-weasis.rhcloud.com/weasis-pacs-connector/getJnlpScheme/viewer?studyUID=1.3.6.1.4.1.5962.99.1.1839181372.1275896472.1436358291004.4.0   
+=> This is useful when jnlp protocol is not allowed (like this wiki page). The getJnlpScheme servlet makes a redirection from http to jnlp.
+* https://launcher-weasis.rhcloud.com/weasis-pacs-connector/getJnlpScheme/viewer?studyUID=1.3.6.1.4.1.5962.99.1.1839181372.1275896472.1436358291004.4.0
+
 
 Advantages of jnlp protocol:
 * Works at the system level (association of a MIME type with an application: jnlp => JWS)
