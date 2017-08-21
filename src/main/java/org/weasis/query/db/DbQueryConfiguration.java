@@ -14,8 +14,8 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.EscapeChars;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.mf.Patient;
-import org.weasis.dicom.mf.SOPInstance;
 import org.weasis.dicom.mf.Series;
+import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.Study;
 import org.weasis.dicom.util.DateUtil;
 import org.weasis.query.AbstractQueryConfiguration;
@@ -107,9 +107,10 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
         String sopIUIDField = properties.getProperty("arc.db.query.sopinstanceuid");
 
         while (resultSet.next()) {
+            // Do not handle issuer of patientID as it should be unique within a DB
             Patient patient = getPatient(getString(resultSet, patIDField));
             if (patient == null) {
-                patient = new Patient(getString(resultSet, patIDField));
+                patient = new Patient(getString(resultSet, patIDField), null);
                 patient.setPatientName(getString(resultSet, patientNameField));
 
                 if ("VARCHAR2".equals(patientBirthdateTypeField)) {
@@ -123,7 +124,7 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
                 }
 
                 patient.setPatientSex(getString(resultSet, patientSexField));
-                patients.add(patient);
+                addPatient(patient);
             }
 
             Study study = patient.getStudy(getString(resultSet, studyIUIDField));
@@ -168,19 +169,17 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
                 study.addSeries(series);
             }
 
-            SOPInstance sop = new SOPInstance(getString(resultSet, sopIUIDField));
-            sop.setInstanceNumber(getString(resultSet, instanceNumberField));
-            series.addSOPInstance(sop);
+            Integer frame = StringUtil.getInteger(getString(resultSet, instanceNumberField));
+            String sopUID = getString(resultSet, sopIUIDField);
+            SopInstance sop = series.getSopInstance(sopUID, frame);
+            if (sop == null) {
+                series.addSopInstance(new SopInstance(sopUID, frame));
+            }
         }
     }
 
     private Patient getPatient(String pid) {
-        for (Patient p : patients) {
-            if (p.getPatientID().equals(pid)) {
-                return p;
-            }
-        }
-        return null;
+        return patientMap.get(pid);
     }
 
     private String buildQuery(String clauseWhere) {
