@@ -13,11 +13,11 @@ This component gathers different services:
 * **/[name of the template]** (default template: /weasis.jnlp) building a jnlp file from a template (jnlp template path, jnlp properties and jnp arguments can be passed via URL parameters, see the [JNLP Builder documentation](JnlpBuilder))
 
 
-## New features in weasis-pacs-connector 6.1.2 ##
+## New features in weasis-pacs-connector 6.1.3 ##
 * Enable running Weasis on Java 9
 * Getting jnlp protocol by redirection (see [launching jnlp](#new-way-to-launch-jnlp))
 * Allow the configuration of the default max memory size of Weasis
-* Add double quotes for command parameters in jnlp (requires by Weasis 2.5.4 and later)
+* Add double quotes for command parameters in jnlp (requires by Weasis 2.6.0 and later)
 
 ## New features in weasis-pacs-connector 6 ##
 * Multi-PACS configuration (can be requested simultaneously or individually)
