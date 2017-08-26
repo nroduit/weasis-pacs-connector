@@ -4,7 +4,7 @@ weasis-pacs-connector provides the easiest way to launch Weasis from a web conte
 
 [![CircleCI](https://circleci.com/gh/nroduit/weasis-pacs-connector.svg?style=svg&circle-token=290c4516d1daa4aed30f25ef20d4f55de3428020)](https://circleci.com/gh/nroduit/weasis-pacs-connector) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/916cb1c21eba438483a373b9580007b5)](https://www.codacy.com/app/nicolas.roduit/weasis-pacs-connector?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nroduit/weasis-pacs-connector&amp;utm_campaign=Badge_Grade)
 
-The master branch requires Java 8+ and the 6.x branch requires Java 7+.
+The master branch requires Java 8+ and a servlet container 3.1. The [6.x branch](https://github.com/nroduit/weasis-pacs-connector/tree/6.x) requires Java 7+ and a servlet container 2.5.
 
 This component gathers different services:   
 
@@ -20,11 +20,11 @@ This component gathers different services:
 * Redirection for getting jnlp protocol from a http request
 * Support of Java 9
 
-## New features in weasis-pacs-connector 6.1.2 ##
+## New features in weasis-pacs-connector 6.1.3 ##
 * Enable running Weasis on Java 9
 * Getting jnlp protocol by redirection (see [launching jnlp](#new-way-to-launch-jnlp))
 * Allow the configuration of the default max memory size of Weasis
-* Add double quotes for command parameters in jnlp (requires by Weasis 2.5.4 and later)
+* Add double quotes for command parameters in jnlp (requires by Weasis 2.6.0 and later)
 
 ## New features in weasis-pacs-connector 6 ##
 * Multi-PACS configuration (can be requested simultaneously or individually)
