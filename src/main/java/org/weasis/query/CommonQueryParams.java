@@ -156,9 +156,9 @@ public class CommonQueryParams {
         }
     }
 
-    public void removePatientId(List<String> patientIdList) {
+    public void removePatientId(List<String> patientIdList, boolean containsIssuer) {
         for (QueryResult arcConfig : archiveList) {
-            arcConfig.removePatientId(patientIdList);
+            arcConfig.removePatientId(patientIdList, containsIssuer);
         }
     }
 

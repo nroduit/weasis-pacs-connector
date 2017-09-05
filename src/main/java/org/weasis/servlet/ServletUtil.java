@@ -37,6 +37,8 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.util.TagUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.StringUtil;
@@ -55,6 +57,24 @@ public class ServletUtil {
     private ServletUtil() {
     }
 
+    
+    public static Integer getIntegerFromDicomElement(Attributes dicom, int tag, Integer defaultValue) {
+        return getIntegerFromDicomElement(dicom, tag, null, defaultValue);
+    }
+
+    public static Integer getIntegerFromDicomElement(Attributes dicom, int tag, String privateCreatorID,
+        Integer defaultValue) {
+        if (dicom == null || !dicom.containsValue(tag)) {
+            return defaultValue;
+        }
+        try {
+            return dicom.getInt(privateCreatorID, tag, defaultValue == null ? 0 : defaultValue);
+        } catch (NumberFormatException e) {
+            LOGGER.error("Cannot parse Integer of {}: {} ", TagUtils.toString(tag), e.getMessage()); //$NON-NLS-1$
+        }
+        return defaultValue;
+    }
+    
     public static String getFirstParameter(Object val) {
         if (val instanceof String[]) {
             String[] params = (String[]) val;
@@ -243,7 +263,7 @@ public class ServletUtil {
                         for (String s : pat) {
                             list.add(decrypt(s, key, PATIENT_ID));
                         }
-                        params.removePatientId(list);
+                        params.removePatientId(list, false);
                     } else if (val.trim().equals(STUDY_UID)) {
                         if (stu == null) {
                             params.clearAllPatients();
@@ -279,12 +299,7 @@ public class ServletUtil {
 
                 // Remove Patient without study
                 for (QueryResult arcConfig : params.getArchiveList()) {
-                    List<Patient> patients = arcConfig.getPatients();
-                    for (int i = patients.size() - 1; i >= 0; i--) {
-                        if (patients.get(i).isEmpty()) {
-                            patients.remove(i);
-                        }
-                    }
+                    arcConfig.removeItemsWithoutElements();
                 }
             }
         }
@@ -358,15 +373,15 @@ public class ServletUtil {
         buf.append(RequestManifest.PARAM_ID);
         buf.append('=');
         buf.append(builder.getRequestId());
-        
-        String manifestVersion =  props.getProperty("manifest.version");
+
+        String manifestVersion = props.getProperty("manifest.version");
         if (manifestVersion != null) {
             buf.append('&');
             buf.append(ConnectorProperties.MANIFEST_VERSION);
             buf.append('=');
             buf.append(manifestVersion);
         }
-        
+
         if (!gzip) {
             buf.append('&');
             buf.append(RequestManifest.PARAM_NO_GZIP);
