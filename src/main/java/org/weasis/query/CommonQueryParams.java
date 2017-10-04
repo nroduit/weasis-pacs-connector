@@ -10,8 +10,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
-import org.weasis.dicom.mf.ArcQuery.ViewerMessage;
 import org.weasis.dicom.mf.QueryResult;
+import org.weasis.dicom.mf.ViewerMessage;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.query.db.DbQueryConfiguration;
 import org.weasis.query.dicom.DicomQueryConfiguration;
@@ -156,9 +156,9 @@ public class CommonQueryParams {
         }
     }
 
-    public void removePatientId(List<String> patientIdList) {
+    public void removePatientId(List<String> patientIdList, boolean containsIssuer) {
         for (QueryResult arcConfig : archiveList) {
-            arcConfig.removePatientId(patientIdList);
+            arcConfig.removePatientId(patientIdList, containsIssuer);
         }
     }
 

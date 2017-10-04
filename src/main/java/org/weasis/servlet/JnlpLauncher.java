@@ -55,6 +55,9 @@ public class JnlpLauncher extends HttpServlet {
     static final String INITIAL_HEAP_SIZE = "128m";
     static final String MAX_HEAP_SIZE = "768m";
 
+    protected static final String PARAM_INITIAL_HEAP_SIZE = "weasis.init.heap";
+    protected static final String PARAM_MAX_HEAP_SIZE = "weasis.max.heap";
+
     protected static final String PARAM_ARGUMENT = "arg";
     protected static final String PARAM_PROPERTY = "pro";
 
@@ -313,17 +316,22 @@ public class JnlpLauncher extends HttpServlet {
             // Get other parameters
             queryParameterMap = new HashMap<>(request.getParameterMap());
 
+            ConnectorProperties props =
+                (ConnectorProperties) this.getServletContext().getAttribute("componentProperties");
+
             String initialHeapSize = request.getParameter(PARM_JVM_INITIAL_HEAP_SIZE);
             if (initialHeapSize == null) {
-                initialHeapSize = INITIAL_HEAP_SIZE;
-            } else if (!initialHeapSize.endsWith("m")) {
+                initialHeapSize = props.getProperty(PARAM_INITIAL_HEAP_SIZE, INITIAL_HEAP_SIZE);
+            }
+            if (!initialHeapSize.endsWith("m")) {
                 initialHeapSize += "m";
             }
 
             String maxHeapSize = request.getParameter(PARM_JVM_MAX_HEAP_SIZE);
             if (maxHeapSize == null) {
-                maxHeapSize = MAX_HEAP_SIZE;
-            } else if (!maxHeapSize.endsWith("m")) {
+                maxHeapSize = props.getProperty(PARAM_MAX_HEAP_SIZE, MAX_HEAP_SIZE);
+            }            
+            if (!maxHeapSize.endsWith("m")) {
                 maxHeapSize += "m";
             }
 

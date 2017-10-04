@@ -111,6 +111,10 @@ public class RequestManifest extends HttpServlet {
 
         response.setCharacterEncoding(xml.getCharsetEncoding());
         String wadoXmlGenerated = xml.xmlManifest(request.getParameter(ConnectorProperties.MANIFEST_VERSION));
+        if(wadoXmlGenerated == null) {
+            ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error when building the xml manifest.");
+            return;
+        }
 
         Boolean gzip = request.getParameter(PARAM_NO_GZIP) == null;
 

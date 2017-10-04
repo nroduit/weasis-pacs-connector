@@ -14,11 +14,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
-import org.weasis.dicom.mf.ArcQuery.ViewerMessage;
 import org.weasis.dicom.mf.Patient;
-import org.weasis.dicom.mf.SOPInstance;
 import org.weasis.dicom.mf.Series;
+import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.Study;
+import org.weasis.dicom.mf.ViewerMessage;
 import org.weasis.dicom.op.CFind;
 import org.weasis.dicom.param.AdvancedParams;
 import org.weasis.dicom.param.DicomNode;
@@ -27,6 +27,7 @@ import org.weasis.dicom.param.DicomState;
 import org.weasis.dicom.param.TlsOptions;
 import org.weasis.query.AbstractQueryConfiguration;
 import org.weasis.query.CommonQueryParams;
+import org.weasis.servlet.ServletUtil;
 
 public class DicomQueryConfiguration extends AbstractQueryConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomQueryConfiguration.class);
@@ -106,7 +107,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                 DicomState state =
                     CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.STUDY, keysStudies);
                 LOGGER.debug("C-FIND with PatientID {}", state.getMessage());
-                
+
                 List<Attributes> studies = state.getDicomRSP();
                 if (studies != null && !studies.isEmpty()) {
                     Collections.sort(studies, getStudyComparator());
@@ -289,9 +290,9 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
 
     @Override
     public void buildFromSeriesInstanceUID(CommonQueryParams params, String... seriesInstanceUIDs) {
-        AdvancedParams advParams = advancedParams == null ? new AdvancedParams(): advancedParams;
+        AdvancedParams advParams = advancedParams == null ? new AdvancedParams() : advancedParams;
         advParams.getQueryOptions().add(QueryOption.RELATIONAL);
-        
+
         for (String seriesInstanceUID : seriesInstanceUIDs) {
             if (!StringUtil.hasText(seriesInstanceUID)) {
                 continue;
@@ -310,7 +311,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                 DicomState state =
                     CFind.process(advParams, callingNode, calledNode, 0, QueryRetrieveLevel.SERIES, keysSeries);
                 LOGGER.debug("C-FIND with SeriesInstanceUID {}", state.getMessage());
-                
+
                 List<Attributes> series = state.getDicomRSP();
                 if (series != null && !series.isEmpty()) {
                     Attributes dataset = series.get(0);
@@ -328,9 +329,9 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
 
     @Override
     public void buildFromSopInstanceUID(CommonQueryParams params, String... sopInstanceUIDs) {
-        AdvancedParams advParams = advancedParams == null ? new AdvancedParams(): advancedParams;
+        AdvancedParams advParams = advancedParams == null ? new AdvancedParams() : advancedParams;
         advParams.getQueryOptions().add(QueryOption.RELATIONAL);
-        
+
         for (String sopInstanceUID : sopInstanceUIDs) {
             if (!StringUtil.hasText(sopInstanceUID)) {
                 continue;
@@ -357,11 +358,11 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                     Study study = getStudy(patient, dataset);
                     Series s = getSeries(study, dataset);
                     for (Attributes instanceDataSet : instances) {
+                        Integer frame = ServletUtil.getIntegerFromDicomElement(instanceDataSet, Tag.InstanceNumber, null);
                         String sopUID = instanceDataSet.getString(Tag.SOPInstanceUID);
-                        if (sopUID != null) {
-                            SOPInstance sop = new SOPInstance(sopUID);
-                            sop.setInstanceNumber(instanceDataSet.getString(Tag.InstanceNumber));
-                            s.addSOPInstance(sop);
+                        SopInstance sop = s.getSopInstance(sopUID, frame);
+                        if (sop == null) {
+                            s.addSopInstance(new SopInstance(sopUID, frame));
                         }
                     }
                 }
@@ -378,7 +379,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
             DicomState state =
                 CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.STUDY, keysStudies);
             LOGGER.debug("C-FIND at study level {}", state.getMessage());
-            
+
             List<Attributes> studies = state.getDicomRSP();
             if (studies != null) {
                 for (Attributes studyDataSet : studies) {
@@ -403,7 +404,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
             DicomState state =
                 CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.SERIES, keysSeries);
             LOGGER.debug("C-FIND with StudyInstanceUID {}", state.getMessage());
-            
+
             List<Attributes> series = state.getDicomRSP();
             if (series != null && !series.isEmpty()) {
                 // Get patient from each study in case IssuerOfPatientID is different
@@ -434,11 +435,11 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                 Series s = getSeries(study, seriesDataset);
 
                 for (Attributes instanceDataSet : instances) {
+                    Integer frame = ServletUtil.getIntegerFromDicomElement(instanceDataSet, Tag.InstanceNumber, null);
                     String sopUID = instanceDataSet.getString(Tag.SOPInstanceUID);
-                    if (sopUID != null) {
-                        SOPInstance sop = new SOPInstance(sopUID);
-                        sop.setInstanceNumber(instanceDataSet.getString(Tag.InstanceNumber));
-                        s.addSOPInstance(sop);
+                    SopInstance sop = s.getSopInstance(sopUID, frame);
+                    if (sop == null) {
+                        s.addSopInstance(new SopInstance(sopUID, frame));
                     }
                 }
             }
@@ -454,17 +455,15 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
 
         String id = patientDataset.getString(Tag.PatientID, "Unknown");
         String ispid = patientDataset.getString(Tag.IssuerOfPatientID);
-        for (Patient p : patients) {
-            if (p.hasSameUniqueID(id, ispid)) {
-                return p;
-            }
+        Patient p = getPatient(id, ispid);
+        if (p == null) {
+            p = new Patient(id, ispid);
+            p.setPatientName(patientDataset.getString(Tag.PatientName));
+            // Only set birth date, birth time is often not consistent (00:00)
+            p.setPatientBirthDate(patientDataset.getString(Tag.PatientBirthDate));
+            p.setPatientSex(patientDataset.getString(Tag.PatientSex));
+            addPatient(p);
         }
-        Patient p = new Patient(id, ispid);
-        p.setPatientName(patientDataset.getString(Tag.PatientName));
-        // Only set birth date, birth time is often not consistent (00:00)
-        p.setPatientBirthDate(patientDataset.getString(Tag.PatientBirthDate));
-        p.setPatientSex(patientDataset.getString(Tag.PatientSex));
-        patients.add(p);
         return p;
     }
 
@@ -486,7 +485,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                 DicomState state =
                     CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.SERIES, keysSeries);
                 LOGGER.debug("C-FIND with SeriesInstanceUID {}", state.getMessage());
-                
+
                 List<Attributes> series = state.getDicomRSP();
                 if (series.isEmpty()) {
                     throw new IllegalStateException("Get empty C-Find reply at Series level for " + seriesInstanceUID);
