@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.net.URL;
 import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -330,10 +331,12 @@ public class JnlpLauncher extends HttpServlet {
             String maxHeapSize = request.getParameter(PARM_JVM_MAX_HEAP_SIZE);
             if (maxHeapSize == null) {
                 maxHeapSize = props.getProperty(PARAM_MAX_HEAP_SIZE, MAX_HEAP_SIZE);
-            }            
+            }
             if (!maxHeapSize.endsWith("m")) {
                 maxHeapSize += "m";
             }
+
+            addWeasisParameters(queryParameterMap, codeBasePath + "/AppInfo");
 
             // Set or override following parameters
             queryParameterMap.put(PARAM_CODEBASE, codeBasePath);
@@ -348,6 +351,37 @@ public class JnlpLauncher extends HttpServlet {
         }
 
         return new JnlpTemplate(templateFileName, templateURI, queryParameterMap);
+    }
+
+    private void addWeasisParameters(Map<String, Object> queryParameterMap, String appURL) {
+        boolean enableVersion = false;
+        String appVersion = "";
+        String felix = "";
+        String substance = "";
+
+        try {
+            URL obj = new URL(appURL);
+            HttpURLConnection conn = (HttpURLConnection) obj.openConnection();
+            int status = conn.getResponseCode();
+
+            if (status == HttpURLConnection.HTTP_OK) {
+                String av = conn.getHeaderField("AppVersion");
+                String fv = conn.getHeaderField("FelixVersion");
+                String sv = conn.getHeaderField("SubstanceVersion");
+                if (av != null && fv != null && sv != null) {
+                    appVersion = av;
+                    felix = fv;
+                    substance = sv;
+                    enableVersion = true;
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("Cannot get information of weasis package", e);
+        }
+        queryParameterMap.put("jnlp.jar.version", enableVersion);
+        queryParameterMap.put("app.version", appVersion);
+        queryParameterMap.put("felix.framework.version", felix);
+        queryParameterMap.put("substance.version", substance);
     }
 
     public class ServletErrorException extends Exception {
@@ -410,7 +444,8 @@ public class JnlpLauncher extends HttpServlet {
         String outputStr = null;
         try {
             Format format = Format.getPrettyFormat();
-            // Converts native encodings to ASCII with escaped Unicode like (ô è é...), necessary for jnlp
+            // Converts native encodings to ASCII with escaped Unicode like (ô è é...),
+            // necessary for jnlp
             format.setEncoding("US-ASCII");
             outputStr = new XMLOutputter(format).outputString(launcher.rootElt);
         } catch (Exception e) {
