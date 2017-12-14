@@ -165,9 +165,7 @@ weasis-pacs-connector 6.1 generates new manifests and requires Weasis 2.5 and su
 
 Note: when multiple archives are configured, only the references of the first archive containing images will be incorporated in the manifest 1.0. Multiple archives can only work with Weasis 2.5.
 
-For [dcm4chee-arc-light](https://github.com/dcm4che/dcm4chee-arc-light):
-
-* Change the configuration of the WADO server property in dicom-dcm4chee.properties: **pacs.wado.url=${server.base.url}/dcm4chee-arc/aets/DCM4CHEE/wado**
+For [dcm4chee-arc-light](https://github.com/dcm4che/dcm4chee-arc-light) see the [installation instructions](http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHEE).
 
 ## New way to launch jnlp ##
 

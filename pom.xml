@@ -127,7 +127,7 @@
 					<artifactId>dcm4che-image</artifactId>
 				</exclusion>
 			</exclusions>
-			<version>1.2.1</version>
+			<version>1.2.2</version>
 		</dependency>
 	</dependencies>
 </project>
