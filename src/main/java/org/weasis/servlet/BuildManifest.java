@@ -69,9 +69,13 @@ public class BuildManifest extends HttpServlet {
             ManifestBuilder builder = ServletUtil.buildManifest(request, props);
             String wadoQueryUrl = ServletUtil.buildManifestURL(request, builder, props, gzip);
             wadoQueryUrl = response.encodeRedirectURL(wadoQueryUrl);
-
             response.setStatus(HttpServletResponse.SC_OK);
-            response.sendRedirect(wadoQueryUrl);
+            if (request.getParameter("url") != null) {
+                response.setContentType("text/xml");
+                response.getWriter().print(wadoQueryUrl);
+            } else {
+                response.sendRedirect(wadoQueryUrl);
+            }
 
         } catch (Exception e) {
             LOGGER.error("Building manifest", e);
