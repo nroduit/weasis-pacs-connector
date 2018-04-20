@@ -1,8 +1,8 @@
 # weasis-pacs-connector #
 
-weasis-pacs-connector provides the easiest way to launch Weasis from a web context (see URL examples below) and to connect Weasis to any PACS supporting WADO or to a WEB API.
+weasis-pacs-connector provides the easiest way to launch the Weasis DICOM viewer from a web context (see URL examples below) and to connect Weasis to any PACS supporting WADO or to a WEB API.
 
-[![CircleCI](https://circleci.com/gh/nroduit/weasis-pacs-connector.svg?style=svg&circle-token=290c4516d1daa4aed30f25ef20d4f55de3428020)](https://circleci.com/gh/nroduit/weasis-pacs-connector) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/916cb1c21eba438483a373b9580007b5)](https://www.codacy.com/app/nicolas.roduit/weasis-pacs-connector?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nroduit/weasis-pacs-connector&amp;utm_campaign=Badge_Grade)
+[![Build Status](https://travis-ci.org/nroduit/weasis-pacs-connector.svg?branch=master)](https://travis-ci.org/nroduit/weasis-pacs-connector) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/916cb1c21eba438483a373b9580007b5)](https://www.codacy.com/app/nicolas.roduit/weasis-pacs-connector?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nroduit/weasis-pacs-connector&amp;utm_campaign=Badge_Grade)
 
 The master branch requires Java 8+ and a servlet container 3.1. The [6.x branch](https://github.com/nroduit/weasis-pacs-connector/tree/6.x) requires Java 7+ and a servlet container 2.5.
 
@@ -50,13 +50,12 @@ This component gathers different services:
 
 ## Build weasis-pacs-connector ##
 
-Prerequisites: JDK 7 and Maven
+Prerequisites: JDK 8 and Maven 3
 
-* Execute the maven command `mvn clean package` in the root directory of the project and get the package from /target/weasis-pacs-connector.war. Official releases can be downloaded [here](http://sourceforge.net/projects/dcm4che/files/Weasis/weasis-pacs-connector/).
+* Execute the maven command `mvn clean package` in the root directory of the project and get the package from /target/weasis-pacs-connector.war. Official releases are available at [here](http://sourceforge.net/projects/dcm4che/files/Weasis/weasis-pacs-connector/).
 
 * Use the loggerless profile for web application container which already embeds slf4j and log4j (like JBoss): `mvn clean package -Ploggerless`
 
-Note: with a snapshot version, it can be necessary to build first the library [weasis-dicom-tools](https://github.com/nroduit/weasis-dicom-tools)
 
 ## Launching Weasis with [IHE IID profile](http://www.ihe.net/Technical_Framework/upload/IHE_RAD_Suppl_IID.pdf) ##
 
@@ -207,6 +206,6 @@ There are different ways to treat the security aspects. Here are some:
 
 ## Architecture of weasis-pacs-connector ##
 
-![weasis-pacs-connector schema](https://dcm4che.atlassian.net/wiki/download/attachments/3670037/weasis_pacs_connector5.png)
+![weasis-pacs-connector schema](https://nroduit.github.io/images/connector-wk-std.png)
 
-See [How to launch Weasis from any environments](http://www.dcm4che.org/confluence/display/WEA/How+to+launch+Weasis+from+any+environments)
+See [How to launch Weasis from any environments](https://nroduit.github.io/en/basics/customize/integration/)
