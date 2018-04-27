@@ -1,8 +1,9 @@
 # weasis-pacs-connector #
 
-weasis-pacs-connector provides the easiest way to launch the Weasis DICOM viewer from a web context (see URL examples below) and to connect Weasis to any PACS supporting WADO or to a WEB API.
+[![License](https://img.shields.io/badge/License-EPL%202.0-blue.svg)](https://opensource.org/licenses/EPL-2.0) [![Build Status](https://travis-ci.org/nroduit/weasis-pacs-connector.svg?branch=master)](https://travis-ci.org/nroduit/weasis-pacs-connector)   
+[![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-pacs-connector&metric=ncloc)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-pacs-connector) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-pacs-connector&metric=reliability_rating)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-pacs-connector) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-pacs-connector&metric=sqale_rating)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-pacs-connector) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-pacs-connector&metric=security_rating)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-pacs-connector) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-pacs-connector&metric=alert_status)](https://sonarcloud.io/dashboard?id=org.weasis%3Aweasis-pacs-connector)  
 
-[![Build Status](https://travis-ci.org/nroduit/weasis-pacs-connector.svg?branch=master)](https://travis-ci.org/nroduit/weasis-pacs-connector) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/916cb1c21eba438483a373b9580007b5)](https://www.codacy.com/app/nicolas.roduit/weasis-pacs-connector?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nroduit/weasis-pacs-connector&amp;utm_campaign=Badge_Grade)
+weasis-pacs-connector provides the easiest way to launch the Weasis DICOM viewer from a web context (see URL examples below) and to connect Weasis to any PACS supporting WADO or to a WEB API.
 
 The master branch requires Java 8+ and a servlet container 3.1. The [6.x branch](https://github.com/nroduit/weasis-pacs-connector/tree/6.x) requires Java 7+ and a servlet container 2.5.
 
@@ -141,11 +142,11 @@ Go [here](https://sourceforge.net/projects/dcm4che/files/Weasis/) and download t
 	- [weasis-i18n.war] Optional package for Weasis translations
 * From weasis-pacs-connector folder:  
 	- [weasis-pacs-connector.war] Connector between the archive and the viewer
-	- [dcm4chee-web-weasis.jar] Optional package for [dcm4che-web3](http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHEE)
+	- [dcm4chee-web-weasis.jar] Optional package for [dcm4che-web3](https://nroduit.github.io/en/getting-started/dcm4chee/)
 
 ## Configuration of weasis-pacs-connector ##
 
-The default configurations works directly with [dcm4che-web3](http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHEE). To override the configuration of weasis-pacs-connector, download [weasis-connector-default.properties](src/main/resources/weasis-connector-default.properties) and rename it **weasis-pacs-connector.properties**. This file named **weasis-pacs-connector.properties** and **[dicom-dcm4chee.properties](src/main/resources/dicom-dcm4chee.properties)** must be placed in the classpath of the application:
+The default configurations works directly with [dcm4che-web3](https://nroduit.github.io/en/getting-started/dcm4chee/). To override the configuration of weasis-pacs-connector, download [weasis-connector-default.properties](src/main/resources/weasis-connector-default.properties) and rename it **weasis-pacs-connector.properties**. This file named **weasis-pacs-connector.properties** and **[dicom-dcm4chee.properties](src/main/resources/dicom-dcm4chee.properties)** must be placed in the classpath of the application:
 
 * In JBoss inferior to version 7, the best location would be "/server/default/conf/"
 * In JBoss 7.2 and 8.x, see [here](https://developer.jboss.org/wiki/HowToPutAnExternalFileInTheClasspath)
@@ -164,7 +165,7 @@ weasis-pacs-connector 6.1 generates new manifests and requires Weasis 2.5 and su
 
 Note: when multiple archives are configured, only the references of the first archive containing images will be incorporated in the manifest 1.0. Multiple archives can only work with Weasis 2.5.
 
-For [dcm4chee-arc-light](https://github.com/dcm4che/dcm4chee-arc-light) see the [installation instructions](http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHEE).
+For [dcm4chee-arc-light](https://github.com/dcm4che/dcm4chee-arc-light) see the [installation instructions](https://nroduit.github.io/en/getting-started/dcm4chee/).
 
 ## New way to launch jnlp ##
 
@@ -192,7 +193,7 @@ Advantages of jnlp protocol:
 
 For more informations:
 * [Oracle JWS documentation](https://docs.oracle.com/javase/9/deploy/overview.htm)
-* [About the configuration in dcm4chee](http://www.dcm4che.org/confluence/display/WEA/Installing+Weasis+in+DCM4CHEE)
+* [About the configuration in dcm4chee](https://nroduit.github.io/en/getting-started/dcm4chee/)
 
 
 ## Security ##
