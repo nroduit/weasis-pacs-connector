@@ -306,7 +306,7 @@ public class ServletUtil {
     static String decrypt(String message, String key, String level) {
         if (key != null) {
             String decrypt = EncryptUtils.decrypt(message, key);
-            LOGGER.debug("Decrypt {}: {} to {}", new Object[] { level, message, decrypt });
+            LOGGER.debug("Decrypt {}: {} to {}", level, message, decrypt);
             return decrypt;
         }
         return message;
@@ -317,7 +317,7 @@ public class ServletUtil {
             String[] decrypt = new String[message.length];
             for (int i = 0; i < decrypt.length; i++) {
                 decrypt[i] = EncryptUtils.decrypt(message[i], key);
-                LOGGER.debug("Decrypt {}: {} to {}", new Object[] { level, message[i], decrypt[i] });
+                LOGGER.debug("Decrypt {}: {} to {}", level, message[i], decrypt[i]);
             }
             return decrypt;
         }

@@ -30,6 +30,9 @@ import org.weasis.query.CommonQueryParams;
 
 public class DicomQueryConfiguration extends AbstractQueryConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomQueryConfiguration.class);
+    
+    private static final String C_FIND_WITH_SERIESUID = "C-FIND with SeriesInstanceUID {}";
+    private static final String DICOM_QUERY_ERROR = "DICOM query Error of {}";
 
     private final DicomNode callingNode;
     private final DicomNode calledNode;
@@ -113,7 +116,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                     applyAllFilters(params, studies);
                 }
             } catch (Exception e) {
-                LOGGER.error("DICOM query Error of {}", getArchiveConfigName(), e);
+                LOGGER.error(DICOM_QUERY_ERROR, getArchiveConfigName(), e);
             }
         }
     }
@@ -309,7 +312,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
             try {
                 DicomState state =
                     CFind.process(advParams, callingNode, calledNode, 0, QueryRetrieveLevel.SERIES, keysSeries);
-                LOGGER.debug("C-FIND with SeriesInstanceUID {}", state.getMessage());
+                LOGGER.debug(C_FIND_WITH_SERIESUID, state.getMessage());
                 
                 List<Attributes> series = state.getDicomRSP();
                 if (series != null && !series.isEmpty()) {
@@ -321,7 +324,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                     }
                 }
             } catch (Exception e) {
-                LOGGER.error("DICOM query Error of {}", getArchiveConfigName(), e);
+                LOGGER.error(DICOM_QUERY_ERROR, getArchiveConfigName(), e);
             }
         }
     }
@@ -366,7 +369,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                     }
                 }
             } catch (Exception e) {
-                String msg = "DICOM query Error of {}" + getArchiveConfigName();
+                String msg = DICOM_QUERY_ERROR + getArchiveConfigName();
                 LOGGER.error(msg, e);
                 setViewerMessage(new ViewerMessage(msg, e.getMessage(), ViewerMessage.eLevel.ERROR));
             }
@@ -386,7 +389,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("DICOM query Error of {}", getArchiveConfigName(), e);
+            LOGGER.error(DICOM_QUERY_ERROR, getArchiveConfigName(), e);
         }
     }
 
@@ -427,7 +430,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                 CFind.SOPInstanceUID, CFind.InstanceNumber };
             DicomState state =
                 CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.IMAGE, keysInstance);
-            LOGGER.debug("C-FIND with SeriesInstanceUID {}", state.getMessage());
+            LOGGER.debug(C_FIND_WITH_SERIESUID, state.getMessage());
 
             List<Attributes> instances = state.getDicomRSP();
             if (instances != null && !instances.isEmpty()) {
@@ -485,8 +488,8 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
 
                 DicomState state =
                     CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.SERIES, keysSeries);
-                LOGGER.debug("C-FIND with SeriesInstanceUID {}", state.getMessage());
-                
+                LOGGER.debug(C_FIND_WITH_SERIESUID, state.getMessage());
+
                 List<Attributes> series = state.getDicomRSP();
                 if (series.isEmpty()) {
                     throw new IllegalStateException("Get empty C-Find reply at Series level for " + seriesInstanceUID);

@@ -41,7 +41,7 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.util.FileUtil;
+
 import org.weasis.dicom.util.StringUtil;
 
 public class JnlpLauncher extends HttpServlet {
