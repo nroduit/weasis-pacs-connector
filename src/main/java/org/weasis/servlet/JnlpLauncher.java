@@ -42,7 +42,6 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 
 @WebServlet(urlPatterns = "/")
@@ -244,7 +243,7 @@ public class JnlpLauncher extends HttpServlet {
             if (templatePath.endsWith("/")) {
                 templateFileName = ManifestManager.DEFAULT_TEMPLATE; // default value
             } else {
-                int fileNameBeginIndex = templatePath.lastIndexOf("/") + 1;
+                int fileNameBeginIndex = templatePath.lastIndexOf('/') + 1;
                 templateFileName = templatePath.substring(fileNameBeginIndex);
                 templatePath = templatePath.substring(0, fileNameBeginIndex);
             }
@@ -409,18 +408,14 @@ public class JnlpLauncher extends HttpServlet {
 
         // Parse JNLP launcher as JDOM
         Element rootElt = null;
-        BufferedReader reader = null;
 
-        try {
-            // Assume the template has UTF-8 encoding
-            reader = new BufferedReader(
-                new InputStreamReader(launcher.realPathURL.toURL().openConnection().getInputStream(), "UTF-8"));
+        // Assume the template has UTF-8 encoding
+        try (BufferedReader reader = new BufferedReader(
+            new InputStreamReader(launcher.realPathURL.toURL().openConnection().getInputStream(), "UTF-8"))) {
 
             rootElt = new SAXBuilder(XMLReaders.NONVALIDATING, null, null).build(reader).getRootElement();
         } catch (JDOMException e) {
             throw new ServletErrorException(HttpServletResponse.SC_NOT_ACCEPTABLE, "Can't parse launcher template", e);
-        } finally {
-            FileUtil.safeClose(reader);
         }
 
         if (!rootElt.getName().equals(JNLP_TAG_ELT_ROOT)) {
@@ -598,8 +593,8 @@ public class JnlpLauncher extends HttpServlet {
                         attributeValue = attributeValue.replace(marker, parameterValue);
                         attribute.setValue(attributeValue);
                     } else {
-                        LOGGER.warn("Found marker \"" + marker + "\" with NO matching parameter in Element <"
-                            + elt.getName() + "> " + attribute);
+                        LOGGER.warn("Found marker \"{}\" with NO matching parameter in Element <{}> {}", marker,
+                            elt.getName(), attribute);
                     }
                 }
             }
@@ -627,8 +622,8 @@ public class JnlpLauncher extends HttpServlet {
                     elt.setText(elementValue);
 
                 } else {
-                    LOGGER.warn("Found marker \"" + marker + "\" with NO matching parameter in Element <"
-                        + elt.getName() + ">");
+                    LOGGER.warn("Found marker \"{}\" with NO matching parameter in Element <{}>", marker,
+                        elt.getName());
                 }
             }
         }

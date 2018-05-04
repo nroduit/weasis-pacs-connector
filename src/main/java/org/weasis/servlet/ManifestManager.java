@@ -121,9 +121,9 @@ public class ManifestManager implements ServletContextListener {
                 ManifestManagerThread.CLEAN_FREQUENCY));
             manifestManagerThread.setMaxLifeCycle(
                 ServletUtil.getLongProperty(properties, "thread.max.life.clyle", ManifestManagerThread.MAX_LIFE_CYCLE));
-            LOGGER.info("ManifestManagerThread configuration (maxLifeCycle="
-                + TimeUnit.MILLISECONDS.toSeconds(manifestManagerThread.getMaxLifeCycle()) + "s, cleanFrequency="
-                + TimeUnit.MILLISECONDS.toSeconds(manifestManagerThread.getCleanFrequency()) + "s)");
+            LOGGER.info("ManifestManagerThread configuration (maxLifeCycle={}s, cleanFrequency={}s)",
+                TimeUnit.MILLISECONDS.toSeconds(manifestManagerThread.getMaxLifeCycle()),
+                TimeUnit.MILLISECONDS.toSeconds(manifestManagerThread.getCleanFrequency()));
 
             sc.setAttribute("manifestExecutor",
                 Executors.newFixedThreadPool(ServletUtil.getIntProperty(properties, "thread.manifest.concurrency", 5)));

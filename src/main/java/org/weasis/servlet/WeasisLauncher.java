@@ -225,7 +225,7 @@ public class WeasisLauncher extends HttpServlet {
                 if (buf.length() > 10) {
                     return new UploadXml(buf.toString(), request.getCharacterEncoding());
                 } else {
-                    LOGGER.error("Invalid manifest: {}", buf.toString());
+                    LOGGER.error("Invalid manifest: {}", buf);
                     ServletUtil.sendResponseError(response, HttpServletResponse.SC_NO_CONTENT,
                         "Invalid manifest: " + buf.toString());
                 }
