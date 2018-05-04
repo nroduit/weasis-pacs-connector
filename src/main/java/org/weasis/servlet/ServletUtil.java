@@ -140,7 +140,7 @@ public class ServletUtil {
     }
 
     public static void logInfo(HttpServletRequest request, Logger logger) {
-        logger.debug("HttpServletRequest - getRequestQueryURL: {}{}", request.getRequestURL().toString(),
+        logger.debug("HttpServletRequest - getRequestQueryURL: {}{}", request.getRequestURL(),
             request.getQueryString() != null ? ("?" + request.getQueryString().trim()) : "");
         logger.debug("HttpServletRequest - getContextPath: {}", request.getContextPath());
         logger.debug("HttpServletRequest - getServletPath: {}", request.getServletPath());
@@ -332,6 +332,10 @@ public class ServletUtil {
     }
 
     public static String getBaseURL(HttpServletRequest request, boolean canonicalHostName) {
+        return request.getScheme() + "://" + getServerHost(request, canonicalHostName) + ":" + request.getServerPort();
+    }
+
+    public static String getServerHost(HttpServletRequest request, boolean canonicalHostName) {
         if (canonicalHostName) {
             try {
                 /**
@@ -339,13 +343,12 @@ public class ServletUtil {
                  * InetAddress.getLocalHost().getCanonicalHostName() instead of req.getLocalAddr()<br>
                  * If not resolved from the DNS server FQDM is taken from the /etc/hosts on Unix server
                  */
-                return request.getScheme() + "://" + InetAddress.getLocalHost().getCanonicalHostName() + ":"
-                    + request.getServerPort();
+                return InetAddress.getLocalHost().getCanonicalHostName();
             } catch (UnknownHostException e) {
                 LOGGER.error("Cannot get hostname", e);
             }
         }
-        return request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+        return request.getServerName();
     }
 
     public static ManifestBuilder buildManifest(HttpServletRequest request, ConnectorProperties props) {
@@ -371,22 +374,22 @@ public class ServletUtil {
         buf.append(RequestManifest.PARAM_ID);
         buf.append('=');
         buf.append(builder.getRequestId());
-        
-        String manifestVersion =  props.getProperty("manifest.version");
+
+        String manifestVersion = props.getProperty("manifest.version");
         if (manifestVersion != null) {
             buf.append('&');
             buf.append(ConnectorProperties.MANIFEST_VERSION);
             buf.append('=');
             buf.append(manifestVersion);
         }
-        
+
         if (!gzip) {
             buf.append('&');
             buf.append(RequestManifest.PARAM_NO_GZIP);
         }
 
         String wadoQueryUrl = buf.toString();
-        LOGGER.debug("wadoQueryUrl = " + wadoQueryUrl);
+        LOGGER.debug("wadoQueryUrl = {}", wadoQueryUrl);
         return wadoQueryUrl;
     }
 

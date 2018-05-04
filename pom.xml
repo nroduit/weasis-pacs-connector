@@ -6,7 +6,7 @@
 	<artifactId>weasis-pacs-connector</artifactId>
 	<packaging>war</packaging>
 	<name>Weasis PACS Connector</name>
-	<version>6.1.2</version>
+	<version>6.1.4</version>
 	<prerequisites>
 		<maven>3.0</maven>
 	</prerequisites>
@@ -62,7 +62,7 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-compiler-plugin</artifactId>
-						<version>3.5.1</version>
+						<version>3.6.1</version>
 						<configuration>
 							<source>1.7</source>
 							<target>1.7</target>
@@ -71,7 +71,7 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-war-plugin</artifactId>
-						<version>3.0.0</version>
+						<version>3.1.0</version>
 						<configuration>
 							<packagingExcludes>WEB-INF/lib/dcm4che-dict-*,WEB-INF/lib/log4j*,WEB-INF/lib/slf4j*</packagingExcludes>
 							<warName>${project.artifactId}</warName>

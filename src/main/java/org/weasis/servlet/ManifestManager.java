@@ -138,7 +138,7 @@ public class ManifestManager extends HttpServlet {
 
     private static String getBaseConfigURL(URL config) {
         String val = config.toString();
-        return val.substring(0, val.lastIndexOf("/") + 1);
+        return val.substring(0, val.lastIndexOf('/') + 1);
     }
 
     private URL readConfigURL(String configDir, String name) throws IOException {

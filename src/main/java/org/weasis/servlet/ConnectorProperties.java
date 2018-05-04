@@ -80,8 +80,10 @@ public class ConnectorProperties extends Properties {
 
     public ConnectorProperties getResolveConnectorProperties(HttpServletRequest request) {
         Properties extProps = new Properties();
-        extProps.put("server.base.url", ServletUtil.getBaseURL(request,
-            StringUtil.getNULLtoFalse(this.getProperty("server.canonical.hostname.mode"))));
+        boolean canonical = StringUtil.getNULLtoFalse(this.getProperty("server.canonical.hostname.mode"));
+        String serverHost = ServletUtil.getServerHost(request, canonical);
+        extProps.put("server.host", serverHost);
+        extProps.put("server.base.url", request.getScheme() + "://" + serverHost + ":" + request.getServerPort());
 
         ConnectorProperties dynamicProps = getDeepCopy();
 

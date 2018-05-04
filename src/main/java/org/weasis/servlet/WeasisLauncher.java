@@ -174,7 +174,7 @@ public class WeasisLauncher extends HttpServlet {
 
     static String buildManifest(HttpServletRequest request, XmlManifest manifest)
         throws InterruptedException, ExecutionException, TimeoutException, IOException {
-        if (manifest !=null || CommonQueryParams.isManifestRequest(request.getParameterMap())) {
+        if (manifest != null || CommonQueryParams.isManifestRequest(request.getParameterMap())) {
             ServletContext ctx = request.getSession().getServletContext();
             ConnectorProperties connectorProperties = (ConnectorProperties) ctx.getAttribute("componentProperties");
             ConnectorProperties props = connectorProperties.getResolveConnectorProperties(request);
@@ -220,7 +220,7 @@ public class WeasisLauncher extends HttpServlet {
                 if (buf.length() > 10) {
                     return new UploadXml(buf.toString(), request.getCharacterEncoding());
                 } else {
-                    LOGGER.error("Invalid manifest: {}", buf.toString());
+                    LOGGER.error("Invalid manifest: {}", buf);
                     ServletUtil.sendResponseError(response, HttpServletResponse.SC_NO_CONTENT,
                         "Invalid manifest: " + buf.toString());
                 }
