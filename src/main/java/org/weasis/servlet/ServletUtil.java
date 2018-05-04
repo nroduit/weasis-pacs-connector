@@ -331,6 +331,10 @@ public class ServletUtil {
     }
 
     public static String getBaseURL(HttpServletRequest request, boolean canonicalHostName) {
+        return request.getScheme() + "://" + getServerHost(request, canonicalHostName) + ":" + request.getServerPort();
+    }
+
+    public static String getServerHost(HttpServletRequest request, boolean canonicalHostName) {
         if (canonicalHostName) {
             try {
                 /**
@@ -338,13 +342,12 @@ public class ServletUtil {
                  * InetAddress.getLocalHost().getCanonicalHostName() instead of req.getLocalAddr()<br>
                  * If not resolved from the DNS server FQDM is taken from the /etc/hosts on Unix server
                  */
-                return request.getScheme() + "://" + InetAddress.getLocalHost().getCanonicalHostName() + ":"
-                    + request.getServerPort();
+                return InetAddress.getLocalHost().getCanonicalHostName();
             } catch (UnknownHostException e) {
                 LOGGER.error("Cannot get hostname", e);
             }
         }
-        return request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+        return request.getServerName();
     }
 
     public static ManifestBuilder buildManifest(HttpServletRequest request, ConnectorProperties props) {
