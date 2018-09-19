@@ -1,8 +1,11 @@
 # weasis-pacs-connector #
 
-weasis-pacs-connector provides the easiest way to launch Weasis from a web context (see URL examples below) and to connect Weasis to any PACS supporting WADO or to a WEB API.
+[![License](https://img.shields.io/badge/License-EPL%202.0-blue.svg)](https://opensource.org/licenses/EPL-2.0) [![Build Status](https://travis-ci.com/nroduit/weasis-pacs-connector.svg?branch=master)](https://travis-ci.com/nroduit/weasis-pacs-connector)   
+[![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-pacs-connector&metric=ncloc)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-pacs-connector) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-pacs-connector&metric=reliability_rating)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-pacs-connector) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-pacs-connector&metric=sqale_rating)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-pacs-connector) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-pacs-connector&metric=security_rating)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-pacs-connector) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-pacs-connector&metric=alert_status)](https://sonarcloud.io/dashboard?id=org.weasis%3Aweasis-pacs-connector)  
 
-[![CircleCI](https://circleci.com/gh/nroduit/weasis-pacs-connector.svg?style=svg&circle-token=290c4516d1daa4aed30f25ef20d4f55de3428020)](https://circleci.com/gh/nroduit/weasis-pacs-connector) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/916cb1c21eba438483a373b9580007b5)](https://www.codacy.com/app/nicolas.roduit/weasis-pacs-connector?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nroduit/weasis-pacs-connector&amp;utm_campaign=Badge_Grade)
+weasis-pacs-connector provides the easiest way to launch the Weasis DICOM viewer from a web context (see URL examples below) and to connect Weasis to any PACS supporting WADO or to a WEB API.
+
+The master branch requires Java 8+ and a servlet container 3.1. The [6.x branch](https://github.com/nroduit/weasis-pacs-connector/tree/6.x) requires Java 7+ and a servlet container 2.5.
 
 This component gathers different services:   
 
