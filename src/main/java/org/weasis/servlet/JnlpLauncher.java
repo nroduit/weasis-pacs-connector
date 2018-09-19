@@ -232,8 +232,11 @@ public class JnlpLauncher extends HttpServlet {
             if (queryLauncherPath != null) { // template isn't in the Web Servlet Context
                 if (queryLauncherPath.startsWith("/")) {
                     templatePath = serverPath + queryLauncherPath; // supposed to be "serverPath/URI"
-                } else {
+                } else if (templatePath.startsWith("http")) {
                     templatePath = queryLauncherPath; // supposed to be a new valid URL for launcher template
+                }
+                else {
+                    throw new IllegalAccessError("Template path must start with \"http\" or \"/\" (relative web context)");
                 }
             }
 
