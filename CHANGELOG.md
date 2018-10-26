@@ -1,13 +1,22 @@
 # Change Log
 
-## [7.0.0](https://github.com/nroduit/weasis-pacs-connector/tree/7.0.0) (2018-10-26)
-[Full Changelog](https://github.com/nroduit/weasis-pacs-connector/compare/v6.1.4...7.0.0)
+## [v7.0.0](https://github.com/nroduit/weasis-pacs-connector/tree/v7.0.0) (2018-10-26)
+[Full Changelog](https://github.com/nroduit/weasis-pacs-connector/compare/v6.1.4...v7.0.0)
 
 **Implemented enhancements:**
 
+- Fix possible injection of local path [\#21](https://github.com/nroduit/weasis-pacs-connector/issues/21) [[security](https://github.com/nroduit/weasis-pacs-connector/labels/security)]
 - Use new API for building Manifest [\#19](https://github.com/nroduit/weasis-pacs-connector/issues/19)
 - Requires Java 8 and Servlet 3.1 [\#18](https://github.com/nroduit/weasis-pacs-connector/issues/18)
 - Use weasis-dicom-tools 5.13.3 [\#17](https://github.com/nroduit/weasis-pacs-connector/issues/17)
+
+**Fixed bugs:**
+
+- Issue when the application container contains spaces in the path [\#15](https://github.com/nroduit/weasis-pacs-connector/issues/15)
+
+**Closed issues:**
+
+- Remove Applet API [\#20](https://github.com/nroduit/weasis-pacs-connector/issues/20) [[removed](https://github.com/nroduit/weasis-pacs-connector/labels/removed)] [[security](https://github.com/nroduit/weasis-pacs-connector/labels/security)]
 
 ## [v6.1.4](https://github.com/nroduit/weasis-pacs-connector/tree/v6.1.4) (2018-10-26)
 [Full Changelog](https://github.com/nroduit/weasis-pacs-connector/compare/6.1.3...v6.1.4)
