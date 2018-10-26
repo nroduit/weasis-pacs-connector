@@ -184,6 +184,8 @@ public class JnlpLauncher extends HttpServlet {
                 String.format("inline; filename=\"%s\"", launcher.templateFileName));
 
             ServletUtil.write(launcherStr, response.getOutputStream());
+
+            LOGGER.info("Build JNLP from template = {} and with arguments = {}", launcher.templateFileName, Arrays.toString(launcher.parameterMap.entrySet().toArray()));
         } catch (ServletErrorException e) {
             LOGGER.error("Build jnlp", e);
             ServletUtil.sendResponseError(response, e.responseErrorCode, e.getMessage());
@@ -240,8 +242,6 @@ public class JnlpLauncher extends HttpServlet {
                     throw new IllegalAccessError("Template path must start with \"http\" or \"/\" (relative web context)");
                 }
             }
-
-            LOGGER.info("1 - templatePath = {}", templatePath);
 
             if (templatePath.endsWith("/")) {
                 templateFileName = ManifestManager.DEFAULT_TEMPLATE; // default value
