@@ -84,7 +84,6 @@ public class JnlpLauncher extends HttpServlet {
     protected static final String JNLP_TAG_ELT_APPLICATION_DESC = "application-desc";
     protected static final String JNLP_TAG_ELT_ARGUMENT = "argument";
 
-    protected static final String JNLP_TAG_ELT_APPLET_DESC = "applet-desc";
     protected static final String JNLP_TAG_ELT_PARAM = "param";
 
     public JnlpLauncher() {
@@ -259,8 +258,8 @@ public class JnlpLauncher extends HttpServlet {
             LOGGER.debug("locateLauncherTemplate() - String templateFileName = {}", templateFileName);
 
             if (templatePath.startsWith(serverPath + request.getContextPath())) {
-                String uriTemplatePath = templatePath.replaceFirst(serverPath + request.getContextPath(), "");
-                templateURI = getServletContext().getResource("/" + uriTemplatePath + templateFileName).toURI();
+                String uriTemplatePath = serverPath + request.getContextPath();
+                templateURI = getServletContext().getResource("/" + templatePath.substring(uriTemplatePath.length()) + templateFileName).toURI();
             } else {
                 if (!StringUtil.hasText(templatePath)) {
                     templateURI = getServletContext().getResource("/" + templateFileName).toURI();
@@ -460,29 +459,7 @@ public class JnlpLauncher extends HttpServlet {
             try {
                 Element applicationDescElt = launcher.rootElt.getChild(JNLP_TAG_ELT_APPLICATION_DESC);
                 if (applicationDescElt == null) {
-                    applicationDescElt = launcher.rootElt.getChild(JNLP_TAG_ELT_APPLET_DESC);
-                    if (applicationDescElt == null) {
-                        throw new IllegalStateException("JNLP TAG : <application-desc> or <applet-desc> is not found");
-                    } else {
-                        // Arguments in Applet are formatted as properties
-                        for (String newContent : argValues) {
-                            // split any whitespace character: [ \t\n\x0B\f\r ]
-                            String[] property = Pattern.compile("\\s").split(newContent, 2);
-
-                            String propertyName = property != null && property.length > 0 ? property[0] : null;
-                            String propertyValue = property != null && property.length > 1 ? property[1] : null;
-
-                            if (propertyName != null && propertyValue != null) {
-                                Element paramElt = new Element(JNLP_TAG_ELT_PARAM);
-                                paramElt.setAttribute(JNLP_TAG_PRO_NAME, propertyName);
-                                paramElt.setAttribute(JNLP_TAG_PRO_VALUE, propertyValue);
-                                applicationDescElt.addContent(paramElt);
-                            } else {
-                                throw new IllegalStateException(
-                                    "Applet Query Parameter {property} is invalid : " + Arrays.toString(argValues));
-                            }
-                        }
-                    }
+                    throw new IllegalStateException("JNLP TAG : <application-desc> is not found");
                 } else {
                     for (String newContent : argValues) {
                         applicationDescElt.addContent(new Element(JNLP_TAG_ELT_ARGUMENT).addContent(newContent));
@@ -558,12 +535,7 @@ public class JnlpLauncher extends HttpServlet {
 
                 Element applicationElt = launcher.rootElt.getChild(JNLP_TAG_ELT_APPLICATION_DESC);
                 if (applicationElt == null) {
-                    applicationElt = launcher.rootElt.getChild(JNLP_TAG_ELT_APPLET_DESC);
-                    if (applicationElt == null) {
-                        throw new IllegalStateException("JNLP TAG : <application-desc> or <applet-desc> is not found");
-                    } else {
-                        filterMarkerInElement(applicationElt.getChildren(JNLP_TAG_ELT_PARAM), launcher.parameterMap);
-                    }
+                   throw new IllegalStateException("JNLP TAG : <application-desc> is not found");
                 } else {
                     filterMarkerInElement(applicationElt.getChildren(JNLP_TAG_ELT_ARGUMENT), launcher.parameterMap);
                 }

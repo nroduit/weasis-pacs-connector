@@ -41,7 +41,6 @@ public class ManifestManager implements ServletContextListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(ManifestManager.class);
 
     public static final String DEFAULT_TEMPLATE = "weasis.jnlp";
-    public static final String DEFAULT_APPLET_TEMPLATE = "weasisApplet.jnlp";
 
     private final ConcurrentHashMap<Integer, ManifestBuilder> manifestBuilderMap = new ConcurrentHashMap<>();
     private final ManifestManagerThread manifestManagerThread = new ManifestManagerThread(manifestBuilderMap);
@@ -78,7 +77,7 @@ public class ManifestManager implements ServletContextListener {
                     String requestIID = properties.getProperty("request.IID.level");
                     if (requests == null) {
                         LOGGER.error(
-                            "No request ID is allowed for the web context /viewer, /viewer-applet and /manifest!");
+                            "No request ID is allowed for the web context /viewer and /manifest!");
                     } else {
                         for (String id : requests.split(",")) {
                             properties.put(id.trim(), "true");
@@ -103,10 +102,6 @@ public class ManifestManager implements ServletContextListener {
                     loadTemplate(sc, baseConfigDir, configDir,
                         properties.getProperty("jnlp.default.name", DEFAULT_TEMPLATE), "weasis.default.jnlp",
                         properties);
-                    loadTemplate(sc, baseConfigDir, configDir,
-                        properties.getProperty("jnlp.applet.name", DEFAULT_APPLET_TEMPLATE), "weasis.applet.jnlp",
-                        properties);
-
                 } else {
                     LOGGER.error("Cannot find  a configuration file for weasis-pacs-connector");
                 }

@@ -11,7 +11,6 @@ This component gathers different services:
 
 * **/viewer** launching Weasis with the patient ID, study UID... (can be configured to use a combination of UIDs or to hide some of them)
 * **/IHEInvokeImageDisplay** launching Weasis at Patient and Study level, compliant to the [IHE IID profile](http://www.ihe.net/Technical_Framework/upload/IHE_RAD_Suppl_IID.pdf)
-* **/viewer-applet** same as _/viewer_ but it can launch Weasis as Applet in a web page (the service returns an html page). This method is not recommended as most of browsers block Java plugin.
 * **/manifest** building the xml manifest (containing the necessary UIDs) consumed by Weasis to retrieve all the images by WADO requests
 * **/[name of the template]** (default template: /weasis.jnlp) building a jnlp file from a template (jnlp template path, jnlp properties and jnp arguments can be passed via URL parameters, see the [JNLP Builder documentation](JnlpBuilder))
 
@@ -62,10 +61,6 @@ Prerequisites: JDK 8 and Maven 3
 * http://localhost:8080/weasis-pacs-connector/viewer?objectUID=1.2.840.113704.1.111.3520.1273640118.5118
 
 Note: It is allowed to have multiple UIDs for patient, study, series and instance but within the same level. The [configuration file](src/main/resources/weasis-connector-default.properties) enables to set which ID is allowed and if a combination of UIDs is required. When using a combination of UIDs, the order is not relevant.
-
-##### Launch Weasis as an Applet in a web browser (not recommended as most of browsers block Java plugin) #####
-* http://localhost:8080/weasis-pacs-connector/viewer-applet?patientID=97026728   
-  => same as _/viewer_ but it can launch Weasis as Applet in a webpage.
 
 ##### Upload the manifest via http POST #####
 * http://localhost:8080/weasis-pacs-connector/viewer?upload=manifest  
@@ -131,7 +126,6 @@ To add properties or arguments in the JNLP there are two possibilities:
 weasis-pacs-connector 6.1 generates new manifests and requires Weasis 2.5 and superior. However it is possible to run previous version of Weasis by modifying the [weasis-connector-default.properties](src/main/resources/weasis-connector-default.properties):    
 1. Set the property _manifest.version=1_
 2. Uncomment the property _jnlp.default.name=weasis1.jnlp_
-3. Uncomment the property _jnlp.applet.name=weasisApplet1.jnlp_
 
 Note: when multiple archives are configured, only the references of the first archive containing images will be incorporated in the manifest 1.0. Multiple archives can only work with Weasis 2.5.
 
