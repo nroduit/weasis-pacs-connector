@@ -53,13 +53,7 @@ public class WeasisLauncher extends HttpServlet {
     @Override
     protected void doHead(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
-        try {
-            RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/jnlpBuilder");
-            dispatcher.forward(request, response);
-        } catch (Exception e) {
-            LOGGER.error("JNLP dispatcher error", e);
-            ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-        }
+        invokeWeasis(request, response, null);
     }
 
     @Override
