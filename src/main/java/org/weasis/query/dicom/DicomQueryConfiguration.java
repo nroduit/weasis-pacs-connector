@@ -31,6 +31,9 @@ import org.weasis.servlet.ServletUtil;
 
 public class DicomQueryConfiguration extends AbstractQueryConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomQueryConfiguration.class);
+    
+    private static final String C_FIND_WITH_SERIESUID = "C-FIND with SeriesInstanceUID {}";
+    private static final String DICOM_QUERY_ERROR = "DICOM query Error of {}";
 
     private final DicomNode callingNode;
     private final DicomNode calledNode;
@@ -114,7 +117,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                     applyAllFilters(params, studies);
                 }
             } catch (Exception e) {
-                LOGGER.error("DICOM query Error of {}", getArchiveConfigName(), e);
+                LOGGER.error(DICOM_QUERY_ERROR, getArchiveConfigName(), e);
             }
         }
     }
@@ -217,38 +220,34 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
     }
 
     private static Comparator<Attributes> getStudyComparator() {
-        return new Comparator<Attributes>() {
-
-            @Override
-            public int compare(Attributes o1, Attributes o2) {
-                Date date1 = o1.getDate(Tag.StudyDate);
-                Date date2 = o2.getDate(Tag.StudyDate);
-                if (date1 != null && date2 != null) {
-                    // inverse time
-                    int rep = date2.compareTo(date1);
-                    if (rep == 0) {
-                        Date time1 = o1.getDate(Tag.StudyTime);
-                        Date time2 = o2.getDate(Tag.StudyTime);
-                        if (time1 != null && time2 != null) {
-                            // inverse time
-                            return time2.compareTo(time1);
-                        }
-                    } else {
-                        return rep;
+        return (o1, o2) -> {
+            Date date1 = o1.getDate(Tag.StudyDate);
+            Date date2 = o2.getDate(Tag.StudyDate);
+            if (date1 != null && date2 != null) {
+                // inverse time
+                int rep = date2.compareTo(date1);
+                if (rep == 0) {
+                    Date time1 = o1.getDate(Tag.StudyTime);
+                    Date time2 = o2.getDate(Tag.StudyTime);
+                    if (time1 != null && time2 != null) {
+                        // inverse time
+                        return time2.compareTo(time1);
                     }
-                }
-                if (date1 == null && date2 == null) {
-                    return o1.getString(Tag.StudyInstanceUID, "").compareTo(o2.getString(Tag.StudyInstanceUID, ""));
                 } else {
-                    if (date1 == null) {
-                        return 1;
-                    }
-                    if (date2 == null) {
-                        return -1;
-                    }
+                    return rep;
                 }
-                return 0;
             }
+            if (date1 == null && date2 == null) {
+                return o1.getString(Tag.StudyInstanceUID, "").compareTo(o2.getString(Tag.StudyInstanceUID, ""));
+            } else {
+                if (date1 == null) {
+                    return 1;
+                }
+                if (date2 == null) {
+                    return -1;
+                }
+            }
+            return 0;
         };
     }
 
@@ -310,7 +309,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
             try {
                 DicomState state =
                     CFind.process(advParams, callingNode, calledNode, 0, QueryRetrieveLevel.SERIES, keysSeries);
-                LOGGER.debug("C-FIND with SeriesInstanceUID {}", state.getMessage());
+                LOGGER.debug(C_FIND_WITH_SERIESUID, state.getMessage());
 
                 List<Attributes> series = state.getDicomRSP();
                 if (series != null && !series.isEmpty()) {
@@ -322,7 +321,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                     }
                 }
             } catch (Exception e) {
-                LOGGER.error("DICOM query Error of {}", getArchiveConfigName(), e);
+                LOGGER.error(DICOM_QUERY_ERROR, getArchiveConfigName(), e);
             }
         }
     }
@@ -367,7 +366,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                     }
                 }
             } catch (Exception e) {
-                String msg = "DICOM query Error of {}" + getArchiveConfigName();
+                String msg = DICOM_QUERY_ERROR + getArchiveConfigName();
                 LOGGER.error(msg, e);
                 setViewerMessage(new ViewerMessage(msg, e.getMessage(), ViewerMessage.eLevel.ERROR));
             }
@@ -387,7 +386,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("DICOM query Error of {}", getArchiveConfigName(), e);
+            LOGGER.error(DICOM_QUERY_ERROR, getArchiveConfigName(), e);
         }
     }
 
@@ -428,7 +427,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                 CFind.SOPInstanceUID, CFind.InstanceNumber };
             DicomState state =
                 CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.IMAGE, keysInstance);
-            LOGGER.debug("C-FIND with SeriesInstanceUID {}", state.getMessage());
+            LOGGER.debug(C_FIND_WITH_SERIESUID, state.getMessage());
 
             List<Attributes> instances = state.getDicomRSP();
             if (instances != null && !instances.isEmpty()) {
@@ -484,7 +483,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
 
                 DicomState state =
                     CFind.process(advancedParams, callingNode, calledNode, 0, QueryRetrieveLevel.SERIES, keysSeries);
-                LOGGER.debug("C-FIND with SeriesInstanceUID {}", state.getMessage());
+                LOGGER.debug(C_FIND_WITH_SERIESUID, state.getMessage());
 
                 List<Attributes> series = state.getDicomRSP();
                 if (series.isEmpty()) {

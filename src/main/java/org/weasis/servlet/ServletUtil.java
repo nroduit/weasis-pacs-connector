@@ -42,8 +42,6 @@ import org.dcm4che3.util.TagUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.StringUtil;
-import org.weasis.core.api.util.StringUtil.Suffix;
-import org.weasis.dicom.mf.Patient;
 import org.weasis.dicom.mf.QueryResult;
 import org.weasis.dicom.mf.ViewerMessage;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
@@ -57,7 +55,6 @@ public class ServletUtil {
     private ServletUtil() {
     }
 
-    
     public static Integer getIntegerFromDicomElement(Attributes dicom, int tag, Integer defaultValue) {
         return getIntegerFromDicomElement(dicom, tag, null, defaultValue);
     }
@@ -74,7 +71,7 @@ public class ServletUtil {
         }
         return defaultValue;
     }
-    
+
     public static String getFirstParameter(Object val) {
         if (val instanceof String[]) {
             String[] params = (String[]) val;
@@ -161,7 +158,7 @@ public class ServletUtil {
     }
 
     public static void logInfo(HttpServletRequest request, Logger logger) {
-        logger.debug("HttpServletRequest - getRequestQueryURL: {}{}", request.getRequestURL().toString(),
+        logger.debug("HttpServletRequest - getRequestQueryURL: {}{}", request.getRequestURL(),
             request.getQueryString() != null ? ("?" + request.getQueryString().trim()) : "");
         logger.debug("HttpServletRequest - getContextPath: {}", request.getContextPath());
         logger.debug("HttpServletRequest - getServletPath: {}", request.getServletPath());
@@ -308,7 +305,7 @@ public class ServletUtil {
     static String decrypt(String message, String key, String level) {
         if (key != null) {
             String decrypt = EncryptUtils.decrypt(message, key);
-            LOGGER.debug("Decrypt {}: {} to {}", new Object[] { level, message, decrypt });
+            LOGGER.debug("Decrypt {}: {} to {}", level, message, decrypt);
             return decrypt;
         }
         return message;
@@ -319,7 +316,7 @@ public class ServletUtil {
             String[] decrypt = new String[message.length];
             for (int i = 0; i < decrypt.length; i++) {
                 decrypt[i] = EncryptUtils.decrypt(message[i], key);
-                LOGGER.debug("Decrypt {}: {} to {}", new Object[] { level, message[i], decrypt[i] });
+                LOGGER.debug("Decrypt {}: {} to {}", level, message[i], decrypt[i]);
             }
             return decrypt;
         }
@@ -334,6 +331,10 @@ public class ServletUtil {
     }
 
     public static String getBaseURL(HttpServletRequest request, boolean canonicalHostName) {
+        return request.getScheme() + "://" + getServerHost(request, canonicalHostName) + ":" + request.getServerPort();
+    }
+
+    public static String getServerHost(HttpServletRequest request, boolean canonicalHostName) {
         if (canonicalHostName) {
             try {
                 /**
@@ -341,13 +342,12 @@ public class ServletUtil {
                  * InetAddress.getLocalHost().getCanonicalHostName() instead of req.getLocalAddr()<br>
                  * If not resolved from the DNS server FQDM is taken from the /etc/hosts on Unix server
                  */
-                return request.getScheme() + "://" + InetAddress.getLocalHost().getCanonicalHostName() + ":"
-                    + request.getServerPort();
+                return InetAddress.getLocalHost().getCanonicalHostName();
             } catch (UnknownHostException e) {
                 LOGGER.error("Cannot get hostname", e);
             }
         }
-        return request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+        return request.getServerName();
     }
 
     public static ManifestBuilder buildManifest(HttpServletRequest request, ConnectorProperties props) {
@@ -388,7 +388,7 @@ public class ServletUtil {
         }
 
         String wadoQueryUrl = buf.toString();
-        LOGGER.debug("wadoQueryUrl = " + wadoQueryUrl);
+        LOGGER.debug("wadoQueryUrl = {}", wadoQueryUrl);
         return wadoQueryUrl;
     }
 

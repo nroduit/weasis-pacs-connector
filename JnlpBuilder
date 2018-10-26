@@ -89,12 +89,6 @@ JNLP Builder Readme
 	Codebase injected will be "http://serveur.com:30541/photobox"
 
 	---------------------------------------------------------------------------------------------------------------------------
-	EX : http://localhost:8080/weasis-pacs-connector/?src=file://///hostname/webroot/&cdb=/applicationCode
-
-  	Servlet will build JNLP from "file://///hostname/webroot/weasis.jnlp"
-	Codebase injected will be "file://///hostname/webroot/applicationCode"
-
-	---------------------------------------------------------------------------------------------------------------------------
 	EX : http://localhost:8080/weasis-pacs-connector/?cdb=/newWebContext/application1&pro=testConfig+file://///hostname/webroot/config.properties
 
   	Servlet will build JNLP from "http://localhost:8080/weasis-pacs-connector/weasis.jnlp"
