@@ -15,34 +15,7 @@ This component gathers different services:
 * **/manifest** building the xml manifest (containing the necessary UIDs) consumed by Weasis to retrieve all the images by WADO requests
 * **/[name of the template]** (default template: /weasis.jnlp) building a jnlp file from a template (jnlp template path, jnlp properties and jnp arguments can be passed via URL parameters, see the [JNLP Builder documentation](JnlpBuilder))
 
-
-## New features in weasis-pacs-connector 6.1.3 ##
-* Enable running Weasis on Java 9
-* Getting jnlp protocol by redirection (see [launching jnlp](#new-way-to-launch-jnlp))
-* Allow the configuration of the default max memory size of Weasis
-* Add double quotes for command parameters in jnlp (requires by Weasis 2.6.0 and later)
-
-## New features in weasis-pacs-connector 6 ##
-* Multi-PACS configuration (can be requested simultaneously or individually)
-* Allows to query the PACS through its database (not recommended)
-* Generates new manifest 2.5 (supported by Weasis 2.5)
-* Requires Java 7
-
-## New features in weasis-pacs-connector 5 ##
-
-* Used [weasis-dicom-tools](https://github.com/nroduit/weasis-dicom-tools) (based on dcm4che3) for building the manifest
-* Starting Weasis and building manifest are executed in parallel (improve the time to get the images)
-* The manifest is not embedded any more by default in the jnlp, only an url with an id can be called once within 5 min. That means clicking on a jnlp a second time won't show any images (this behavior is desirable for security reasons as most browsers downloads jnlp)
-* Configure the maximum number of manifests treated simultaneous and the maximum life time of a building manifest process (5 min by default)
-* Error messages (when building the manifest) are transmitted to the viewer via the manifest
-* New context (_/IHEInvokeImageDisplay_) compliant to the [IHE IID profile](http://www.ihe.net/Technical_Framework/upload/IHE_RAD_Suppl_IID.pdf)
-* Parameters at patient level defined in IID profile (mostRecentResults, lowerDateTime, upperDateTime, modalitiesInStudy) are also available in the other contexts (_/viewer_, _/viewer-applet_ and _/manifest_)
-* Allows to have on different servers the following components: weasis-pacs-connector, PACS, Weasis, weasis-ext (additional plugins) and jnlp templates
-* Major improvement of the JNLP builder servlet (allows dynamic injection of arguments, properties and templates)
-* Option for DICOM query in TLS mode
-* Launching Weasis as an Applet in web page
-* Uploading the manifest by http POST
-* Option to embed the manifest into the jnlp
+## [Release History](CHANGELOG.md)
 
 ## Build weasis-pacs-connector ##
 
