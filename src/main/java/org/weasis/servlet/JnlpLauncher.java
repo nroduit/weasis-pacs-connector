@@ -264,7 +264,7 @@ public class JnlpLauncher extends HttpServlet {
                 if (!StringUtil.hasText(templatePath)) {
                     templateURI = getServletContext().getResource("/" + templateFileName).toURI();
                 } else {
-                    templateURI = new URI(templatePath + "/" + templateFileName);
+                    templateURI = new URI(templatePath.replaceAll(" ", "%20")  + "/" + templateFileName);
                 }
             }
             LOGGER.debug("locateLauncherTemplate() - URL templateURL = {}", templateURI);
@@ -340,6 +340,9 @@ public class JnlpLauncher extends HttpServlet {
             addWeasisParameters(queryParameterMap, codeBasePath + "/AppInfo");
 
             // Set or override following parameters
+            if (StringUtil.hasText(queryLauncherPath)) {
+                queryParameterMap.put(PARAM_SOURCE, queryLauncherPath);
+            }
             queryParameterMap.put(PARAM_CODEBASE, codeBasePath);
             queryParameterMap.put(PARAM_CODEBASE_EXT, codeBaseExtPath);
 
