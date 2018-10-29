@@ -87,6 +87,7 @@ public class ManifestManagerThread extends Thread {
             try {
                 Thread.sleep(CLEAN_FREQUENCY);
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 LOGGER.warn(e.getMessage());
             }
         }

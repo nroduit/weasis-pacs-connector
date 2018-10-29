@@ -42,7 +42,6 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
 
 @WebServlet(urlPatterns = "/")
@@ -85,7 +84,6 @@ public class JnlpLauncher extends HttpServlet {
     protected static final String JNLP_TAG_ELT_APPLICATION_DESC = "application-desc";
     protected static final String JNLP_TAG_ELT_ARGUMENT = "argument";
 
-    protected static final String JNLP_TAG_ELT_APPLET_DESC = "applet-desc";
     protected static final String JNLP_TAG_ELT_PARAM = "param";
 
     public JnlpLauncher() {
@@ -185,6 +183,8 @@ public class JnlpLauncher extends HttpServlet {
                 String.format("inline; filename=\"%s\"", launcher.templateFileName));
 
             ServletUtil.write(launcherStr, response.getOutputStream());
+
+            LOGGER.info("Build JNLP from template = {} and with arguments = {}", launcher.templateFileName, Arrays.toString(launcher.parameterMap.entrySet().toArray()));
         } catch (ServletErrorException e) {
             LOGGER.error("Build jnlp", e);
             ServletUtil.sendResponseError(response, e.responseErrorCode, e.getMessage());
@@ -234,17 +234,18 @@ public class JnlpLauncher extends HttpServlet {
             if (queryLauncherPath != null) { // template isn't in the Web Servlet Context
                 if (queryLauncherPath.startsWith("/")) {
                     templatePath = serverPath + queryLauncherPath; // supposed to be "serverPath/URI"
-                } else {
+                } else if (templatePath.startsWith("http")) {
                     templatePath = queryLauncherPath; // supposed to be a new valid URL for launcher template
                 }
+                else {
+                    throw new IllegalAccessError("Template path must start with \"http\" or \"/\" (relative web context)");
+                }
             }
-
-            LOGGER.info("1 - templatePath = {}", templatePath);
 
             if (templatePath.endsWith("/")) {
                 templateFileName = ManifestManager.DEFAULT_TEMPLATE; // default value
             } else {
-                int fileNameBeginIndex = templatePath.lastIndexOf("/") + 1;
+                int fileNameBeginIndex = templatePath.lastIndexOf('/') + 1;
                 templateFileName = templatePath.substring(fileNameBeginIndex);
                 templatePath = templatePath.substring(0, fileNameBeginIndex);
             }
@@ -257,13 +258,13 @@ public class JnlpLauncher extends HttpServlet {
             LOGGER.debug("locateLauncherTemplate() - String templateFileName = {}", templateFileName);
 
             if (templatePath.startsWith(serverPath + request.getContextPath())) {
-                String uriTemplatePath = templatePath.replaceFirst(serverPath + request.getContextPath(), "");
-                templateURI = getServletContext().getResource("/" + uriTemplatePath + templateFileName).toURI();
+                String uriTemplatePath = serverPath + request.getContextPath();
+                templateURI = getServletContext().getResource("/" + templatePath.substring(uriTemplatePath.length()) + templateFileName).toURI();
             } else {
                 if (!StringUtil.hasText(templatePath)) {
                     templateURI = getServletContext().getResource("/" + templateFileName).toURI();
                 } else {
-                    templateURI = new URI(templatePath + "/" + templateFileName);
+                    templateURI = new URI(templatePath.replaceAll(" ", "%20")  + "/" + templateFileName);
                 }
             }
             LOGGER.debug("locateLauncherTemplate() - URL templateURL = {}", templateURI);
@@ -339,6 +340,9 @@ public class JnlpLauncher extends HttpServlet {
             addWeasisParameters(queryParameterMap, codeBasePath + "/AppInfo");
 
             // Set or override following parameters
+            if (StringUtil.hasText(queryLauncherPath)) {
+                queryParameterMap.put(PARAM_SOURCE, queryLauncherPath);
+            }
             queryParameterMap.put(PARAM_CODEBASE, codeBasePath);
             queryParameterMap.put(PARAM_CODEBASE_EXT, codeBaseExtPath);
 
@@ -409,18 +413,14 @@ public class JnlpLauncher extends HttpServlet {
 
         // Parse JNLP launcher as JDOM
         Element rootElt = null;
-        BufferedReader reader = null;
 
-        try {
-            // Assume the template has UTF-8 encoding
-            reader = new BufferedReader(
-                new InputStreamReader(launcher.realPathURL.toURL().openConnection().getInputStream(), "UTF-8"));
+        // Assume the template has UTF-8 encoding
+        try (BufferedReader reader = new BufferedReader(
+            new InputStreamReader(launcher.realPathURL.toURL().openConnection().getInputStream(), "UTF-8"))) {
 
             rootElt = new SAXBuilder(XMLReaders.NONVALIDATING, null, null).build(reader).getRootElement();
         } catch (JDOMException e) {
             throw new ServletErrorException(HttpServletResponse.SC_NOT_ACCEPTABLE, "Can't parse launcher template", e);
-        } finally {
-            FileUtil.safeClose(reader);
         }
 
         if (!rootElt.getName().equals(JNLP_TAG_ELT_ROOT)) {
@@ -462,29 +462,7 @@ public class JnlpLauncher extends HttpServlet {
             try {
                 Element applicationDescElt = launcher.rootElt.getChild(JNLP_TAG_ELT_APPLICATION_DESC);
                 if (applicationDescElt == null) {
-                    applicationDescElt = launcher.rootElt.getChild(JNLP_TAG_ELT_APPLET_DESC);
-                    if (applicationDescElt == null) {
-                        throw new IllegalStateException("JNLP TAG : <application-desc> or <applet-desc> is not found");
-                    } else {
-                        // Arguments in Applet are formatted as properties
-                        for (String newContent : argValues) {
-                            // split any whitespace character: [ \t\n\x0B\f\r ]
-                            String[] property = Pattern.compile("\\s").split(newContent, 2);
-
-                            String propertyName = property != null && property.length > 0 ? property[0] : null;
-                            String propertyValue = property != null && property.length > 1 ? property[1] : null;
-
-                            if (propertyName != null && propertyValue != null) {
-                                Element paramElt = new Element(JNLP_TAG_ELT_PARAM);
-                                paramElt.setAttribute(JNLP_TAG_PRO_NAME, propertyName);
-                                paramElt.setAttribute(JNLP_TAG_PRO_VALUE, propertyValue);
-                                applicationDescElt.addContent(paramElt);
-                            } else {
-                                throw new IllegalStateException(
-                                    "Applet Query Parameter {property} is invalid : " + Arrays.toString(argValues));
-                            }
-                        }
-                    }
+                    throw new IllegalStateException("JNLP TAG : <application-desc> is not found");
                 } else {
                     for (String newContent : argValues) {
                         applicationDescElt.addContent(new Element(JNLP_TAG_ELT_ARGUMENT).addContent(newContent));
@@ -560,12 +538,7 @@ public class JnlpLauncher extends HttpServlet {
 
                 Element applicationElt = launcher.rootElt.getChild(JNLP_TAG_ELT_APPLICATION_DESC);
                 if (applicationElt == null) {
-                    applicationElt = launcher.rootElt.getChild(JNLP_TAG_ELT_APPLET_DESC);
-                    if (applicationElt == null) {
-                        throw new IllegalStateException("JNLP TAG : <application-desc> or <applet-desc> is not found");
-                    } else {
-                        filterMarkerInElement(applicationElt.getChildren(JNLP_TAG_ELT_PARAM), launcher.parameterMap);
-                    }
+                   throw new IllegalStateException("JNLP TAG : <application-desc> is not found");
                 } else {
                     filterMarkerInElement(applicationElt.getChildren(JNLP_TAG_ELT_ARGUMENT), launcher.parameterMap);
                 }
@@ -598,8 +571,8 @@ public class JnlpLauncher extends HttpServlet {
                         attributeValue = attributeValue.replace(marker, parameterValue);
                         attribute.setValue(attributeValue);
                     } else {
-                        LOGGER.warn("Found marker \"" + marker + "\" with NO matching parameter in Element <"
-                            + elt.getName() + "> " + attribute);
+                        LOGGER.warn("Found marker \"{}\" with NO matching parameter in Element <{}> {}", marker,
+                            elt.getName(), attribute);
                     }
                 }
             }
@@ -627,8 +600,8 @@ public class JnlpLauncher extends HttpServlet {
                     elt.setText(elementValue);
 
                 } else {
-                    LOGGER.warn("Found marker \"" + marker + "\" with NO matching parameter in Element <"
-                        + elt.getName() + ">");
+                    LOGGER.warn("Found marker \"{}\" with NO matching parameter in Element <{}>", marker,
+                        elt.getName());
                 }
             }
         }

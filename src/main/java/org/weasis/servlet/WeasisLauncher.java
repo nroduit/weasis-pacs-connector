@@ -56,13 +56,7 @@ public class WeasisLauncher extends HttpServlet {
     @Override
     protected void doHead(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
-        try {
-            RequestDispatcher dispatcher = getServletContext().getRequestDispatcher("/jnlpBuilder");
-            dispatcher.forward(request, response);
-        } catch (Exception e) {
-            LOGGER.error("JNLP dispatcher error", e);
-            ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-        }
+        invokeWeasis(request, response, null);
     }
 
     @Override
@@ -225,7 +219,7 @@ public class WeasisLauncher extends HttpServlet {
                 if (buf.length() > 10) {
                     return new UploadXml(buf.toString(), request.getCharacterEncoding());
                 } else {
-                    LOGGER.error("Invalid manifest: {}", buf.toString());
+                    LOGGER.error("Invalid manifest: {}", buf);
                     ServletUtil.sendResponseError(response, HttpServletResponse.SC_NO_CONTENT,
                         "Invalid manifest: " + buf.toString());
                 }

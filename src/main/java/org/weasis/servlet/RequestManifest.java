@@ -59,7 +59,7 @@ public class RequestManifest extends HttpServlet {
 
         if (id == null) {
             String errorMsg = "Missing or bad 'id' parameter in request";
-            LOGGER.error(errorMsg + ": {}", wadoXmlId);
+            LOGGER.error("{}: {}", errorMsg, wadoXmlId);
             ServletUtil.sendResponseError(response, HttpServletResponse.SC_BAD_REQUEST, errorMsg);
             return;
         }
@@ -111,8 +111,9 @@ public class RequestManifest extends HttpServlet {
 
         response.setCharacterEncoding(xml.getCharsetEncoding());
         String wadoXmlGenerated = xml.xmlManifest(request.getParameter(ConnectorProperties.MANIFEST_VERSION));
-        if(wadoXmlGenerated == null) {
-            ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error when building the xml manifest.");
+        if (wadoXmlGenerated == null) {
+            ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                "Error when building the xml manifest.");
             return;
         }
 
