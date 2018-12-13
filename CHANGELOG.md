@@ -1,6 +1,18 @@
 # Changelog
 
-## [v7.0.0](https://github.com/nroduit/weasis-pacs-connector/tree/v7.0.0) (2018-10-28)
+## [7.0.1](https://github.com/nroduit/weasis-pacs-connector/tree/7.0.1) (2018-12-12)
+
+[Full Changelog](https://github.com/nroduit/weasis-pacs-connector/compare/v7.0.0...7.0.1)
+
+**Implemented enhancements:**
+
+- Allows to transmit a token for the WADO URI service authentication [\#23](https://github.com/nroduit/weasis-pacs-connector/issues/23)
+
+**Fixed bugs:**
+
+- Infinite loop when replacing weasis-pacs-connector.war in wildfly 12 [\#22](https://github.com/nroduit/weasis-pacs-connector/issues/22) [[Priority: High](https://github.com/nroduit/weasis-pacs-connector/labels/Priority:%20High)]
+
+## [v7.0.0](https://github.com/nroduit/weasis-pacs-connector/tree/v7.0.0) (2018-11-02)
 
 [Full Changelog](https://github.com/nroduit/weasis-pacs-connector/compare/v6.1.4...v7.0.0)
 

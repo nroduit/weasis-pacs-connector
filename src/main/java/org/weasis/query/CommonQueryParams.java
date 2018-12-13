@@ -59,14 +59,21 @@ public class CommonQueryParams {
         this.properties = properties;
         this.archiveList = new ArrayList<>();
         this.requestMap = new HashMap<>(request.getParameterMap());
-
-        initArchiveList();
+        initArchiveList(request);
     }
 
-    private void initArchiveList() {
+    private void initArchiveList(HttpServletRequest request) {
         DicomNode callingNode = new DicomNode(properties.getProperty("aet", "PACS-CONNECTOR"));
-
         String[] archives = requestMap.get("archive");
+
+        String auth = null;
+        String[] tokenParams = requestMap.get("access_token");
+        if (tokenParams != null && tokenParams.length > 0) {
+            auth = "Authorization: Bearer " + tokenParams[0];
+        } else {
+            auth = request.getHeader("authorization");
+        }
+
         if (archives != null && archives.length > 0) {
             for (String archiveID : archives) {
                 if (StringUtil.hasText(archiveID)) {
@@ -88,11 +95,7 @@ public class CommonQueryParams {
                         }
 
                         if (buildConfig) {
-                            if (p.getProperty("arc.aet") != null) {
-                                this.archiveList.add(new DicomQueryConfiguration(p, callingNode));
-                            } else if (p.getProperty("arc.db.driver") != null) {
-                                this.archiveList.add(new DbQueryConfiguration(p));
-                            }
+                            addArchive(p, callingNode, auth);
                             break;
                         }
                     }
@@ -101,18 +104,27 @@ public class CommonQueryParams {
         } else {
             for (Properties p : properties.getArchivePropertiesList()) {
                 if (LangUtil.getEmptytoFalse(p.getProperty("arc.activate"))) {
-                    if (p.getProperty("arc.aet") != null) {
-                        this.archiveList.add(new DicomQueryConfiguration(p, callingNode));
-                    } else if (p.getProperty("arc.db.driver") != null) {
-                        this.archiveList.add(new DbQueryConfiguration(p));
-                    }
+                    addArchive(p, callingNode, auth);
                 }
             }
         }
+    }
 
-        if (archiveList.isEmpty()) {
-            // No configuration found. Build with default dcm4chee values
-            this.archiveList.add(new DicomQueryConfiguration(properties, callingNode));
+    private void addArchive(Properties p, DicomNode callingNode, String auth) {
+        if (StringUtil.hasText(auth)) {
+            String val = p.getProperty("wado.httpTags");
+            if (StringUtil.hasText(val)) {
+                val = val + "," + auth;
+            } else {
+                val = auth;
+            }
+            p.setProperty("wado.httpTags", val);
+        }
+
+        if (p.getProperty("arc.aet") != null) {
+            this.archiveList.add(new DicomQueryConfiguration(p, callingNode));
+        } else if (p.getProperty("arc.db.driver") != null) {
+            this.archiveList.add(new DbQueryConfiguration(p));
         }
     }
 

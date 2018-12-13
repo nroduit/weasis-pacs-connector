@@ -28,8 +28,8 @@ public class ManifestManagerThread extends Thread {
 
     private final ConcurrentMap<Integer, ManifestBuilder> manifestBuilderMap;
 
-    private long maxLifeCycle = MAX_LIFE_CYCLE;
-    private long cleanFrequency = CLEAN_FREQUENCY;
+    private volatile long maxLifeCycle = MAX_LIFE_CYCLE;
+    private volatile long cleanFrequency = CLEAN_FREQUENCY;
 
     /**
      * The role of the ManifestManagerThread class is to clean the non consumed threads.
@@ -65,7 +65,7 @@ public class ManifestManagerThread extends Thread {
 
     @Override
     public void run() {
-        while (isAlive()) {
+        while (isAlive() && !isInterrupted()) {
             for (Entry<Integer, ManifestBuilder> entry : manifestBuilderMap.entrySet()) {
                 Integer key = entry.getKey();
                 ManifestBuilder manifestBuilder = entry.getValue();
