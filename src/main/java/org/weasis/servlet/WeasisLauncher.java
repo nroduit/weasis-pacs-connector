@@ -98,7 +98,7 @@ public class WeasisLauncher extends HttpServlet {
 
             if (!embeddedManifest && StringUtil.hasText(wadoQueryUrl)) {
                 buf.append("&");
-                buf.append(JnlpLauncher.PARAM_ARGUMENT);
+                buf.append(WeasisConfig.PARAM_ARGUMENT);
                 buf.append("=");
                 buf.append(URLEncoder.encode("$dicom:get -w \"" + wadoQueryUrl + "\"", "UTF-8"));
             }
@@ -124,22 +124,22 @@ public class WeasisLauncher extends HttpServlet {
 
     static void builRequest(HttpServletRequest request, StringBuilder buf, ConnectorProperties props,
         String jnlpTemplate) {
-        String queryCodeBasePath = request.getParameter(JnlpLauncher.PARAM_CODEBASE);
+        String queryCodeBasePath = request.getParameter(WeasisConfig.PARAM_CODEBASE);
         buf.append("?");
-        buf.append(JnlpLauncher.PARAM_CODEBASE);
+        buf.append(WeasisConfig.PARAM_CODEBASE);
         buf.append("=");
         // If weasis codebase is not in the request, set the url from the weasis-pacs-connector properties.
         buf.append(queryCodeBasePath == null
             ? props.getProperty("weasis.base.url", props.getProperty("server.base.url") + "/weasis")
             : queryCodeBasePath);
 
-        String cdbExtParam = request.getParameter(JnlpLauncher.PARAM_CODEBASE_EXT);
+        String cdbExtParam = request.getParameter(WeasisConfig.PARAM_CODEBASE_EXT);
         if (cdbExtParam == null) {
             // If not in URL parameter, try to get from the config.
             String cdbExt = props.getProperty("weasis.ext.url", null);
             if (cdbExt != null) {
                 buf.append("&");
-                buf.append(JnlpLauncher.PARAM_CODEBASE_EXT);
+                buf.append(WeasisConfig.PARAM_CODEBASE_EXT);
                 buf.append("=");
                 buf.append(cdbExt);
             }
