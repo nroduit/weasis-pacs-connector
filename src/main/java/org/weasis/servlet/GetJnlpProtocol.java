@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @WebServlet(urlPatterns = { "/getJnlpScheme/*" })
+@Deprecated
 public class GetJnlpProtocol extends HttpServlet {
     private static final long serialVersionUID = 3831796275365799251L;
     private static final Logger LOGGER = LoggerFactory.getLogger(GetJnlpProtocol.class);
@@ -51,8 +52,6 @@ public class GetJnlpProtocol extends HttpServlet {
                 throw new IllegalStateException("Cannot not convert to jnlp no http or https request");
             }
 
-            
-            
             String params = request.getQueryString();
             if (params != null) {
                 buf.append("?");

@@ -58,12 +58,7 @@ public class JnlpLauncher extends HttpServlet {
     protected static final String PARAM_INITIAL_HEAP_SIZE = "weasis.init.heap";
     protected static final String PARAM_MAX_HEAP_SIZE = "weasis.max.heap";
 
-    protected static final String PARAM_ARGUMENT = "arg";
-    protected static final String PARAM_PROPERTY = "pro";
-
     protected static final String PARAM_UPLOAD = "upload";
-    protected static final String PARAM_CODEBASE = "cdb";
-    protected static final String PARAM_CODEBASE_EXT = "cdb-ext";
     protected static final String PARAM_SOURCE = "src";
 
     protected static final String ATTRIBUTE_UPLOADED_ARGUMENT = "org.weasis.uploaded.arg";
@@ -168,8 +163,8 @@ public class JnlpLauncher extends HttpServlet {
 
             if (uploadedArg instanceof String) {
                 Object argValues =
-                    ServletUtil.addParameter(launcher.parameterMap.get(PARAM_ARGUMENT), (String) uploadedArg);
-                launcher.parameterMap.put(PARAM_ARGUMENT, argValues);
+                    ServletUtil.addParameter(launcher.parameterMap.get(WeasisConfig.PARAM_ARGUMENT), (String) uploadedArg);
+                launcher.parameterMap.put(WeasisConfig.PARAM_ARGUMENT, argValues);
             }
             String launcherStr = buildJnlpResponse(launcher);
 
@@ -280,7 +275,7 @@ public class JnlpLauncher extends HttpServlet {
             }
 
             // Get codebase path
-            String queryCodeBasePath = request.getParameter(PARAM_CODEBASE);
+            String queryCodeBasePath = request.getParameter(WeasisConfig.PARAM_CODEBASE);
             if (queryCodeBasePath != null) { // codebase is not in the Web Servlet Context
                 if (queryCodeBasePath.startsWith("/")) {
                     codeBasePath = serverPath + queryCodeBasePath;
@@ -298,7 +293,7 @@ public class JnlpLauncher extends HttpServlet {
             LOGGER.debug("locateLauncherTemplate(HttpServletRequest) - String codeBasePath = {}", codeBasePath);
 
             // Get codebaseExt path
-            String queryCodeBaseExtPath = request.getParameter(PARAM_CODEBASE_EXT);
+            String queryCodeBaseExtPath = request.getParameter(WeasisConfig.PARAM_CODEBASE_EXT);
             if (queryCodeBaseExtPath != null) { // codebaseExt is not in the Web Servlet Context
                 if (queryCodeBaseExtPath.startsWith("/")) {
                     codeBaseExtPath = serverPath + queryCodeBaseExtPath;
@@ -343,8 +338,8 @@ public class JnlpLauncher extends HttpServlet {
             if (StringUtil.hasText(queryLauncherPath)) {
                 queryParameterMap.put(PARAM_SOURCE, queryLauncherPath);
             }
-            queryParameterMap.put(PARAM_CODEBASE, codeBasePath);
-            queryParameterMap.put(PARAM_CODEBASE_EXT, codeBaseExtPath);
+            queryParameterMap.put(WeasisConfig.PARAM_CODEBASE, codeBasePath);
+            queryParameterMap.put(WeasisConfig.PARAM_CODEBASE_EXT, codeBaseExtPath);
 
             queryParameterMap.put(PARM_SERVER_PATH, serverPath);
             queryParameterMap.put(PARM_JVM_INITIAL_HEAP_SIZE, initialHeapSize);
@@ -433,7 +428,7 @@ public class JnlpLauncher extends HttpServlet {
     protected String buildJnlpResponse(JnlpTemplate launcher) throws ServletErrorException {
 
         launcher.rootElt.setAttribute(JNLP_TAG_ATT_CODEBASE,
-            ServletUtil.getFirstParameter(launcher.parameterMap.get(PARAM_CODEBASE)));
+            ServletUtil.getFirstParameter(launcher.parameterMap.get(WeasisConfig.PARAM_CODEBASE)));
         launcher.rootElt.removeAttribute(JNLP_TAG_ATT_HREF); // this tag has not to be used inside dynamic JNLP
 
         handleRequestPropertyParameter(launcher);
@@ -456,7 +451,7 @@ public class JnlpLauncher extends HttpServlet {
     }
 
     protected void handleRequestArgumentParameter(JnlpTemplate launcher) throws ServletErrorException {
-        String[] argValues = ServletUtil.getParameters(launcher.parameterMap.remove(PARAM_ARGUMENT));
+        String[] argValues = ServletUtil.getParameters(launcher.parameterMap.remove(WeasisConfig.PARAM_ARGUMENT));
 
         if (launcher.rootElt != null && argValues != null) {
             try {
@@ -476,7 +471,7 @@ public class JnlpLauncher extends HttpServlet {
     }
 
     protected void handleRequestPropertyParameter(JnlpTemplate launcher) throws ServletErrorException {
-        String[] propValues = ServletUtil.getParameters(launcher.parameterMap.remove(PARAM_PROPERTY));
+        String[] propValues = ServletUtil.getParameters(launcher.parameterMap.remove(WeasisConfig.PARAM_PROPERTY));
 
         if (launcher.rootElt != null && propValues != null) {
             try {
