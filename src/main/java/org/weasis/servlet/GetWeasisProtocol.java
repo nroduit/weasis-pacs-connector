@@ -128,9 +128,13 @@ public class GetWeasisProtocol extends HttpServlet {
                 buf.append(' ');
                 buf.append(param);
                 buf.append("=\"");
-                buf.append(p);
+                buf.append(removeEnglobingQuotes(p));
                 buf.append(QUOTE);
             }
         }
+    }
+
+    private static String removeEnglobingQuotes(String value) {
+        return value.replaceAll("^\"|\"$", ""); //$NON-NLS-1$ //$NON-NLS-2$
     }
 }
