@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 
 @WebServlet(urlPatterns = { "/weasis" })
@@ -99,6 +100,15 @@ public class GetWeasisProtocol extends HttpServlet {
                 buf.append(WeasisConfig.PARAM_CONFIG_URL);
                 buf.append("=\"");
                 buf.append(urlCfg);
+                buf.append(QUOTE);
+            }
+            
+            String auth = ServletUtil.getAuthorizationValue(request);
+            if (StringUtil.hasText(auth)) {
+                buf.append(' ');
+                buf.append(WeasisConfig.PARAM_AUTHORIZATION);
+                buf.append("=\"");
+                buf.append(auth);
                 buf.append(QUOTE);
             }
 

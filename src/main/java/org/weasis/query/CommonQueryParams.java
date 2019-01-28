@@ -16,6 +16,7 @@ import org.weasis.dicom.param.DicomNode;
 import org.weasis.query.db.DbQueryConfiguration;
 import org.weasis.query.dicom.DicomQueryConfiguration;
 import org.weasis.servlet.ConnectorProperties;
+import org.weasis.servlet.ServletUtil;
 
 public class CommonQueryParams {
 
@@ -65,14 +66,7 @@ public class CommonQueryParams {
     private void initArchiveList(HttpServletRequest request) {
         DicomNode callingNode = new DicomNode(properties.getProperty("aet", "PACS-CONNECTOR"));
         String[] archives = requestMap.get("archive");
-
-        String auth = null;
-        String[] tokenParams = requestMap.get("access_token");
-        if (tokenParams != null && tokenParams.length > 0) {
-            auth = "Authorization: Bearer " + tokenParams[0];
-        } else {
-            auth = request.getHeader("authorization");
-        }
+        String auth = ServletUtil.getAuthorizationValue(request);
 
         if (archives != null && archives.length > 0) {
             for (String archiveID : archives) {
@@ -112,11 +106,12 @@ public class CommonQueryParams {
 
     private void addArchive(Properties p, DicomNode callingNode, String auth) {
         if (StringUtil.hasText(auth)) {
+            String tag = "Authorization:" + auth;
             String val = p.getProperty("wado.httpTags");
             if (StringUtil.hasText(val)) {
-                val = val + "," + auth;
+                val = val + "," + tag;
             } else {
-                val = auth;
+                val = tag;
             }
             p.setProperty("wado.httpTags", val);
         }
