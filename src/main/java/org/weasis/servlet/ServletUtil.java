@@ -130,6 +130,17 @@ public class ServletUtil {
         }
         return result;
     }
+    
+    public static String getAuthorizationValue(HttpServletRequest request) {
+        String auth = null;
+        String tokenParams = request.getParameter("access_token");
+        if (StringUtil.hasText(tokenParams)) {
+            auth = "Bearer " + tokenParams;
+        } else {
+            auth = request.getHeader("Authorization");
+        }
+        return auth;
+    }
 
     public static boolean isRequestAllowed(HttpServletRequest request, Properties archiveProperties, Logger logger) {
         if (request == null || archiveProperties == null) {

@@ -42,6 +42,7 @@ public class WeasisConfig extends HttpServlet {
     public static final String PARAM_CODEBASE_EXT = "cdb-ext";
     public static final String PARAM_CODEBASE = "cdb";
     public static final String PARAM_CONFIG_URL = "wcfg";
+    public static final String PARAM_AUTHORIZATION = "auth";
     public static final String PARAM_ARGUMENT = "arg";
     public static final String PARAM_PROPERTY = "pro";
 
