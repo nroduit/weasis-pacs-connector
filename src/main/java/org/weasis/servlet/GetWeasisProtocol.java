@@ -13,7 +13,10 @@ package org.weasis.servlet;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -32,7 +35,8 @@ public class GetWeasisProtocol extends HttpServlet {
     private static final long serialVersionUID = 2987582758040784229L;
     private static final Logger LOGGER = LoggerFactory.getLogger(GetWeasisProtocol.class);
 
-    private static final String QUOTE = "\"";
+    private static final String SERVICE_CONFIG = "weasis.config.url";
+    private static final String SERVICE_PREFS = "weasis.pref.url";
 
     public GetWeasisProtocol() {
         super();
@@ -71,46 +75,42 @@ public class GetWeasisProtocol extends HttpServlet {
                 throw new IllegalStateException("Cannot not get a valid manifest URL " + wadoQueryUrl);
             }
             buf.append(wadoQueryUrl);
-            buf.append(QUOTE);
+            buf.append("\"");
 
             String urlCfg = request.getParameter(WeasisConfig.PARAM_CONFIG_URL);
             if (urlCfg == null) {
-                urlCfg = props.getProperty("weasis.config.url");
+                urlCfg = props.getProperty(SERVICE_CONFIG);
             }
 
             buf.append(" $weasis:config");
             if (urlCfg == null) {
-                buf.append(' ');
-                buf.append(WeasisConfig.PARAM_CODEBASE);
-                buf.append("=\"");
-                buf.append(WeasisConfig.getCodebase(request, props, false));
-                buf.append(QUOTE);
-                if (props.getProperty("weasis.ext.url") != null) {
-                    buf.append(' ');
-                    buf.append(WeasisConfig.PARAM_CODEBASE_EXT);
-                    buf.append("=\"");
-                    buf.append(WeasisConfig.getCodebase(request, props, true));
-                    buf.append(QUOTE);
-                }
+                addElement(buf, WeasisConfig.PARAM_CODEBASE, WeasisConfig.getCodebase(request, props, false));
+                addElement(buf, WeasisConfig.PARAM_CODEBASE_EXT, WeasisConfig.getCodebase(request, props, true));
+
+                // Add properties
                 Map<String, String[]> params = request.getParameterMap();
-                handleRequestParameters(buf, params, WeasisConfig.PARAM_PROPERTY);
+                Map<String, String> properties = getPropertiesFromRequestParameters(params);
+                if (properties.get(SERVICE_PREFS) == null) {
+                    String prefs = props.getProperty(SERVICE_PREFS);
+                    if (StringUtil.hasText(prefs)) {
+                        // Add the preference service URL from this component configuration
+                        properties.put(SERVICE_PREFS, prefs);
+                    }
+                }
+
+                for (Entry<String, String> entry : properties.entrySet()) {
+                    StringBuilder b = new StringBuilder(entry.getKey());
+                    b.append(' ');
+                    b.append(entry.getValue());
+                    addElement(buf, WeasisConfig.PARAM_PROPERTY, b.toString());
+                }
+
+                // Add arguments
                 handleRequestParameters(buf, params, WeasisConfig.PARAM_ARGUMENT);
             } else {
-                buf.append(' ');
-                buf.append(WeasisConfig.PARAM_CONFIG_URL);
-                buf.append("=\"");
-                buf.append(urlCfg);
-                buf.append(QUOTE);
+                addElement(buf, WeasisConfig.PARAM_CONFIG_URL, urlCfg);
             }
-            
-            String auth = ServletUtil.getAuthorizationValue(request);
-            if (StringUtil.hasText(auth)) {
-                buf.append(' ');
-                buf.append(WeasisConfig.PARAM_AUTHORIZATION);
-                buf.append("=\"");
-                buf.append(auth);
-                buf.append(QUOTE);
-            }
+            addElement(buf, WeasisConfig.PARAM_AUTHORIZATION, ServletUtil.getAuthorizationValue(request));
 
             StringBuilder wurl = new StringBuilder("weasis://");
             wurl.append(URLEncoder.encode(buf.toString(), "UTF-8"));
@@ -121,20 +121,43 @@ public class GetWeasisProtocol extends HttpServlet {
         }
     }
 
+    private static void addElement(StringBuilder buf, String key, String val) {
+        if (StringUtil.hasText(val)) {
+            buf.append(' ');
+            buf.append(key);
+            buf.append("=\"");
+            buf.append(val);
+            buf.append("\"");
+        }
+    }
+
+    private static Map<String, String> getPropertiesFromRequestParameters(Map<String, String[]> params) {
+        Map<String, String> props = new HashMap<>();
+        String[] paramValues = ServletUtil.getParameters(params.get(WeasisConfig.PARAM_PROPERTY));
+        if (paramValues != null) {
+            Pattern pattern = Pattern.compile("\\s+");
+            for (String p : paramValues) {
+                String[] res = pattern.split(removeEnglobingQuotes(p), 2);
+                if (res.length == 2) {
+                    props.put(res[0], res[1]);
+                } else {
+                    LOGGER.warn("Cannot parse property: {0}", p);
+                }
+            }
+        }
+        return props;
+    }
+
     private static void handleRequestParameters(StringBuilder buf, Map<String, String[]> params, String param) {
         String[] paramValues = ServletUtil.getParameters(params.get(param));
         if (paramValues != null) {
             for (String p : paramValues) {
-                buf.append(' ');
-                buf.append(param);
-                buf.append("=\"");
-                buf.append(removeEnglobingQuotes(p));
-                buf.append(QUOTE);
+                addElement(buf, param, removeEnglobingQuotes(p));
             }
         }
     }
 
     private static String removeEnglobingQuotes(String value) {
-        return value.replaceAll("^\"|\"$", ""); //$NON-NLS-1$ //$NON-NLS-2$
+        return value.replaceAll("^\"|\"$", "");
     }
 }
