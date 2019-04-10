@@ -141,7 +141,7 @@ public class GetWeasisProtocol extends HttpServlet {
                 if (res.length == 2) {
                     props.put(res[0], res[1]);
                 } else {
-                    LOGGER.warn("Cannot parse property: {0}", p);
+                    LOGGER.warn("Cannot parse property: {}", p);
                 }
             }
         }
