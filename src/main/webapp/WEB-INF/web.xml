@@ -17,6 +17,10 @@
 		<servlet-name>WeasisLauncher</servlet-name>
 		<servlet-class>org.weasis.servlet.WeasisLauncher</servlet-class>
 	</servlet>
+    <servlet>
+		<servlet-name>GetWeasisProtocol</servlet-name>
+		<servlet-class>org.weasis.servlet.GetWeasisProtocol</servlet-class>
+	</servlet>
 	<servlet>
 		<servlet-name>WeasisAppletLauncher</servlet-name>
 		<servlet-class>org.weasis.servlet.WeasisAppletLauncher</servlet-class>
@@ -40,6 +44,10 @@
 	<servlet-mapping>
 		<servlet-name>WeasisLauncher</servlet-name>
 		<url-pattern>/viewer</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>GetWeasisProtocol</servlet-name>
+		<url-pattern>/weasis</url-pattern>
 	</servlet-mapping>
 	<servlet-mapping>
 		<servlet-name>WeasisLauncher</servlet-name>
