@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -27,6 +28,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.dicom.mf.UploadXml;
+import org.weasis.dicom.mf.XmlManifest;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 
 @WebServlet(urlPatterns = { "/weasis" })
@@ -44,26 +47,38 @@ public class GetWeasisProtocol extends HttpServlet {
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        doGet(request, response);
+        UploadXml manifest = WeasisLauncher.uploadManifest(request, response);
+        if (manifest != null && "INVALID".equals(manifest.xmlManifest(null))) {
+            return;
+        }
+        invokeWeasis(request, response, manifest);
     }
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        invokeWeasis(request, response, null);
+    }
+
+    private static void invokeWeasis(HttpServletRequest request, HttpServletResponse response, XmlManifest manifest) {
         try {
             if (LOGGER.isDebugEnabled()) {
                 ServletUtil.logInfo(request, LOGGER);
             }
 
-            ConnectorProperties connectorProperties =
-                (ConnectorProperties) this.getServletContext().getAttribute("componentProperties");
+            ServletContext ctx = request.getSession().getServletContext();
+            ConnectorProperties connectorProperties = (ConnectorProperties) ctx.getAttribute("componentProperties");
             // Check if the source of this request is allowed
             if (!ServletUtil.isRequestAllowed(request, connectorProperties, LOGGER)) {
                 return;
             }
 
             ConnectorProperties props = connectorProperties.getResolveConnectorProperties(request);
-
-            ManifestBuilder builder = ServletUtil.buildManifest(request, props);
+            ManifestBuilder builder;
+            if (manifest == null) {
+                builder = ServletUtil.buildManifest(request, props);
+            } else {
+                builder = ServletUtil.buildManifest(request, new ManifestBuilder(manifest));
+            }
             String wadoQueryUrl = ServletUtil.buildManifestURL(request, builder, props, true);
             wadoQueryUrl = response.encodeRedirectURL(wadoQueryUrl);
 
@@ -84,8 +99,8 @@ public class GetWeasisProtocol extends HttpServlet {
 
             buf.append(" $weasis:config");
             if (urlCfg == null) {
-                addElement(buf, WeasisConfig.PARAM_CODEBASE, WeasisConfig.getCodebase(request, props, false));
-                addElement(buf, WeasisConfig.PARAM_CODEBASE_EXT, WeasisConfig.getCodebase(request, props, true));
+                addElementWithNullValue(buf, WeasisConfig.PARAM_CODEBASE, WeasisConfig.getCodebase(request, props, false));
+                addElementWithNullValue(buf, WeasisConfig.PARAM_CODEBASE_EXT, WeasisConfig.getCodebase(request, props, true));
 
                 // Add properties
                 Map<String, String[]> params = request.getParameterMap();
@@ -118,6 +133,16 @@ public class GetWeasisProtocol extends HttpServlet {
         } catch (Exception e) {
             LOGGER.error("Redirect to weasis secheme", e);
             ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+    
+    private static void addElementWithNullValue(StringBuilder buf, String key, String val) {
+        buf.append(' ');
+        buf.append(key);
+        if (StringUtil.hasText(val)) {
+            buf.append("=\"");
+            buf.append(val);
+            buf.append("\"");  
         }
     }
 

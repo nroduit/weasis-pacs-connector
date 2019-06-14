@@ -46,7 +46,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>
-				<version>1.4.1</version>
+				<version>3.0.0-M2</version>
 				<executions>
 					<execution>
 						<id>min-requirement</id>
@@ -58,10 +58,9 @@
 								<requireMavenVersion>
 									<version>${enforcer.maven-version}</version>
 								</requireMavenVersion>
-								<!-- Bug in maven-enforcer for jdk 9 -->
-								<!-- <requireJavaVersion> -->
-								<!-- <version>${enforcer.jdk-version}</version> -->
-								<!-- </requireJavaVersion> -->
+								<requireJavaVersion>
+								<version>${enforcer.jdk-version}</version>
+								</requireJavaVersion>
 							</rules>
 						</configuration>
 					</execution>
