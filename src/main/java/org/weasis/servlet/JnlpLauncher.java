@@ -18,6 +18,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -411,7 +412,7 @@ public class JnlpLauncher extends HttpServlet {
 
         // Assume the template has UTF-8 encoding
         try (BufferedReader reader = new BufferedReader(
-            new InputStreamReader(launcher.realPathURL.toURL().openConnection().getInputStream(), "UTF-8"))) {
+            new InputStreamReader(launcher.realPathURL.toURL().openConnection().getInputStream(), StandardCharsets.UTF_8))) {
 
             rootElt = new SAXBuilder(XMLReaders.NONVALIDATING, null, null).build(reader).getRootElement();
         } catch (JDOMException e) {

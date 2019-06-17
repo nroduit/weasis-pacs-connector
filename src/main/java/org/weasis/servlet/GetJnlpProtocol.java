@@ -22,6 +22,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @deprecated JNLP protocol has been removed from Java 11, used GetWeasisProtocol instead
+ */
 @WebServlet(urlPatterns = { "/getJnlpScheme/*" })
 @Deprecated
 public class GetJnlpProtocol extends HttpServlet {
