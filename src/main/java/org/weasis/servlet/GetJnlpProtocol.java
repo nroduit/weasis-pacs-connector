@@ -60,8 +60,7 @@ public class GetJnlpProtocol extends HttpServlet {
                 buf.append("?");
                 buf.append(request.getQueryString());
             }
-
-            response.sendRedirect(buf.toString());
+            response.sendRedirect(buf.toString()); // NOSONAR redirect to jnlp protocol
         } catch (Exception e) {
             LOGGER.error("Redirect to jnlp secheme", e);
             ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
