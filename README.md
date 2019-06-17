@@ -9,6 +9,7 @@ The master branch requires Java 8+ and a servlet container 3.1. The [6.x branch]
 
 This component gathers different services:   
 
+* **/weasis** new protocol which replaces Java Webstart. It works with Weasis 3.5 (or superior) installed on the system with a [native installer](https://nroduit.github.io/en/getting-started/)
 * **/viewer** launching Weasis with the patient ID, study UID... (can be configured to use a combination of UIDs or to hide some of them)
 * **/IHEInvokeImageDisplay** launching Weasis at Patient and Study level, compliant to the [IHE IID profile](http://www.ihe.net/Technical_Framework/upload/IHE_RAD_Suppl_IID.pdf)
 * **/manifest** building the xml manifest (containing the necessary UIDs) consumed by Weasis to retrieve all the images by WADO requests
@@ -43,6 +44,8 @@ Prerequisites: JDK 8 and Maven 3
   => query at study level with _accessionNumber_ or _studyUID_
 
 ## Launching Weasis ##
+
+Note: *viewer* can be replaced by *weasis* to launch Weasis installed on the system  
 
 * http://localhost:8080/weasis-pacs-connector/viewer?patientID=9702672
 * http://localhost:8080/weasis-pacs-connector/viewer?patientID=9702672%5E%5E%5Etest  
