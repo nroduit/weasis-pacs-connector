@@ -1,8 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2014 Weasis Team. All rights reserved. This program and the accompanying materials are made available under the terms of the Eclipse Public License v1.0 which accompanies this distribution, and is available at
+ * Copyright (c) 2014 Weasis Team.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
- * Contributors: Nicolas Roduit - initial API and implementation
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
  *******************************************************************************/
 
 package org.weasis.servlet;
@@ -50,7 +54,8 @@ public class GetWeasisProtocol extends HttpServlet {
                 ServletUtil.logInfo(request, LOGGER);
             }
 
-            ConnectorProperties connectorProperties = (ConnectorProperties) this.getServletContext().getAttribute("componentProperties");
+            ConnectorProperties connectorProperties =
+                (ConnectorProperties) this.getServletContext().getAttribute("componentProperties");
             // Check if the source of this request is allowed
             if (!ServletUtil.isRequestAllowed(request, connectorProperties, LOGGER)) {
                 return;
@@ -58,13 +63,9 @@ public class GetWeasisProtocol extends HttpServlet {
 
             ConnectorProperties props = connectorProperties.getResolveConnectorProperties(request);
 
-            // BUILD WADO MANIFEST FROM WORKERTHREAD AND GET URL TO RETRIEVE IT LATER
-
             ManifestBuilder builder = ServletUtil.buildManifest(request, props);
             String wadoQueryUrl = ServletUtil.buildManifestURL(request, builder, props, true);
             wadoQueryUrl = response.encodeRedirectURL(wadoQueryUrl);
-
-            // SET WadoQueryUrl PARAMETER >> $dicom:get -w "{wadoQueryUrl}"
 
             StringBuilder buf = new StringBuilder();
             int startIndex = wadoQueryUrl.indexOf(':');
@@ -76,20 +77,13 @@ public class GetWeasisProtocol extends HttpServlet {
             buf.append(wadoQueryUrl);
             buf.append("\"");
 
-            // SET weasisConfigUrl PARAMETER >> $weasis:config ""
-            // IF QUERY PARAMETER "wcfg" GIVEN
-
-            String weasisConfigUrl = request.getParameter(WeasisConfig.PARAM_CONFIG_URL);
-
-            if (weasisConfigUrl == null) {
-                // ELSE SET weasisConfigUrl PARAMETER from component configuration
-                weasisConfigUrl = props.getProperty(SERVICE_CONFIG);
+            String urlCfg = request.getParameter(WeasisConfig.PARAM_CONFIG_URL);
+            if (urlCfg == null) {
+                urlCfg = props.getProperty(SERVICE_CONFIG);
             }
 
             buf.append(" $weasis:config");
-            
-            if (weasisConfigUrl == null) {
-                // ELSE SET weasisConfigUrl 
+            if (urlCfg == null) {
                 addElement(buf, WeasisConfig.PARAM_CODEBASE, WeasisConfig.getCodebase(request, props, false));
                 addElement(buf, WeasisConfig.PARAM_CODEBASE_EXT, WeasisConfig.getCodebase(request, props, true));
 
@@ -114,7 +108,7 @@ public class GetWeasisProtocol extends HttpServlet {
                 // Add arguments
                 handleRequestParameters(buf, params, WeasisConfig.PARAM_ARGUMENT);
             } else {
-                addElement(buf, WeasisConfig.PARAM_CONFIG_URL, weasisConfigUrl);
+                addElement(buf, WeasisConfig.PARAM_CONFIG_URL, urlCfg);
             }
             addElement(buf, WeasisConfig.PARAM_AUTHORIZATION, ServletUtil.getAuthorizationValue(request));
 
