@@ -204,7 +204,10 @@ public class WeasisConfig extends HttpServlet {
             }
         } else {
             // If weasis codebase is not in the request, set the URL from the weasis-pacs-connector properties.
-            codeBasePath = props.getProperty("weasis.base.url", props.getProperty("server.base.url") + "/weasis");
+            codeBasePath = props.getProperty("weasis.base.url");
+            if(codeBasePath == null) {
+                return "";
+            }
             if(extCodebase) {
                 codeBasePath = props.getProperty("weasis.ext.url", codeBasePath + "-ext");  
             }

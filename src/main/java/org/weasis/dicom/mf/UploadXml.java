@@ -1,5 +1,7 @@
 package org.weasis.dicom.mf;
 
+import org.weasis.core.api.util.StringUtil;
+
 public class UploadXml implements XmlManifest {
 
     private final String xmlContent;
@@ -7,7 +9,7 @@ public class UploadXml implements XmlManifest {
 
     public UploadXml(String xmlContent, String charsetEncoding) {
         this.xmlContent = xmlContent;
-        this.charsetEncoding = charsetEncoding;
+        this.charsetEncoding = StringUtil.hasText(charsetEncoding) ? charsetEncoding : "UTF-8";
     }
 
     @Override
