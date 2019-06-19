@@ -48,7 +48,11 @@ public class WeasisConfig extends HttpServlet {
 
     @Override
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        doGet(request, response);
+        try {
+            doGet(request, response);
+        } catch (ServletException | IOException e) {
+            LOGGER.error("doGet error", e);
+        }
     }
 
     @Override

@@ -35,7 +35,7 @@ public class ManifestBuilder implements Callable<XmlManifest> {
     private final long startTimeMillis;
     private final CommonQueryParams params;
     private final XmlManifest xml;
-    private volatile Future<XmlManifest> future;
+    private Future<XmlManifest> future;
 
     public ManifestBuilder(CommonQueryParams params) {
         if (params == null) {

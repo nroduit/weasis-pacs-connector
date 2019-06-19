@@ -1,3 +1,30 @@
+## [v6.1.5](https://github.com/nroduit/weasis-pacs-connector/tree/v6.1.5) (2019-06-15)
+
+[Full Changelog](https://github.com/nroduit/weasis-pacs-connector/compare/6.1.4...v6.1.5)
+
+**Implemented enhancements:**
+
+- Allow to transmit an authorization in GetWeasisProtocol [\#27](https://github.com/nroduit/weasis-pacs-connector/issues/27) [[Type: Feature](https://github.com/nroduit/weasis-pacs-connector/labels/Type:%20Feature)]
+- Add weasis protocol \(replacing Java Webstart\) [\#26](https://github.com/nroduit/weasis-pacs-connector/issues/26) [[Type: Feature](https://github.com/nroduit/weasis-pacs-connector/labels/Type:%20Feature)]
+
+**Fixed bugs:**
+
+- Uploading manifest encoding issue [\#25](https://github.com/nroduit/weasis-pacs-connector/issues/25)
+
+## [v6.1.4](https://github.com/nroduit/weasis-pacs-connector/tree/v6.1.4) (2018-10-26)
+
+[Full Changelog](https://github.com/nroduit/weasis-pacs-connector/compare/6.1.3...v6.1.4)
+
+**Implemented enhancements:**
+
+- ${server.base.url} like variable that returns IP address of server [\#13](https://github.com/nroduit/weasis-pacs-connector/issues/13)
+- Add a trace when building the JNLP [\#16](https://github.com/nroduit/weasis-pacs-connector/issues/16)
+
+**Fixed bugs:**
+
+- Issue when the application container contains spaces in the path [\#15](https://github.com/nroduit/weasis-pacs-connector/issues/15)
+- Error launching /IHEInvokeImageDisplay with HTTP HEAD [\#10](https://github.com/nroduit/weasis-pacs-connector/issues/10)
+
 ## [6.1.3](https://github.com/nroduit/weasis-pacs-connector/tree/6.1.3) (2017-08-21)
 [Full Changelog](https://github.com/nroduit/weasis-pacs-connector/compare/6.1.1...6.1.3)
 

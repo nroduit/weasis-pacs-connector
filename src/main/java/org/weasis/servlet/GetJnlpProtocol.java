@@ -22,6 +22,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * @deprecated JNLP protocol has been removed from Java 11, used GetWeasisProtocol instead
+ */
 @WebServlet(urlPatterns = { "/getJnlpScheme/*" })
 @Deprecated
 public class GetJnlpProtocol extends HttpServlet {
@@ -57,8 +60,7 @@ public class GetJnlpProtocol extends HttpServlet {
                 buf.append("?");
                 buf.append(request.getQueryString());
             }
-
-            response.sendRedirect(buf.toString());
+            response.sendRedirect(buf.toString()); // NOSONAR redirect to jnlp protocol
         } catch (Exception e) {
             LOGGER.error("Redirect to jnlp secheme", e);
             ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
