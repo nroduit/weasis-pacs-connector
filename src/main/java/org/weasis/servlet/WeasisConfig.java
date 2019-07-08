@@ -31,6 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.util.StringUtil;
 
 @WebServlet(urlPatterns = "/WeasisConfig")
 public class WeasisConfig extends HttpServlet {
@@ -200,13 +201,13 @@ public class WeasisConfig extends HttpServlet {
             if (queryCodeBasePath.startsWith("/")) {
                 codeBasePath = ServletUtil.getBaseURL(request, false) + queryCodeBasePath;
             } else {
-                codeBasePath = queryCodeBasePath; // supposed to be a new valid URL for codeBase
+                codeBasePath = StringUtil.hasText(queryCodeBasePath) ? queryCodeBasePath : StringUtil.EMPTY_STRING; // supposed to be a new valid URL for codeBase
             }
         } else {
             // If weasis codebase is not in the request, set the URL from the weasis-pacs-connector properties.
             codeBasePath = props.getProperty("weasis.base.url");
             if(codeBasePath == null) {
-                return "";
+                return StringUtil.EMPTY_STRING;
             }
             if(extCodebase) {
                 codeBasePath = props.getProperty("weasis.ext.url", codeBasePath + "-ext");  

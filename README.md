@@ -26,8 +26,32 @@ Prerequisites: JDK 8 and Maven 3
 
 * Use the loggerless profile for web application container which already embeds slf4j and log4j (like JBoss): `mvn clean package -Ploggerless`
 
+## Launch Weasis
 
-## Launching Weasis with [IHE IID profile](http://www.ihe.net/Technical_Framework/upload/IHE_RAD_Suppl_IID.pdf) ##
+The **/weasis** service uses the [weasis protocol](https://nroduit.github.io/en/getting-started/weasis-protocol) by redirecting the `http://` request into `weasis://` (because some web frameworks such as the wiki or the URL field of some browsers only support the standard protocols). It replaces the old **/viewer** service using Java Webstart.   
+
+* http://localhost:8080/weasis-pacs-connector/weasis?patientID=9702672
+* http://localhost:8080/weasis-pacs-connector/weasis?patientID=9702672%5E%5E%5Etest  
+  => to handle an universal patientID, add IssuerOfPatientID like in hl7: patientID=9702672^^^test
+* http://localhost:8080/weasis-pacs-connector/weasis?patientID=97026728&patientID=2023231696  
+  => multiple patients
+* http://localhost:8080/weasis-pacs-connector/weasis?patientID=97026728&modalitiesInStudy=MR,XA  
+  => only studies containing MR or XA 
+* http://localhost:8080/weasis-pacs-connector/weasis?patientID=97026728&containsInDescription=abdo,thorax  
+  => only studies containing the string abdo or thorax (accent and case insensitive) in study description (from version 5.0.1) 
+* http://localhost:8080/weasis-pacs-connector/weasis?patientID=97026728&modalitiesInStudy=CT&upperDateTime=2010-01-01T12:00:00Z  
+  => only studies containing CT which are more recent than 2010-01-01 12:00:00 (UTC time, do not use 'Z' if the store files don't have a time zone)  
+* http://localhost:8080/weasis-pacs-connector/weasis?studyUID=1.3.6.1.4.1.5962.1.2.2.20031208063649.855
+* http://localhost:8080/weasis-pacs-connector/weasis?accessionNumber=3224252
+* http://localhost:8080/weasis-pacs-connector/weasis?seriesUID=1.2.840.113704.1.111.4924.1273631010.17
+* http://localhost:8080/weasis-pacs-connector/weasis?objectUID=1.2.840.113704.1.111.3520.1273640118.5118
+
+Note: It is allowed to have multiple UIDs for patient, study, series and instance but within the same level. The [configuration file](src/main/resources/weasis-connector-default.properties) enables to set which ID is allowed and if a combination of UIDs is required. When using a combination of UIDs, the order is not relevant.
+
+### Launch Weasis with IHE IID profile
+
+The [Invoke Image Display Profile](https://www.ihe.net/uploadedFiles/Documents/Radiology/IHE_RAD_Suppl_IID.pdf) allows the user of an Image Display Invoker, typically a nonimage-aware system like an EHR, PHR or RIS, to request the display of studies for a patient, and
+have the display performed by an image-aware system like an Image Display (PACS).
 
 * http://localhost:8080/weasis-pacs-connector/IHEInvokeImageDisplay?requestType=PATIENT&patientID=97026728&mostRecentResults=2  
   => query at patient level to get a number of the most recent studies
@@ -92,24 +116,19 @@ Build an XML file containing the UIDs of the images which will be retrieved in W
 * http://localhost:8080/weasis-pacs-connector/manifest?patientID=97026728&modalitiesInStudy=MR&upperDateTime=2014-05-20T12:00:00  
   => only studies containing MR which are more recent than 2014-05-20 12:00:00
   
-### JNLP Builder ###
+## Installation
 
-See the [JNLP Builder documentation](JnlpBuilder)
-
-### Installation ###
-
-It requires a web application container like Tomcat or JBoss.
+It requires a web application container like Jetty, Tomcat or JBoss. For installation with the dcm4chee user interface, see this [page](https://nroduit.github.io/en/getting-started/dcm4chee/).
 
 Go [here](https://sourceforge.net/projects/dcm4che/files/Weasis/) and download these Weasis files.
 * From the folder with the latest version number:  
-	- [weasis.war] Weasis Web distribution which run with Java Web Start.
-	- [weasis-ext.war] Optional package for additional plug-ins (e.g. exporting the images to build an ISO image for CD/DVD)
-	- [weasis-i18n.war] Optional package for Weasis translations
+	- [weasis.war] Weasis web package. Optional if you want only the version installed on the client, otherwise the web package can update the local installation.    
+	- [weasis-ext.war] Optional package for additional plug-ins (e.g. exporting the images to build an ISO image for CD/DVD)    
+	- [weasis-i18n.war] Optional package for [Weasis translations](https://nroduit.github.io/en/getting-started/translating/)    
 * From weasis-pacs-connector folder:  
-	- [weasis-pacs-connector.war] Connector between the archive and the viewer
-	- [dcm4chee-web-weasis.jar] Optional package for [dcm4che-web3](https://nroduit.github.io/en/getting-started/dcm4chee/)
+	- [weasis-pacs-connector.war] Connector between the archive and the viewer    
 
-## Configuration of weasis-pacs-connector ##
+## Configuration
 
 The default configurations works directly with [dcm4che-web3](https://nroduit.github.io/en/getting-started/dcm4chee/). To override the configuration of weasis-pacs-connector, download [weasis-connector-default.properties](src/main/resources/weasis-connector-default.properties) and rename it **weasis-pacs-connector.properties**. This file named **weasis-pacs-connector.properties** and **[dicom-dcm4chee.properties](src/main/resources/dicom-dcm4chee.properties)** must be placed in the classpath of the application:
 
@@ -131,36 +150,8 @@ Note: when multiple archives are configured, only the references of the first ar
 
 For [dcm4chee-arc-light](https://github.com/dcm4che/dcm4chee-arc-light) see the [installation instructions](https://nroduit.github.io/en/getting-started/dcm4chee/).
 
-## New way to launch jnlp ##
 
-An alternative way to launch Java Webstart (JWS) by changing the scheme of URL:
-* jnlp://localhost:8080/weasis-pacs-connector/viewer?patientID=9702672
-* jnlps://localhost:8443/weasis-pacs-connector/viewer?patientID=9702672 (SSL connection)
-
-or from weasis-pacs-connector 6.1.2 by adding "getJnlpScheme" in the web context:
-* http://launcher-weasis.rhcloud.com/weasis-pacs-connector/getJnlpScheme/viewer?studyUID=1.3.6.1.4.1.5962.99.1.1839181372.1275896472.1436358291004.4.0   
-=> This is useful when jnlp protocol is not allowed (like this wiki page). The getJnlpScheme servlet makes a redirection from http to jnlp.
-* https://launcher-weasis.rhcloud.com/weasis-pacs-connector/getJnlpScheme/viewer?studyUID=1.3.6.1.4.1.5962.99.1.1839181372.1275896472.1436358291004.4.0
-
-
-Advantages of jnlp protocol:
-* Works at the system level (association of a MIME type with an application: jnlp => JWS)
-* Works with most of browsers (Chrome, IE, Firefox, Safari, Opera...)
-* Browsers do not download jnlp anymore. JWS reads directly the URL (do not show the popup "This application will run with unrestricted access" at every launch)
-* Works with other applications which are requesting the default system application for the jnlp protocol
-* No change is required at the client side or at the server side, only replacing the scheme of the jnlp URL is enough
-* Registration of jnlp handler is available in Oracle Java Runtime installer from JRE 8_111 and in the Java 9 installer.
-  * Works out of box on Windows
-  * On Mac OS X, it could be necessary to run once Java Webstart to register the jnlp handler (/Library/Internet Plug-Ins/JavaAppletPlugin.plugin/Contents/Resources/javawslauncher.app)
-  * On Linux, a [configuration](https://docs.oracle.com/javase/9/deploy/overview.htm#JSDPG-GUID-BC1669F9-7238-462D-80AA-3D42BAF99FA7) is required
-* An implementation has be done on [IcedTea-WEB](http://icedtea.classpath.org/wiki/IcedTea-Web) (alternative of the Oracle JWS) and it will be available in the next release (1.7).
-
-For more informations:
-* [Oracle JWS documentation](https://docs.oracle.com/javase/9/deploy/overview.htm)
-* [About the configuration in dcm4chee](https://nroduit.github.io/en/getting-started/dcm4chee/)
-
-
-## Security ##
+## Security
 
 There are different ways to treat the security aspects. Here are some:
 
@@ -169,8 +160,8 @@ There are different ways to treat the security aspects. Here are some:
 * Configure weasis-pacs-connector for accepting only limited IP/host
 * Configure weasis-pacs-connector for accepting only requests with a combination of several UIDs
 
-## Architecture of weasis-pacs-connector ##
+## Architecture
 
-![weasis-pacs-connector schema](https://nroduit.github.io/images/connector-wk-std.png)
+![Architecture schema](https://nroduit.github.io/images/weasis-pacs-connector.svg)
 
 See [How to launch Weasis from any environments](https://nroduit.github.io/en/basics/customize/integration/)

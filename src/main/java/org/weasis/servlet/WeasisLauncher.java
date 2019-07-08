@@ -41,7 +41,7 @@ import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.dicom.mf.thread.ManifestManagerThread;
 import org.weasis.query.CommonQueryParams;
 
-@WebServlet(urlPatterns = {"/viewer", "/IHEInvokeImageDisplay"} )
+@WebServlet(urlPatterns = {"/viewer"} )
 public class WeasisLauncher extends HttpServlet {
 
     private static final long serialVersionUID = 7933047406409849509L;
