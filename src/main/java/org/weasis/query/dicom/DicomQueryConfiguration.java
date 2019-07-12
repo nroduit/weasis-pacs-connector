@@ -566,31 +566,8 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
     }
     
     public static GregorianCalendar parseDateTime(CharSequence s) {
-        String val = trim(s).toString();
+        String val = s.toString().trim();
         return datatypeFactory.newXMLGregorianCalendar(val).toGregorianCalendar();
     }
 
-    public static CharSequence trim(CharSequence text) {
-        int len = text.length();
-        int start = 0;
-
-        while( start<len && isWhiteSpace(text.charAt(start)) )
-            start++;
-
-        int end = len-1;
-
-        while( end>start && isWhiteSpace(text.charAt(end)) )
-            end--;
-
-        if(start==0 && end==len-1)
-            return text;    // no change
-        else
-            return text.subSequence(start,end+1);
-    }
-    
-    public static final boolean isWhiteSpace(char ch) {
-        if( ch>0x20 )   return false;
-        // other than we have to do four comparisons.
-        return ch == 0x9 || ch == 0xA || ch == 0xD || ch == 0x20;
-    }
 }
