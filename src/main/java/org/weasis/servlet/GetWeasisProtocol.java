@@ -28,7 +28,7 @@ import org.weasis.dicom.mf.UploadXml;
 import org.weasis.dicom.mf.XmlManifest;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 
-@WebServlet(urlPatterns = { "/weasis" })
+@WebServlet(urlPatterns = { "/weasis", "/IHEInvokeImageDisplay" })
 public class GetWeasisProtocol extends HttpServlet {
 
     private static final long serialVersionUID = 2987582758040784229L;
