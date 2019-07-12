@@ -1,8 +1,20 @@
 # Changelog
 
-## [7.1.0](https://github.com/nroduit/weasis-pacs-connector/tree/7.1.0) (2019-06-17)
+## [7.1.1](https://github.com/nroduit/weasis-pacs-connector/tree/7.1.1) (2019-07-12)
 
-[Full Changelog](https://github.com/nroduit/weasis-pacs-connector/compare/v7.0.1...7.1.0)
+[Full Changelog](https://github.com/nroduit/weasis-pacs-connector/compare/v7.1.0...7.1.1)
+
+**Implemented enhancements:**
+
+- Update to weasis-dicom-tools 5.17.1 [\#29](https://github.com/nroduit/weasis-pacs-connector/issues/29)
+
+**Fixed bugs:**
+
+- Fix issue when cbd is empty [\#30](https://github.com/nroduit/weasis-pacs-connector/issues/30)
+
+## [v7.1.0](https://github.com/nroduit/weasis-pacs-connector/tree/v7.1.0) (2019-06-17)
+
+[Full Changelog](https://github.com/nroduit/weasis-pacs-connector/compare/v6.1.5...v7.1.0)
 
 **Implemented enhancements:**
 
@@ -14,6 +26,10 @@
 **Fixed bugs:**
 
 - Uploading manifest encoding issue [\#25](https://github.com/nroduit/weasis-pacs-connector/issues/25)
+
+## [v6.1.5](https://github.com/nroduit/weasis-pacs-connector/tree/v6.1.5) (2019-06-14)
+
+[Full Changelog](https://github.com/nroduit/weasis-pacs-connector/compare/v7.0.1...v6.1.5)
 
 ## [v7.0.1](https://github.com/nroduit/weasis-pacs-connector/tree/v7.0.1) (2018-12-12)
 
