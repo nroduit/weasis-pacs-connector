@@ -3,8 +3,12 @@ package org.weasis.query.dicom;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Properties;
+
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
@@ -38,6 +42,16 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
     private final DicomNode callingNode;
     private final DicomNode calledNode;
     private final AdvancedParams advancedParams;
+    
+    private static final DatatypeFactory datatypeFactory;
+
+    static {
+        try {
+            datatypeFactory = DatatypeFactory.newInstance();
+        } catch (DatatypeConfigurationException e) {
+            throw new Error(e);
+        }
+    }
 
     public DicomQueryConfiguration(Properties properties, DicomNode callingNode) {
         super(properties);
@@ -126,7 +140,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
         if (StringUtil.hasText(params.getLowerDateTime())) {
             Date lowerDateTime = null;
             try {
-                lowerDateTime = javax.xml.bind.DatatypeConverter.parseDateTime(params.getLowerDateTime()).getTime();
+                lowerDateTime = parseDateTime(params.getLowerDateTime()).getTime();
             } catch (Exception e) {
                 LOGGER.error("Cannot parse date: {}", params.getLowerDateTime(), e);
             }
@@ -147,7 +161,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
         if (StringUtil.hasText(params.getUpperDateTime())) {
             Date upperDateTime = null;
             try {
-                upperDateTime = javax.xml.bind.DatatypeConverter.parseDateTime(params.getUpperDateTime()).getTime();
+                upperDateTime = parseDateTime(params.getUpperDateTime()).getTime();
             } catch (Exception e) {
                 LOGGER.error("Cannot parse date: {}", params.getUpperDateTime(), e);
             }
@@ -550,5 +564,33 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
         }
         return s;
     }
+    
+    public static GregorianCalendar parseDateTime(CharSequence s) {
+        String val = trim(s).toString();
+        return datatypeFactory.newXMLGregorianCalendar(val).toGregorianCalendar();
+    }
 
+    public static CharSequence trim(CharSequence text) {
+        int len = text.length();
+        int start = 0;
+
+        while( start<len && isWhiteSpace(text.charAt(start)) )
+            start++;
+
+        int end = len-1;
+
+        while( end>start && isWhiteSpace(text.charAt(end)) )
+            end--;
+
+        if(start==0 && end==len-1)
+            return text;    // no change
+        else
+            return text.subSequence(start,end+1);
+    }
+    
+    public static final boolean isWhiteSpace(char ch) {
+        if( ch>0x20 )   return false;
+        // other than we have to do four comparisons.
+        return ch == 0x9 || ch == 0xA || ch == 0xD || ch == 0x20;
+    }
 }

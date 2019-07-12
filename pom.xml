@@ -6,7 +6,7 @@
 	<artifactId>weasis-pacs-connector</artifactId>
 	<packaging>war</packaging>
 	<name>Weasis PACS Connector</name>
-	<version>7.1.0</version>
+	<version>7.1.1</version>
 
 	<properties>
 		<java-version>1.8</java-version>

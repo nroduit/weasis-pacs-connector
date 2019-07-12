@@ -1,8 +1,8 @@
 # Changelog
 
-## [7.1.1](https://github.com/nroduit/weasis-pacs-connector/tree/7.1.1) (2019-07-12)
+## [v7.1.1](https://github.com/nroduit/weasis-pacs-connector/tree/v7.1.1) (2019-07-12)
 
-[Full Changelog](https://github.com/nroduit/weasis-pacs-connector/compare/v7.1.0...7.1.1)
+[Full Changelog](https://github.com/nroduit/weasis-pacs-connector/compare/v7.1.0...v7.1.1)
 
 **Implemented enhancements:**
 
@@ -10,6 +10,7 @@
 
 **Fixed bugs:**
 
+- Fix java 11 issue by removing javax.xml.bind dependency [\#31](https://github.com/nroduit/weasis-pacs-connector/issues/31)
 - Fix issue when cbd is empty [\#30](https://github.com/nroduit/weasis-pacs-connector/issues/30)
 
 ## [v7.1.0](https://github.com/nroduit/weasis-pacs-connector/tree/v7.1.0) (2019-06-17)
