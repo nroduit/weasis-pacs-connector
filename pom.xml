@@ -39,6 +39,13 @@
 				<enabled>false</enabled>
 			</snapshots>
 		</repository>
+
+		<repository>
+			<id>dcm4che</id>
+			<name>dcm4che Repository</name>
+			<url>http://maven.dcm4che.org</url>
+			<!-- <url>http://www.dcm4che.org/maven2</url> (which will redirected to https://www.dcm4che.org/maven2). -->
+		</repository>
 	</repositories>
 
 	<build>
@@ -59,7 +66,7 @@
 									<version>${enforcer.maven-version}</version>
 								</requireMavenVersion>
 								<requireJavaVersion>
-								<version>${enforcer.jdk-version}</version>
+									<version>${enforcer.jdk-version}</version>
 								</requireJavaVersion>
 							</rules>
 						</configuration>
