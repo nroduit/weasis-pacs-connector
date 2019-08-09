@@ -7,11 +7,17 @@
 
 package org.weasis.servlet;
 
+import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletContext;
@@ -93,70 +99,110 @@ public class GetWeasisProtocol extends HttpServlet {
             buf.append(wadoQueryUrl);
             buf.append("\"");
 
-            // ADD WEASISCONFIG PARAMETERS >> $weasis:config "..."
+            //// HANDLE REQUEST PARAMETERS
 
-            buf.append(" $weasis:config");
+            Map<String, String[]> params = new LinkedHashMap<String, String[]>(request.getParameterMap());
+
+            // ADD ARGUMENTS PARAMETERS
+            handleRequestParameters(buf, params, WeasisConfig.PARAM_ARGUMENT);
 
             // GET weasisConfigUrl FROM REQUEST ARGUMENTS
-            String weasisConfigUrl = request.getParameter(WeasisConfig.PARAM_CONFIG_URL);
+            String weasisConfigUrl = ServletUtil.getFirstParameter(params.remove(WeasisConfig.PARAM_CONFIG_URL));
 
             // OR GET weasisConfigUrl FROM CONNECTOR'S CONFIGURATION
             if (weasisConfigUrl == null) {
                 weasisConfigUrl = props.getProperty(SERVICE_CONFIG);
             }
 
-            if (weasisConfigUrl != null) {
-                // ADD weasisConfigUrl URL PARAMETER
-                addElement(buf, WeasisConfig.PARAM_CONFIG_URL, weasisConfigUrl);
+            boolean remoteLaunchConfigDefined = weasisConfigUrl != null;
+            // NOTE : if remote config is defined then any request properties has to be delagated to the remote service instead of beeing given directly to Weasis
+            // in this case properties can be overidden by launch config remote service
 
-            } else {
-                // OR BUILD CUSTOM CONFIG
+            StringBuilder configParamBuf = new StringBuilder();
 
-                addElementWithNullValue(buf, WeasisConfig.PARAM_CODEBASE,
-                    WeasisConfig.getCodebase(request, props, false));
-                addElementWithNullValue(buf, WeasisConfig.PARAM_CODEBASE_EXT,
-                    WeasisConfig.getCodebase(request, props, true));
+            addElementWithNullValue(configParamBuf, WeasisConfig.PARAM_CODEBASE, WeasisConfig.getCodebase(request, props, false), remoteLaunchConfigDefined);
+            addElementWithNullValue(configParamBuf, WeasisConfig.PARAM_CODEBASE_EXT, WeasisConfig.getCodebase(request, props, true), remoteLaunchConfigDefined);
 
-                // GET PROPERTIES PARAMETERS FROM REQUEST ARGUMENTS
-                Map<String, String[]> params = request.getParameterMap();
-                Map<String, String> properties = getPropertiesFromRequestParameters(params);
+            params.remove(WeasisConfig.PARAM_CODEBASE);
+            params.remove(WeasisConfig.PARAM_CODEBASE_EXT);
 
-                // PREFERENCE SERVICE URL IS SET FROM CONNECTOR'S CONFIGURATION IF NOT PROVIDED BY REQUEST
-                if (properties.get(SERVICE_PREFS) == null) {
-                    String prefs = props.getProperty(SERVICE_PREFS);
-                    if (StringUtil.hasText(prefs)) {
-                        properties.put(SERVICE_PREFS, prefs);
-                    }
+            // GET PROPERTIES PARAMETERS FROM REQUEST ARGUMENTS
+            Map<String, String> properties = getPropertiesFromRequestParameters(params);
+
+            // PREFERENCE SERVICE URL IS SET FROM CONNECTOR'S CONFIGURATION IF NOT PROVIDED BY REQUEST
+            if (properties.get(SERVICE_PREFS) == null) {
+                String prefs = props.getProperty(SERVICE_PREFS);
+                if (StringUtil.hasText(prefs)) {
+                    properties.put(SERVICE_PREFS, prefs);
                 }
+            }
 
-                // ADD PROPERTIES PARAMETERS
-                for (Entry<String, String> entry : properties.entrySet()) {
-                    StringBuilder b = new StringBuilder(entry.getKey());
-                    b.append(' ');
-                    b.append(entry.getValue());
-                    addElement(buf, WeasisConfig.PARAM_PROPERTY, b.toString());
-                }
-
-                // ADD ARGUMENTS PARAMETERS
-                handleRequestParameters(buf, params, WeasisConfig.PARAM_ARGUMENT);
+            // ADD PROPERTIES PARAMETERS
+            for (Entry<String, String> entry : properties.entrySet()) {
+                StringBuilder b = new StringBuilder(entry.getKey());
+                b.append(' ');
+                b.append(entry.getValue());
+                addElement(configParamBuf, WeasisConfig.PARAM_PROPERTY, b.toString(), remoteLaunchConfigDefined);
             }
 
             // ADD AUTHORIZATION PARAMETERS
-            addElement(buf, WeasisConfig.PARAM_AUTHORIZATION, ServletUtil.getAuthorizationValue(request));
+            addElement(configParamBuf, WeasisConfig.PARAM_AUTHORIZATION, ServletUtil.getAuthorizationValue(request), remoteLaunchConfigDefined);
+
+            params.remove(WeasisConfig.PARAM_AUTHORIZATION);
+            params.remove("access_token");
+
+           
+            // ADD WEASISCONFIG PARAMETERS >> $weasis:config "..."
+            buf.append(" $weasis:config");
+
+            if (remoteLaunchConfigDefined) {
+                
+                // ADD ANY OTHER UNHANDLED PARAMETERS 
+                // note : they can be consumed as placeholders in a template engine from the remoteLaunchConfig service
+                Iterator<Entry<String, String[]>> itParams = params.entrySet().iterator();
+
+                while (itParams.hasNext()) {
+                    Entry<String, String[]> param = itParams.next();
+                    String value = ServletUtil.getFirstParameter(param.getValue());
+                    if (StringUtil.hasText(value))
+                        value = removeEnglobingQuotes(value);
+                    addElementWithNullValue(configParamBuf, param.getKey(), value, remoteLaunchConfigDefined);
+                    itParams.remove();
+                }
+                
+                // ADD weasisConfigUrl URL WITH HANDLED PARAMETERS
+                // TODO verify URL integrity
+
+                configParamBuf.replace(0, 1, "?");// replace first query separator '&' by "?"
+                weasisConfigUrl += configParamBuf.toString();
+//                addElement(buf, WeasisConfig.PARAM_CONFIG_URL, URLEncoder.encode(weasisConfigUrl, "UTF-8"));
+                addElement(buf, WeasisConfig.PARAM_CONFIG_URL, weasisConfigUrl);
+
+
+            } else {
+                // OR BUILD CUSTOM CONFIG
+                buf.append(" ").append(configParamBuf);
+            }
 
             // BUILD LAUNCH URL
             StringBuilder wurl = new StringBuilder("weasis://");
             wurl.append(URLEncoder.encode(buf.toString(), "UTF-8"));
 
             response.sendRedirect(wurl.toString());
-        } catch (Exception e) {
+        } catch (
+
+        Exception e) {
             LOGGER.error("Redirect to weasis secheme", e);
             ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
 
     private static void addElementWithNullValue(StringBuilder buf, String key, String val) {
-        buf.append(' ');
+        addElementWithNullValue(buf, key, val);
+    }
+
+    private static void addElementWithNullValue(StringBuilder buf, String key, String val, boolean querySeparator) {
+        buf.append(querySeparator ? '&' : ' ');
         buf.append(key);
         if (StringUtil.hasText(val)) {
             buf.append("=\"");
@@ -166,8 +212,12 @@ public class GetWeasisProtocol extends HttpServlet {
     }
 
     private static void addElement(StringBuilder buf, String key, String val) {
+        addElement(buf, key, val, false);
+    }
+
+    private static void addElement(StringBuilder buf, String key, String val, boolean querySeparator) {
         if (StringUtil.hasText(val)) {
-            buf.append(' ');
+            buf.append(querySeparator ? '&' : ' ');
             buf.append(key);
             buf.append("=\"");
             buf.append(val);
@@ -177,7 +227,7 @@ public class GetWeasisProtocol extends HttpServlet {
 
     private static Map<String, String> getPropertiesFromRequestParameters(Map<String, String[]> params) {
         Map<String, String> props = new HashMap<>();
-        String[] paramValues = ServletUtil.getParameters(params.get(WeasisConfig.PARAM_PROPERTY));
+        String[] paramValues = ServletUtil.getParameters(params.remove(WeasisConfig.PARAM_PROPERTY));
         if (paramValues != null) {
             Pattern pattern = Pattern.compile("\\s+");
             for (String p : paramValues) {
@@ -193,7 +243,8 @@ public class GetWeasisProtocol extends HttpServlet {
     }
 
     private static void handleRequestParameters(StringBuilder buf, Map<String, String[]> params, String param) {
-        String[] paramValues = ServletUtil.getParameters(params.get(param));
+        String[] paramValues = ServletUtil.getParameters(params.remove(param));
+
         if (paramValues != null) {
             for (String p : paramValues) {
                 addElement(buf, param, removeEnglobingQuotes(p));
