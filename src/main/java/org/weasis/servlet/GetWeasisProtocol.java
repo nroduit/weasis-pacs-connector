@@ -101,7 +101,7 @@ public class GetWeasisProtocol extends HttpServlet {
 
             //// HANDLE REQUEST PARAMETERS
 
-            Map<String, String[]> params = new LinkedHashMap<String, String[]>(request.getParameterMap());
+            Map<String, String[]> params = new LinkedHashMap<>(request.getParameterMap());
 
             // ADD ARGUMENTS PARAMETERS
             handleRequestParameters(buf, params, WeasisConfig.PARAM_ARGUMENT);

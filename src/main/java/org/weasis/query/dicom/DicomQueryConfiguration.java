@@ -35,14 +35,14 @@ import org.weasis.servlet.ServletUtil;
 
 public class DicomQueryConfiguration extends AbstractQueryConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomQueryConfiguration.class);
-    
+
     private static final String C_FIND_WITH_SERIESUID = "C-FIND with SeriesInstanceUID {}";
     private static final String DICOM_QUERY_ERROR = "DICOM query Error of {}";
 
     private final DicomNode callingNode;
     private final DicomNode calledNode;
     private final AdvancedParams advancedParams;
-    
+
     private static final DatatypeFactory datatypeFactory;
 
     static {
@@ -369,9 +369,10 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
                     Attributes dataset = instances.get(0);
                     Patient patient = getPatient(dataset);
                     Study study = getStudy(patient, dataset);
-                    Series s = getSeries(study, dataset);
+                    Series s = getSeries(study, dataset, properties);
                     for (Attributes instanceDataSet : instances) {
-                        Integer frame = ServletUtil.getIntegerFromDicomElement(instanceDataSet, Tag.InstanceNumber, null);
+                        Integer frame =
+                            ServletUtil.getIntegerFromDicomElement(instanceDataSet, Tag.InstanceNumber, null);
                         String sopUID = instanceDataSet.getString(Tag.SOPInstanceUID);
                         SopInstance sop = s.getSopInstance(sopUID, frame);
                         if (sop == null) {
@@ -445,7 +446,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
 
             List<Attributes> instances = state.getDicomRSP();
             if (instances != null && !instances.isEmpty()) {
-                Series s = getSeries(study, seriesDataset);
+                Series s = getSeries(study, seriesDataset, properties);
 
                 for (Attributes instanceDataSet : instances) {
                     Integer frame = ServletUtil.getIntegerFromDicomElement(instanceDataSet, Tag.InstanceNumber, null);
@@ -549,7 +550,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
         return s;
     }
 
-    private static Series getSeries(Study study, final Attributes seriesDataset) {
+    private static Series getSeries(Study study, final Attributes seriesDataset, Properties properties) {
         if (seriesDataset == null) {
             throw new IllegalArgumentException("seriesDataset cannot be null");
         }
@@ -560,11 +561,21 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
             s.setModality(seriesDataset.getString(Tag.Modality));
             s.setSeriesNumber(seriesDataset.getString(Tag.SeriesNumber));
             s.setSeriesDescription(seriesDataset.getString(Tag.SeriesDescription));
+            String wadotTsuid = properties.getProperty("wado.request.tsuid");
+            if (StringUtil.hasText(wadotTsuid)) {
+                String[] val = wadotTsuid.split(":");
+                if (val.length > 0) {
+                    s.setWadoTransferSyntaxUID(val[0]);
+                }
+                if (val.length > 1) {
+                    s.setWadoCompression(val[1]);
+                }
+            }
             study.addSeries(s);
         }
         return s;
     }
-    
+
     public static GregorianCalendar parseDateTime(CharSequence s) {
         String val = s.toString().trim();
         return datatypeFactory.newXMLGregorianCalendar(val).toGregorianCalendar();
