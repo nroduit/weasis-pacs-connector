@@ -130,7 +130,7 @@ public class ServletUtil {
         }
         return result;
     }
-    
+
     public static String getAuthorizationValue(HttpServletRequest request) {
         String auth = null;
         String tokenParams = request.getParameter("access_token");
@@ -222,26 +222,26 @@ public class ServletUtil {
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromSopInstanceUID(params, val);
                     }
-                    validateRequiredIDs(OBJECT_UID, key, params, pat, stu, anb, ser);
-                } else if (ser != null && ser.length > 0 && isRequestIDAllowed(SERIES_UID, properties)) {
+                }
+                if (ser != null && ser.length > 0 && isRequestIDAllowed(SERIES_UID, properties)) {
                     String[] val = decrypt(ser, key, SERIES_UID);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromSeriesInstanceUID(params, val);
                     }
-                    validateRequiredIDs(SERIES_UID, key, params, pat, stu, anb, null);
-                } else if (anb != null && anb.length > 0 && isRequestIDAllowed(ACCESSION_NUMBER, properties)) {
+                }
+                if (anb != null && anb.length > 0 && isRequestIDAllowed(ACCESSION_NUMBER, properties)) {
                     String[] val = decrypt(anb, key, ACCESSION_NUMBER);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromStudyAccessionNumber(params, val);
                     }
-                    validateRequiredIDs(ACCESSION_NUMBER, key, params, pat, null, null, null);
-                } else if (stu != null && stu.length > 0 && isRequestIDAllowed(STUDY_UID, properties)) {
+                }
+                if (stu != null && stu.length > 0 && isRequestIDAllowed(STUDY_UID, properties)) {
                     String[] val = decrypt(stu, key, STUDY_UID);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromStudyInstanceUID(params, val);
                     }
-                    validateRequiredIDs(STUDY_UID, key, params, pat, null, null, null);
-                } else if (pat != null && pat.length > 0 && isRequestIDAllowed(PATIENT_ID, properties)) {
+                }
+                if (pat != null && pat.length > 0 && isRequestIDAllowed(PATIENT_ID, properties)) {
                     String[] val = decrypt(pat, key, PATIENT_ID);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromPatientID(params, val);
@@ -252,64 +252,6 @@ public class ServletUtil {
             LOGGER.error("Error when building the patient list", e);
             params.addGeneralViewerMessage(new ViewerMessage("Unexpected Error",
                 "Unexpected Error when building the manifest: " + e.getMessage(), ViewerMessage.eLevel.ERROR));
-        }
-    }
-
-    private static void validateRequiredIDs(String id, String key, CommonQueryParams params, String[] pat, String[] stu,
-        String[] anb, String[] ser) {
-
-        if (id != null) {
-            String ids = params.getProperties().getProperty("request." + id);
-            if (ids != null) {
-                for (String val : ids.split(",")) {
-                    if (val.trim().equals(PATIENT_ID)) {
-                        if (pat == null) {
-                            params.clearAllPatients();
-                            return;
-                        }
-                        List<String> list = new ArrayList<>(pat.length);
-                        for (String s : pat) {
-                            list.add(decrypt(s, key, PATIENT_ID));
-                        }
-                        params.removePatientId(list, false);
-                    } else if (val.trim().equals(STUDY_UID)) {
-                        if (stu == null) {
-                            params.clearAllPatients();
-                            return;
-                        }
-                        List<String> list = new ArrayList<>(stu.length);
-                        for (String s : stu) {
-                            list.add(decrypt(s, key, STUDY_UID));
-                        }
-                        params.removeStudyUid(list);
-                    } else if (val.trim().equals(ACCESSION_NUMBER)) {
-                        if (anb == null) {
-                            params.clearAllPatients();
-                            return;
-                        }
-                        List<String> list = new ArrayList<>(anb.length);
-                        for (String s : anb) {
-                            list.add(decrypt(s, key, ACCESSION_NUMBER));
-                        }
-                        params.removeAccessionNumber(list);
-                    } else if (val.trim().equals(SERIES_UID)) {
-                        if (ser == null) {
-                            params.clearAllPatients();
-                            return;
-                        }
-                        List<String> list = new ArrayList<>(ser.length);
-                        for (String s : ser) {
-                            list.add(decrypt(s, key, SERIES_UID));
-                        }
-                        params.removeSeriesUid(list);
-                    }
-                }
-
-                // Remove Patient without study
-                for (QueryResult arcConfig : params.getArchiveList()) {
-                    arcConfig.removeItemsWithoutElements();
-                }
-            }
         }
     }
 
