@@ -106,8 +106,8 @@ Go [here](https://sourceforge.net/projects/dcm4che/files/Weasis/) and download t
 
 * From weasis-pacs-connector folder:  
 	- [weasis-pacs-connector.war] Connector between the archive of images and the viewer  
-* From the folder with the latest version number (Optional if you want only run only the version installed on the client):  
-	- [weasis.war] Weasis web package which will update the local installation (for minor releases updates all the plug-ins except the launcher).    
+* From the folder with the latest version number (Optional if you want to run only the native version installed on the client system):  
+	- [weasis.war] Weasis web package which will upgrade the local installation for minor releases (all the plug-ins except the launcher).    
 	- [weasis-ext.war] Optional package for additional plug-ins (e.g. exporting the images to build an ISO image for CD/DVD)    
 	- [weasis-i18n.war] Optional package for [Weasis translations](https://nroduit.github.io/en/getting-started/translating/)    
 
