@@ -7,17 +7,13 @@
 
 package org.weasis.servlet;
 
-import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletContext;
@@ -114,14 +110,16 @@ public class GetWeasisProtocol extends HttpServlet {
                 weasisConfigUrl = props.getProperty(SERVICE_CONFIG);
             }
 
-            boolean remoteLaunchConfigDefined = weasisConfigUrl != null;
-            // NOTE : if remote config is defined then any request properties has to be delagated to the remote service instead of beeing given directly to Weasis
-            // in this case properties can be overidden by launch config remote service
+            boolean isRemoteLaunchConfigDefined = weasisConfigUrl != null;
+            // NOTE : if remote launch config is defined then any request PROPERTIES should be delegated to the remote
+            // service instead of being given directly to Weasis
 
             StringBuilder configParamBuf = new StringBuilder();
 
-            addElementWithNullValue(configParamBuf, WeasisConfig.PARAM_CODEBASE, WeasisConfig.getCodebase(request, props, false), remoteLaunchConfigDefined);
-            addElementWithNullValue(configParamBuf, WeasisConfig.PARAM_CODEBASE_EXT, WeasisConfig.getCodebase(request, props, true), remoteLaunchConfigDefined);
+            addElementWithNullValue(configParamBuf, WeasisConfig.PARAM_CODEBASE,
+                WeasisConfig.getCodebase(request, props, false), isRemoteLaunchConfigDefined);
+            addElementWithNullValue(configParamBuf, WeasisConfig.PARAM_CODEBASE_EXT,
+                WeasisConfig.getCodebase(request, props, true), isRemoteLaunchConfigDefined);
 
             params.remove(WeasisConfig.PARAM_CODEBASE);
             params.remove(WeasisConfig.PARAM_CODEBASE_EXT);
@@ -142,22 +140,22 @@ public class GetWeasisProtocol extends HttpServlet {
                 StringBuilder b = new StringBuilder(entry.getKey());
                 b.append(' ');
                 b.append(entry.getValue());
-                addElement(configParamBuf, WeasisConfig.PARAM_PROPERTY, b.toString(), remoteLaunchConfigDefined);
+                addElement(configParamBuf, WeasisConfig.PARAM_PROPERTY, b.toString(), isRemoteLaunchConfigDefined);
             }
 
             // ADD AUTHORIZATION PARAMETERS
-            addElement(configParamBuf, WeasisConfig.PARAM_AUTHORIZATION, ServletUtil.getAuthorizationValue(request), remoteLaunchConfigDefined);
+            addElement(configParamBuf, WeasisConfig.PARAM_AUTHORIZATION, ServletUtil.getAuthorizationValue(request),
+                isRemoteLaunchConfigDefined);
 
             params.remove(WeasisConfig.PARAM_AUTHORIZATION);
             params.remove("access_token");
 
-           
             // ADD WEASISCONFIG PARAMETERS >> $weasis:config "..."
             buf.append(" $weasis:config");
 
-            if (remoteLaunchConfigDefined) {
-                
-                // ADD ANY OTHER UNHANDLED PARAMETERS 
+            if (isRemoteLaunchConfigDefined) {
+
+                // ADD ANY OTHER UNHANDLED PARAMETERS
                 // note : they can be consumed as placeholders in a template engine from the remoteLaunchConfig service
                 Iterator<Entry<String, String[]>> itParams = params.entrySet().iterator();
 
@@ -166,18 +164,17 @@ public class GetWeasisProtocol extends HttpServlet {
                     String value = ServletUtil.getFirstParameter(param.getValue());
                     if (StringUtil.hasText(value))
                         value = removeEnglobingQuotes(value);
-                    addElementWithNullValue(configParamBuf, param.getKey(), value, remoteLaunchConfigDefined);
+                    addElementWithNullValue(configParamBuf, param.getKey(), value, isRemoteLaunchConfigDefined);
                     itParams.remove();
                 }
-                
+
                 // ADD weasisConfigUrl URL WITH HANDLED PARAMETERS
                 // TODO verify URL integrity
 
                 configParamBuf.replace(0, 1, "?");// replace first query separator '&' by "?"
                 weasisConfigUrl += configParamBuf.toString();
-//                addElement(buf, WeasisConfig.PARAM_CONFIG_URL, URLEncoder.encode(weasisConfigUrl, "UTF-8"));
+                // addElement(buf, WeasisConfig.PARAM_CONFIG_URL, URLEncoder.encode(weasisConfigUrl, "UTF-8"));
                 addElement(buf, WeasisConfig.PARAM_CONFIG_URL, weasisConfigUrl);
-
 
             } else {
                 // OR BUILD CUSTOM CONFIG
@@ -198,16 +195,18 @@ public class GetWeasisProtocol extends HttpServlet {
     }
 
     private static void addElementWithNullValue(StringBuilder buf, String key, String val) {
-        addElementWithNullValue(buf, key, val);
+        addElementWithNullValue(buf, key, val, false);
     }
 
-    private static void addElementWithNullValue(StringBuilder buf, String key, String val, boolean querySeparator) {
-        buf.append(querySeparator ? '&' : ' ');
+    private static void addElementWithNullValue(StringBuilder buf, String key, String val,
+        boolean isElementQueryParameter) {
+        buf.append(isElementQueryParameter ? '&' : ' ');
         buf.append(key);
         if (StringUtil.hasText(val)) {
-            buf.append("=\"");
-            buf.append(val);
-            buf.append("\"");
+            if (isElementQueryParameter)
+                buf.append("=").append(val);
+            else
+                buf.append("=\"").append(val).append("\"");
         }
     }
 
@@ -215,13 +214,14 @@ public class GetWeasisProtocol extends HttpServlet {
         addElement(buf, key, val, false);
     }
 
-    private static void addElement(StringBuilder buf, String key, String val, boolean querySeparator) {
+    private static void addElement(StringBuilder buf, String key, String val, boolean isElementQueryParameter) {
         if (StringUtil.hasText(val)) {
-            buf.append(querySeparator ? '&' : ' ');
+            buf.append(isElementQueryParameter ? '&' : ' ');
             buf.append(key);
-            buf.append("=\"");
-            buf.append(val);
-            buf.append("\"");
+            if (isElementQueryParameter)
+                buf.append("=").append(val);
+            else
+                buf.append("=\"").append(val).append("\"");
         }
     }
 
