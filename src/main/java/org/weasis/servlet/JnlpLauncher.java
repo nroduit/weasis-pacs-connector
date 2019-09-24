@@ -59,6 +59,8 @@ public class JnlpLauncher extends HttpServlet {
     protected static final String PARAM_INITIAL_HEAP_SIZE = "weasis.init.heap";
     protected static final String PARAM_MAX_HEAP_SIZE = "weasis.max.heap";
 
+    protected static final String SERVICE_CONFIG = "weasis.config.url";
+
     protected static final String PARAM_UPLOAD = "upload";
     protected static final String PARAM_SOURCE = "src";
 
@@ -163,8 +165,8 @@ public class JnlpLauncher extends HttpServlet {
             Object uploadedArg = request.getAttribute(ATTRIBUTE_UPLOADED_ARGUMENT);
 
             if (uploadedArg instanceof String) {
-                Object argValues =
-                    ServletUtil.addParameter(launcher.parameterMap.get(WeasisConfig.PARAM_ARGUMENT), (String) uploadedArg);
+                Object argValues = ServletUtil.addParameter(launcher.parameterMap.get(WeasisConfig.PARAM_ARGUMENT),
+                    (String) uploadedArg);
                 launcher.parameterMap.put(WeasisConfig.PARAM_ARGUMENT, argValues);
             }
             String launcherStr = buildJnlpResponse(launcher);
@@ -180,7 +182,8 @@ public class JnlpLauncher extends HttpServlet {
 
             ServletUtil.write(launcherStr, response.getOutputStream());
 
-            LOGGER.info("Build JNLP from template = {} and with arguments = {}", launcher.templateFileName, Arrays.toString(launcher.parameterMap.entrySet().toArray()));
+            LOGGER.info("Build JNLP from template = {} and with arguments = {}", launcher.templateFileName,
+                Arrays.toString(launcher.parameterMap.entrySet().toArray()));
         } catch (ServletErrorException e) {
             LOGGER.error("Build jnlp", e);
             ServletUtil.sendResponseError(response, e.responseErrorCode, e.getMessage());
@@ -232,9 +235,9 @@ public class JnlpLauncher extends HttpServlet {
                     templatePath = serverPath + queryLauncherPath; // supposed to be "serverPath/URI"
                 } else if (templatePath.startsWith("http")) {
                     templatePath = queryLauncherPath; // supposed to be a new valid URL for launcher template
-                }
-                else {
-                    throw new IllegalAccessError("Template path must start with \"http\" or \"/\" (relative web context)");
+                } else {
+                    throw new IllegalAccessError(
+                        "Template path must start with \"http\" or \"/\" (relative web context)");
                 }
             }
 
@@ -255,12 +258,13 @@ public class JnlpLauncher extends HttpServlet {
 
             if (templatePath.startsWith(serverPath + request.getContextPath())) {
                 String uriTemplatePath = serverPath + request.getContextPath();
-                templateURI = getServletContext().getResource("/" + templatePath.substring(uriTemplatePath.length()) + templateFileName).toURI();
+                templateURI = getServletContext()
+                    .getResource("/" + templatePath.substring(uriTemplatePath.length()) + templateFileName).toURI();
             } else {
                 if (!StringUtil.hasText(templatePath)) {
                     templateURI = getServletContext().getResource("/" + templateFileName).toURI();
                 } else {
-                    templateURI = new URI(templatePath.replaceAll(" ", "%20")  + "/" + templateFileName);
+                    templateURI = new URI(templatePath.replaceAll(" ", "%20") + "/" + templateFileName);
                 }
             }
             LOGGER.debug("locateLauncherTemplate() - URL templateURL = {}", templateURI);
@@ -333,6 +337,11 @@ public class JnlpLauncher extends HttpServlet {
                 maxHeapSize += "m";
             }
 
+            String weasisConfigUrl = request.getParameter(WeasisConfig.PARAM_CONFIG_URL);
+            if (weasisConfigUrl == null) {
+                weasisConfigUrl = props.getProperty(SERVICE_CONFIG);
+            }
+
             addWeasisParameters(queryParameterMap, codeBasePath + "/AppInfo");
 
             // Set or override following parameters
@@ -345,6 +354,8 @@ public class JnlpLauncher extends HttpServlet {
             queryParameterMap.put(PARM_SERVER_PATH, serverPath);
             queryParameterMap.put(PARM_JVM_INITIAL_HEAP_SIZE, initialHeapSize);
             queryParameterMap.put(PARM_JVM_MAX_HEAP_SIZE, maxHeapSize);
+
+            queryParameterMap.put(WeasisConfig.PARAM_CONFIG_URL, weasisConfigUrl);
 
         } catch (Exception e) {
             throw new ServletErrorException(HttpServletResponse.SC_NOT_FOUND, "", e);
@@ -411,8 +422,9 @@ public class JnlpLauncher extends HttpServlet {
         Element rootElt = null;
 
         // Assume the template has UTF-8 encoding
-        try (BufferedReader reader = new BufferedReader(
-            new InputStreamReader(launcher.realPathURL.toURL().openConnection().getInputStream(), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader =
+            new BufferedReader(new InputStreamReader(launcher.realPathURL.toURL().openConnection().getInputStream(),
+                StandardCharsets.UTF_8))) {
 
             rootElt = new SAXBuilder(XMLReaders.NONVALIDATING, null, null).build(reader).getRootElement();
         } catch (JDOMException e) {
@@ -534,7 +546,7 @@ public class JnlpLauncher extends HttpServlet {
 
                 Element applicationElt = launcher.rootElt.getChild(JNLP_TAG_ELT_APPLICATION_DESC);
                 if (applicationElt == null) {
-                   throw new IllegalStateException("JNLP TAG : <application-desc> is not found");
+                    throw new IllegalStateException("JNLP TAG : <application-desc> is not found");
                 } else {
                     filterMarkerInElement(applicationElt.getChildren(JNLP_TAG_ELT_ARGUMENT), launcher.parameterMap);
                 }
