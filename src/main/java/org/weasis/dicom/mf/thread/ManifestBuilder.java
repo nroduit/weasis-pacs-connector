@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.LangUtil;
 import org.weasis.dicom.mf.ArcQuery;
 import org.weasis.dicom.mf.QueryResult;
+import org.weasis.dicom.mf.ViewerMessage;
 import org.weasis.dicom.mf.XmlManifest;
 import org.weasis.query.CommonQueryParams;
 import org.weasis.servlet.ServletUtil;
@@ -79,9 +80,15 @@ public class ManifestBuilder implements Callable<XmlManifest> {
             long startTime = System.currentTimeMillis();
 
             ServletUtil.fillPatientList(params);
-            if (!params.hasPatients() && !params.isAcceptNoImage()) {
-                throw new IllegalStateException("Empty Patient List");
+
+            if (!params.hasPatients()) {
+                LOGGER.warn("Empty patient list");
+                if (!params.hasGeneralViewerMessage() && !params.isAcceptNoImage()) {
+                    params.addGeneralViewerMessage(new ViewerMessage("Empty Patient List",
+                        "No images have been found with given parameters ", ViewerMessage.eLevel.WARN));
+                }
             }
+
             ArcQuery wadoQuery = new ArcQuery(LangUtil.convertCollectionType(params.getArchiveList(),
                 new ArrayList<QueryResult>(), QueryResult.class));
 

@@ -20,7 +20,7 @@ import org.weasis.servlet.ServletUtil;
 
 public class CommonQueryParams {
 
-       // HTTP Request Parameters – Patient-based
+    // HTTP Request Parameters – Patient-based
     public static final String PATIENT_ID = "patientID";
     public static final String PATIENT_NAME = "patientName";
     public static final String PATIENT_BIRTHDATE = "patientBirthDate";
@@ -147,6 +147,10 @@ public class CommonQueryParams {
         if (!archiveList.isEmpty()) {
             archiveList.get(0).setViewerMessage(viewerMessage);
         }
+    }
+
+    public boolean hasGeneralViewerMessage() {
+        return archiveList.get(0).getViewerMessage() != null;
     }
 
     public boolean hasPatients() {

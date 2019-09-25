@@ -51,6 +51,13 @@ public class BuildManifest extends HttpServlet {
     }
 
     private void buildManifest(HttpServletRequest request, HttpServletResponse response) {
+        
+        response.setStatus(HttpServletResponse.SC_ACCEPTED);
+
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1
+        response.setHeader("Pragma", "no-cache"); // HTTP 1.0
+        response.setDateHeader("Expires", -1); // Proxies
+        
         try {
             if (LOGGER.isDebugEnabled()) {
                 ServletUtil.logInfo(request, LOGGER);
@@ -70,9 +77,9 @@ public class BuildManifest extends HttpServlet {
             // BUILDER IS NULL WHEN NO ALLOWED PARAMETER ARE GIVEN WHICH LEADS TO NO MANIFEST BUILT
 
             if (builder == null) {
+                // NO body in response, see: https://httpstatuses.com/204
                 response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-                response.setContentType("text/plain");
-                response.getWriter().print("No allowed parameter have been given to build a manifest");
+                response.setHeader("Cause", "No allowed parameters have been given to build a manifest");
             } else {
                 String wadoQueryUrl = ServletUtil.buildManifestURL(request, builder, props, gzip);
                 wadoQueryUrl = response.encodeRedirectURL(wadoQueryUrl);
