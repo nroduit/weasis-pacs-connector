@@ -20,13 +20,7 @@ import org.weasis.servlet.ServletUtil;
 
 public class CommonQueryParams {
 
-    // Non IID request parameters
-    public static final String SERIES_UID = "seriesUID";
-    public static final String OBJECT_UID = "objectUID";
-
-    /* IHE Radiology Technical Framework Supplement – Invoke Image Display (IID) */
-    // HTTP Request Parameters – Patient-based
-    public static final String REQUEST_TYPE = "requestType";
+       // HTTP Request Parameters – Patient-based
     public static final String PATIENT_ID = "patientID";
     public static final String PATIENT_NAME = "patientName";
     public static final String PATIENT_BIRTHDATE = "patientBirthDate";
@@ -43,6 +37,13 @@ public class CommonQueryParams {
     // HTTP Request Parameters – Study-based
     public static final String STUDY_UID = "studyUID";
     public static final String ACCESSION_NUMBER = "accessionNumber";
+
+    // Non IID request parameters
+    public static final String SERIES_UID = "seriesUID";
+    public static final String OBJECT_UID = "objectUID";
+
+    /* IHE Radiology Technical Framework Supplement – Invoke Image Display (IID) */
+    public static final String REQUEST_TYPE = "requestType";
 
     // Well-Known Values for Viewer Type Parameter
     public static final String IHE_BIR = "IHE_BIR";

@@ -71,8 +71,9 @@ public class GetWeasisProtocol extends HttpServlet {
             }
 
             ConnectorProperties props = connectorProperties.getResolveConnectorProperties(request);
+            StringBuilder buf = new StringBuilder();
 
-            // BUILD WADO MANIFEST FROM WORKERTHREAD AND GET URL TO RETRIEVE IT LATER
+            // BUILD WADO MANIFEST FROM WORKERTHREAD AND GET WADO QUERY URL TO RETRIEVE IT LATER
 
             ManifestBuilder builder;
             if (manifest == null) {
@@ -80,21 +81,25 @@ public class GetWeasisProtocol extends HttpServlet {
             } else {
                 builder = ServletUtil.buildManifest(request, new ManifestBuilder(manifest));
             }
-            String wadoQueryUrl = ServletUtil.buildManifestURL(request, builder, props, true);
-            wadoQueryUrl = response.encodeRedirectURL(wadoQueryUrl);
 
-            // ADD WADO MANIFEST PARAMETER >> $dicom:get -w "..."
+            // BUILDER IS NULL WHEN NO ALLOWED PARAMETER ARE GIVEN WHICH LEADS TO NO MANIFEST BUILT
 
-            StringBuilder buf = new StringBuilder();
-            int startIndex = wadoQueryUrl.indexOf(':');
-            if (startIndex > 0) {
-                buf.append("$dicom:get -w \"");
-            } else {
-                throw new IllegalStateException("Cannot not get a valid manifest URL " + wadoQueryUrl);
+            if (builder != null) {
+                String wadoQueryUrl = ServletUtil.buildManifestURL(request, builder, props, true);
+                wadoQueryUrl = response.encodeRedirectURL(wadoQueryUrl);
+
+                // ADD WADO MANIFEST PARAMETER >> $dicom:get -w "..."
+
+                int startIndex = wadoQueryUrl.indexOf(':');
+                if (startIndex > 0) {
+                    buf.append("$dicom:get -w \"");
+                } else {
+                    throw new IllegalStateException("Cannot not get a valid manifest URL " + wadoQueryUrl);
+                }
+                buf.append(wadoQueryUrl);
+                buf.append("\"");
             }
-            buf.append(wadoQueryUrl);
-            buf.append("\"");
-
+            
             //// HANDLE REQUEST PARAMETERS
 
             Map<String, String[]> params = new LinkedHashMap<>(request.getParameterMap());

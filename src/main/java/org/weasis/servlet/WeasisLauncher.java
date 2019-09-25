@@ -41,7 +41,7 @@ import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.dicom.mf.thread.ManifestManagerThread;
 import org.weasis.query.CommonQueryParams;
 
-@WebServlet(urlPatterns = {"/viewer"} )
+@WebServlet(urlPatterns = { "/viewer" })
 public class WeasisLauncher extends HttpServlet {
 
     private static final long serialVersionUID = 7933047406409849509L;
@@ -184,21 +184,26 @@ public class WeasisLauncher extends HttpServlet {
             } else {
                 builder = ServletUtil.buildManifest(request, new ManifestBuilder(manifest));
             }
-            if (embeddedManifest) {
-                Future<XmlManifest> future = builder.getFuture();
-                XmlManifest xml = future.get(ManifestManagerThread.MAX_LIFE_CYCLE, TimeUnit.MILLISECONDS);
-                StringBuilder buf = new StringBuilder("$dicom:get -i ");
-                buf.append(Base64.getEncoder().encode(GzipManager
-                    .gzipCompressToByte(xml.xmlManifest((String) props.get("manifest.version")).getBytes())));
 
-                request.setAttribute(JnlpLauncher.ATTRIBUTE_UPLOADED_ARGUMENT, buf.toString());
-                // Remove the builder as it has been retrieved without calling RequestManifest servlet
-                final ConcurrentHashMap<Integer, ManifestBuilder> builderMap =
-                    (ConcurrentHashMap<Integer, ManifestBuilder>) ctx.getAttribute("manifestBuilderMap");
-                builderMap.remove(builder.getRequestId());
-                LOGGER.info("Embedding a ManifestBuilder with key={}", builder.getRequestId());
-            } else {
-                return ServletUtil.buildManifestURL(request, builder, props, true);
+            // BUILDER IS NULL WHEN NO ALLOWED PARAMETER ARE GIVEN WHICH LEADS TO NO MANIFEST BUILT
+
+            if (builder != null) {
+                if (embeddedManifest) {
+                    Future<XmlManifest> future = builder.getFuture();
+                    XmlManifest xml = future.get(ManifestManagerThread.MAX_LIFE_CYCLE, TimeUnit.MILLISECONDS);
+                    StringBuilder buf = new StringBuilder("$dicom:get -i ");
+                    buf.append(Base64.getEncoder().encode(GzipManager
+                        .gzipCompressToByte(xml.xmlManifest((String) props.get("manifest.version")).getBytes())));
+
+                    request.setAttribute(JnlpLauncher.ATTRIBUTE_UPLOADED_ARGUMENT, buf.toString());
+                    // Remove the builder as it has been retrieved without calling RequestManifest servlet
+                    final ConcurrentHashMap<Integer, ManifestBuilder> builderMap =
+                        (ConcurrentHashMap<Integer, ManifestBuilder>) ctx.getAttribute("manifestBuilderMap");
+                    builderMap.remove(builder.getRequestId());
+                    LOGGER.info("Embedding a ManifestBuilder with key={}", builder.getRequestId());
+                } else {
+                    return ServletUtil.buildManifestURL(request, builder, props, true);
+                }
             }
         }
         return "";

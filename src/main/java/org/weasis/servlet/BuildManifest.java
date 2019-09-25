@@ -67,14 +67,23 @@ public class BuildManifest extends HttpServlet {
             boolean gzip = request.getParameter("gzip") != null;
 
             ManifestBuilder builder = ServletUtil.buildManifest(request, props);
-            String wadoQueryUrl = ServletUtil.buildManifestURL(request, builder, props, gzip);
-            wadoQueryUrl = response.encodeRedirectURL(wadoQueryUrl);
-            response.setStatus(HttpServletResponse.SC_OK);
-            if (request.getParameter("url") != null) {
-                response.setContentType("text/xml");
-                response.getWriter().print(wadoQueryUrl);
+            // BUILDER IS NULL WHEN NO ALLOWED PARAMETER ARE GIVEN WHICH LEADS TO NO MANIFEST BUILT
+
+            if (builder == null) {
+                response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                response.setContentType("text/plain");
+                response.getWriter().print("No allowed parameter have been given to build a manifest");
             } else {
-                response.sendRedirect(wadoQueryUrl);
+                String wadoQueryUrl = ServletUtil.buildManifestURL(request, builder, props, gzip);
+                wadoQueryUrl = response.encodeRedirectURL(wadoQueryUrl);
+                response.setStatus(HttpServletResponse.SC_OK);
+
+                if (request.getParameter("url") != null) {
+                    response.setContentType("text/xml");
+                    response.getWriter().print(wadoQueryUrl);
+                } else {
+                    response.sendRedirect(wadoQueryUrl);
+                }
             }
 
         } catch (Exception e) {

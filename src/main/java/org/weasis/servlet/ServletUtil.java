@@ -25,9 +25,8 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -42,7 +41,6 @@ import org.dcm4che3.util.TagUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.StringUtil;
-import org.weasis.dicom.mf.QueryResult;
 import org.weasis.dicom.mf.ViewerMessage;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.query.AbstractQueryConfiguration;
@@ -175,73 +173,119 @@ public class ServletUtil {
         logger.debug("HttpServletRequest - getServletPath: {}", request.getServletPath());
     }
 
-    public static void fillPatientList(CommonQueryParams params) {
+    public static boolean isQueryBuildRequired(CommonQueryParams params) {
+        return fillPatientList(params, false);
+    }
+
+    public static boolean fillPatientList(CommonQueryParams params) {
+        return fillPatientList(params, true);
+    }
+
+    /**
+     * @param params
+     * @param doBuildQuery
+     *            if FALSE only checks if it's worth calling this function again to build the query
+     * @return TRUE if building the query is required, that is calling again this function with param doBuildQuery=TRUE
+     */
+    public static boolean fillPatientList(CommonQueryParams params, final boolean doBuildQuery) {
+
         try {
             Properties properties = params.getProperties();
             String key = properties.getProperty("encrypt.key", null);
             String requestType = params.getRequestType();
 
+            // Handle IHE_BIR (Basic Image Review) viewerType parameters
+            // Implemented as described in the IHE-RAD-IID (Invoke Image Display) profile
+
             if (STUDY_LEVEL.equals(requestType) && isRequestIDAllowed(STUDY_LEVEL, properties)) {
+                if (!doBuildQuery)
+                    return true;
+
                 String stuID = params.getReqStudyUID();
                 String anbID = params.getReqAccessionNumber();
-                if (StringUtil.hasText(anbID)) {
+                if (hasText(anbID)) {
                     String val = ServletUtil.decrypt(anbID, key, ACCESSION_NUMBER);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromStudyAccessionNumber(params, val);
                     }
-                } else if (StringUtil.hasText(stuID)) {
+                } else if (hasText(stuID)) {
                     String val = ServletUtil.decrypt(stuID, key, STUDY_UID);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromStudyInstanceUID(params, val);
                     }
                 } else {
-                    LOGGER.error("Not ID found for STUDY request type: {}", requestType);
+                    LOGGER.error("No ID found for STUDY request type: {}", requestType);
                     params.addGeneralViewerMessage(new ViewerMessage("Missing Study ID",
                         "No study ID found in the request", ViewerMessage.eLevel.ERROR));
                 }
+
             } else if (PATIENT_LEVEL.equals(requestType) && isRequestIDAllowed(PATIENT_LEVEL, properties)) {
+                if (!doBuildQuery)
+                    return true;
+
                 String patID = params.getReqPatientID();
-                if (StringUtil.hasText(patID)) {
+                if (hasText(patID)) {
                     String val = ServletUtil.decrypt(patID, key, PATIENT_ID);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromPatientID(params, val);
                     }
+                } else {
+                    LOGGER.error("No ID found for PATIENT request type: {}", requestType);
+                    params.addGeneralViewerMessage(new ViewerMessage("Missing Patient ID",
+                        "No patient ID found in the request", ViewerMessage.eLevel.ERROR));
                 }
             } else if (requestType != null) {
+                if (!doBuildQuery)
+                    return true;
+
                 LOGGER.error("Not supported IID request type: {}", requestType);
                 params.addGeneralViewerMessage(new ViewerMessage("Unexpected Request",
                     "IID request type: " + requestType, ViewerMessage.eLevel.ERROR));
-            } else {
+            }
+
+            // IF request doesn't fit IHEInvokeImageDisplay profile use pacsconnector's parameters
+            else {
                 String[] pat = params.getReqPatientIDs();
                 String[] stu = params.getReqStudyUIDs();
                 String[] anb = params.getReqAccessionNumbers();
                 String[] ser = params.getReqSeriesUIDs();
                 String[] obj = params.getReqObjectUIDs();
-                if (obj != null && obj.length > 0 && isRequestIDAllowed(OBJECT_UID, properties)) {
+
+                if (hasText(obj) && isRequestIDAllowed(OBJECT_UID, properties)) {
+                    if (!doBuildQuery)
+                        return true;
                     String[] val = decrypt(obj, key, OBJECT_UID);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromSopInstanceUID(params, val);
                     }
                 }
-                if (ser != null && ser.length > 0 && isRequestIDAllowed(SERIES_UID, properties)) {
+                if (hasText(ser) && isRequestIDAllowed(SERIES_UID, properties)) {
+                    if (!doBuildQuery)
+                        return true;
                     String[] val = decrypt(ser, key, SERIES_UID);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromSeriesInstanceUID(params, val);
                     }
                 }
-                if (anb != null && anb.length > 0 && isRequestIDAllowed(ACCESSION_NUMBER, properties)) {
+                if (hasText(anb) && isRequestIDAllowed(ACCESSION_NUMBER, properties)) {
+                    if (!doBuildQuery)
+                        return true;
                     String[] val = decrypt(anb, key, ACCESSION_NUMBER);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromStudyAccessionNumber(params, val);
                     }
                 }
-                if (stu != null && stu.length > 0 && isRequestIDAllowed(STUDY_UID, properties)) {
+                if (hasText(stu) && isRequestIDAllowed(STUDY_UID, properties)) {
+                    if (!doBuildQuery)
+                        return true;
                     String[] val = decrypt(stu, key, STUDY_UID);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromStudyInstanceUID(params, val);
                     }
                 }
-                if (pat != null && pat.length > 0 && isRequestIDAllowed(PATIENT_ID, properties)) {
+                if (hasText(pat) && isRequestIDAllowed(PATIENT_ID, properties)) {
+                    if (!doBuildQuery)
+                        return true;
                     String[] val = decrypt(pat, key, PATIENT_ID);
                     for (AbstractQueryConfiguration query : params.getArchiveList()) {
                         query.buildFromPatientID(params, val);
@@ -253,6 +297,12 @@ public class ServletUtil {
             params.addGeneralViewerMessage(new ViewerMessage("Unexpected Error",
                 "Unexpected Error when building the manifest: " + e.getMessage(), ViewerMessage.eLevel.ERROR));
         }
+
+        return false;
+    }
+
+    static boolean hasText(String... str) {
+        return Objects.nonNull(str) && Arrays.stream(str).filter(s -> StringUtil.hasText(s)).count() > 0;
     }
 
     static String decrypt(String message, String key, String level) {
@@ -304,7 +354,12 @@ public class ServletUtil {
     }
 
     public static ManifestBuilder buildManifest(HttpServletRequest request, ConnectorProperties props) {
-        return buildManifest(request, new ManifestBuilder(new CommonQueryParams(request, props)));
+        CommonQueryParams params = new CommonQueryParams(request, props);
+
+        if (ServletUtil.isQueryBuildRequired(params))
+            return buildManifest(request, new ManifestBuilder(params));
+        else
+            return null;
     }
 
     public static ManifestBuilder buildManifest(HttpServletRequest request, ManifestBuilder builder) {
