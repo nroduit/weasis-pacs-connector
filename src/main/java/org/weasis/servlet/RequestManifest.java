@@ -119,6 +119,8 @@ public class RequestManifest extends HttpServlet {
 
         Boolean gzip = request.getParameter(PARAM_NO_GZIP) == null;
 
+        response.setStatus(HttpServletResponse.SC_OK);
+
         if (gzip) {
             try {
                 OutputStream outputStream = response.getOutputStream();
@@ -149,6 +151,5 @@ public class RequestManifest extends HttpServlet {
             }
         }
 
-        response.setStatus(HttpServletResponse.SC_OK);
     }
 }

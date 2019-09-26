@@ -109,6 +109,8 @@ public class WeasisConfig extends HttpServlet {
 
         Boolean gzip = request.getParameter(PARAM_NO_GZIP) == null;
 
+        response.setStatus(HttpServletResponse.SC_OK);
+        
         if (gzip) {
             try {
                 OutputStream outputStream = response.getOutputStream();
@@ -139,7 +141,7 @@ public class WeasisConfig extends HttpServlet {
             }
         }
 
-        response.setStatus(HttpServletResponse.SC_OK);
+        
     }
 
     private void handleRequestArgumentParameter(List<String> arguments, Map<String, String[]> params) {
