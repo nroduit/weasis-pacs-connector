@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -542,13 +543,18 @@ public class JnlpLauncher extends HttpServlet {
                     throw new IllegalStateException("JNLP TAG : <" + JNLP_TAG_ELT_RESOURCES + "> is not found");
                 }
 
-                filterMarkerInAttribute(resourcesElt.getChildren(), launcher.parameterMap);
+                ConnectorProperties props =
+                    (ConnectorProperties) this.getServletContext().getAttribute("componentProperties");
+                Boolean allowEmptyMarker = Boolean.parseBoolean(props.getProperty("jnlp.allow.empty.marker"));
+
+                filterMarkerInAttribute(resourcesElt.getChildren(), launcher.parameterMap, allowEmptyMarker);
 
                 Element applicationElt = launcher.rootElt.getChild(JNLP_TAG_ELT_APPLICATION_DESC);
                 if (applicationElt == null) {
                     throw new IllegalStateException("JNLP TAG : <application-desc> is not found");
                 } else {
-                    filterMarkerInElement(applicationElt.getChildren(JNLP_TAG_ELT_ARGUMENT), launcher.parameterMap);
+                    filterMarkerInElement(applicationElt.getChildren(JNLP_TAG_ELT_ARGUMENT), launcher.parameterMap,
+                        allowEmptyMarker);
                 }
 
             } catch (Exception e) {
@@ -559,6 +565,11 @@ public class JnlpLauncher extends HttpServlet {
     }
 
     static void filterMarkerInAttribute(List<Element> eltList, Map<String, Object> parameterMap) {
+        filterMarkerInAttribute(eltList, parameterMap, false);
+    }
+
+    static void filterMarkerInAttribute(List<Element> eltList, Map<String, Object> parameterMap,
+        boolean allowEmptyMarker) {
 
         final Pattern patternMarker = Pattern.compile("\\$\\{([^}]+)\\}"); // matching pattern is "${..}"
 
@@ -575,6 +586,10 @@ public class JnlpLauncher extends HttpServlet {
                     String marker = matcher.group(0); // full pattern matched "${..}"
                     String markerName = matcher.group(1); // get only text between curly braces
                     String parameterValue = ServletUtil.getFirstParameter(parameterMap.get(markerName));
+
+                    if (parameterValue == null && allowEmptyMarker)
+                        parameterValue = "";
+
                     if (parameterValue != null) {
                         attributeValue = attributeValue.replace(marker, parameterValue);
                         attribute.setValue(attributeValue);
@@ -588,6 +603,11 @@ public class JnlpLauncher extends HttpServlet {
     }
 
     static void filterMarkerInElement(List<Element> eltList, Map<String, Object> parameterMap) {
+        filterMarkerInElement(eltList, parameterMap, false);
+    }
+
+    static void filterMarkerInElement(List<Element> eltList, Map<String, Object> parameterMap,
+        boolean allowEmptyMarker) {
         final Pattern patternMarker = Pattern.compile("\\$\\{([^}]+)\\}"); // matching pattern is "${..}"
 
         for (Element elt : eltList) {
@@ -602,6 +622,9 @@ public class JnlpLauncher extends HttpServlet {
                 String marker = matcher.group(0); // full pattern matched "${..}"
                 String markerName = matcher.group(1); // get only text between curly braces
                 String parameterValue = ServletUtil.getFirstParameter(parameterMap.get(markerName));
+
+                if (parameterValue == null && allowEmptyMarker)
+                    parameterValue = "";
 
                 if (parameterValue != null) {
                     elementValue = elementValue.replace(marker, parameterValue);
