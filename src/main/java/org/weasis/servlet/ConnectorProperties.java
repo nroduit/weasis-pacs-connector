@@ -21,15 +21,15 @@ public class ConnectorProperties extends Properties {
     public static final String CONFIG_FILENAME = "config.filename";
     public static final String MANIFEST_VERSION = "mfv";
 
-    private final List<Properties> list;
+    private final List<Properties> arcList;
 
     public ConnectorProperties() {
-        list = new ArrayList<>();
+        arcList = new ArrayList<>();
     }
 
     public ConnectorProperties(Properties defaults) {
         super(defaults);
-        list = new ArrayList<>();
+        arcList = new ArrayList<>();
     }
 
     @Override
@@ -37,10 +37,10 @@ public class ConnectorProperties extends Properties {
         if (o instanceof ConnectorProperties) {
             ConnectorProperties c = (ConnectorProperties) o;
             boolean identical = super.equals(c);
-            if (identical && c.list.size() == list.size()) {
-                for (int i = 0; i < list.size(); i++) {
-                    Object oa = list.get(i);
-                    Object ob = c.list.get(i);
+            if (identical && c.arcList.size() == arcList.size()) {
+                for (int i = 0; i < arcList.size(); i++) {
+                    Object oa = arcList.get(i);
+                    Object ob = c.arcList.get(i);
                     // Handle both are null
                     if (oa == null && ob == null) {
                         continue;
@@ -59,25 +59,25 @@ public class ConnectorProperties extends Properties {
     @Override
     public synchronized int hashCode() {
         int code = super.hashCode();
-        for (Properties p : list) {
+        for (Properties p : arcList) {
             code ^= p.hashCode();
         }
         return code;
     }
 
     public void addArchiveProperties(Properties archiveProps) {
-        list.add(archiveProps);
+        arcList.add(archiveProps);
     }
 
     public List<Properties> getArchivePropertiesList() {
-        return Collections.unmodifiableList(list);
+        return Collections.unmodifiableList(arcList);
     }
 
     public ConnectorProperties getDeepCopy() {
         ConnectorProperties newObject = new ConnectorProperties();
         newObject.putAll(this);
-        for (Properties properties : list) {
-            newObject.list.add((Properties) properties.clone());
+        for (Properties properties : arcList) {
+            newObject.arcList.add((Properties) properties.clone());
         }
         return newObject;
     }
@@ -99,7 +99,7 @@ public class ConnectorProperties extends Properties {
 
         dynamicProps.putAll(extProps);
 
-        for (Properties dynProps : dynamicProps.list) {
+        for (Properties dynProps : dynamicProps.arcList) {
             // Perform variable substitution for system properties.
             for (Enumeration<?> e = dynProps.propertyNames(); e.hasMoreElements();) {
                 String name = (String) e.nextElement();
