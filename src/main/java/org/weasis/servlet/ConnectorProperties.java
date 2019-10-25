@@ -85,13 +85,21 @@ public class ConnectorProperties extends Properties {
     public ConnectorProperties getResolveConnectorProperties(HttpServletRequest request) {
         Properties extProps = new Properties();
         boolean canonical = LangUtil.getEmptytoFalse(this.getProperty("server.canonical.hostname.mode"));
+
         String serverHost = ServletUtil.getServerHost(request, canonical);
         extProps.put("server.host", serverHost);
-        extProps.put("server.base.url", request.getScheme() + "://" + serverHost + ":" + request.getServerPort());
+
+        String serverBaseUrl = request.getScheme() + "://" + serverHost + ":" + request.getServerPort();
+        extProps.put("server.base.url", serverBaseUrl);
+
+        String applicationContextUrl = serverBaseUrl + request.getContextPath();
+        extProps.put("application.context.url", applicationContextUrl);
+
+        // TODO extProps should be set only once in ManifestManager.contextInitialized() from context.getServerInfo()
 
         ConnectorProperties dynamicProps = getDeepCopy();
 
-        // Perform variable substitution for system properties.
+        // Perform variable substitution with System OR configProps OR extProps properties
         for (Enumeration<?> e = this.propertyNames(); e.hasMoreElements();) {
             String name = (String) e.nextElement();
             dynamicProps.setProperty(name, substVars(this.getProperty(name), name, null, this, extProps));
@@ -99,12 +107,13 @@ public class ConnectorProperties extends Properties {
 
         dynamicProps.putAll(extProps);
 
+        // Perform variable substitution for archive properties with System OR configProps OR extProps properties
         for (Properties dynProps : dynamicProps.arcList) {
-            // Perform variable substitution for system properties.
             for (Enumeration<?> e = dynProps.propertyNames(); e.hasMoreElements();) {
                 String name = (String) e.nextElement();
                 dynProps.setProperty(name, substVars(dynProps.getProperty(name), name, null, dynProps, extProps));
             }
+            // TODO should archive property substitution be applpied any time getResolveConnectorProperties is called ??
         }
 
         String manifestVersion = request.getParameter(MANIFEST_VERSION);
