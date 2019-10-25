@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<jnlp spec="1.6+" version="" codebase="">
+	<information>
+		<title>Weasis</title>
+		<vendor>Weasis Team</vendor>
+
+		<description>DICOM images viewer</description>
+		<description kind="short">An application to visualize and analyze DICOM images.</description>
+
+		<description kind="one-line">DICOM images viewer</description>
+		<description kind="tooltip">Weasis</description>
+	</information>
+
+	<security>
+		<all-permissions />
+	</security>
+
+	<resources>
+		<!-- Requires Java SE 8 for Weasis 2.5 and superior -->
+		<java version="9+" href="http://java.sun.com/products/autodl/j2se" java-vm-args="--add-modules java.xml.bind --add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED --add-exports=java.base/sun.net.www.protocol.https=ALL-UNNAMED --add-exports=java.base/sun.net.www.protocol.file=ALL-UNNAMED --add-exports=java.base/sun.net.www.protocol.ftp=ALL-UNNAMED --add-exports=java.base/sun.net.www.protocol.jar=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.security=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.desktop/javax.imageio.stream=ALL-UNNAMED --add-opens=java.desktop/javax.imageio=ALL-UNNAMED --add-opens=java.desktop/com.sun.awt=ALL-UNNAMED" initial-heap-size="${ihs}" max-heap-size="${mhs}" />
+		<java version="9+" java-vm-args="--add-modules java.xml.bind --add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED --add-exports=java.base/sun.net.www.protocol.https=ALL-UNNAMED --add-exports=java.base/sun.net.www.protocol.file=ALL-UNNAMED --add-exports=java.base/sun.net.www.protocol.ftp=ALL-UNNAMED --add-exports=java.base/sun.net.www.protocol.jar=ALL-UNNAMED --add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.security=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.desktop/javax.imageio.stream=ALL-UNNAMED --add-opens=java.desktop/javax.imageio=ALL-UNNAMED --add-opens=java.desktop/com.sun.awt=ALL-UNNAMED" initial-heap-size="${ihs}" max-heap-size="${mhs}" />
+		<j2se version="1.8+" href="http://java.sun.com/products/autodl/j2se" initial-heap-size="${ihs}" max-heap-size="${mhs}" />
+		<j2se version="1.8+" initial-heap-size="${ihs}" max-heap-size="${mhs}" />
+
+		<jar href="${cdb}/weasis-launcher${profile}.jar" main="true" version="${app.version}"/>
+		<jar href="${cdb}/felix.jar" version="${felix.framework.version}"/>
+		<jar href="${cdb}/substance.jar" version="${substance.version}"/>
+		
+		<!-- Avoiding Unnecessary Update Checks -->
+		<property name="jnlp.versionEnabled" value="${jnlp.jar.version}"/>
+
+		<!-- Allows to get files in pack200 compression, only since Weasis 1.1.2 -->
+		<property name="jnlp.packEnabled" value="true" />
+
+		<!-- Define the location of the weasis config service -->
+		<!--<property name="jnlp.weasis.weasis.config.url" value="${wcfg}?user=${user}&amp;profile=${profile}" />-->
+
+	</resources>
+
+	<application-desc main-class="org.weasis.launcher.WebstartLauncher">
+		<!-- Define the location of the weasis config service -->
+		<argument>$weasis:config wcfg=${wcfg}?pro=weasis.user+${user}</argument>
+	</application-desc>
+</jnlp>
