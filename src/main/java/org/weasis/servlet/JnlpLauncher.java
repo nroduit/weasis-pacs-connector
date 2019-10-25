@@ -27,8 +27,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -319,8 +321,18 @@ public class JnlpLauncher extends HttpServlet {
             // Get other parameters
             queryParameterMap = new HashMap<>(request.getParameterMap());
 
-            ConnectorProperties props =
-                (ConnectorProperties) this.getServletContext().getAttribute("componentProperties");
+            ServletContext ctx = request.getSession().getServletContext();
+            ConnectorProperties connectorProperties = (ConnectorProperties) ctx.getAttribute("componentProperties");
+
+            ConnectorProperties props = connectorProperties.getResolveConnectorProperties(request);
+
+            // Set queryParameterMap with "weasis.*" connectorProperties for JnlpTemplate
+
+            Map<String, String> weasisConnectorPropertyMap =
+                props.entrySet().stream().filter(p -> ((String) p.getKey()).startsWith("weasis."))
+                    .collect(Collectors.toMap(e -> String.valueOf(e.getKey()), e -> String.valueOf(e.getValue())));
+
+            queryParameterMap.putAll(weasisConnectorPropertyMap);
 
             String initialHeapSize = request.getParameter(PARM_JVM_INITIAL_HEAP_SIZE);
             if (initialHeapSize == null) {
