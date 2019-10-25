@@ -59,8 +59,12 @@
 		<!-- Optional parameter. Allows to get plug-ins translations -->
 		<property name="jnlp.weasis.weasis.i18n" value="${cdb}/../weasis-i18n" />
 
-		<!-- Optional Weasis Documentation -->
-		<!-- <property name="jnlp.weasis.weasis.help.url" value="${cdb}/../weasis-doc" /> -->
+		<!-- Optional Weasis Documentation, appears in the menu Help > User Manual -->
+		<!-- <property name="jnlp.weasis.weasis.help.url" value="${weasis.help.url}" /> -->
+		
+		<!-- Optional parameter. Define the Weasis Preference Server -->
+    	<!--<property name="jnlp.weasis.weasis.pref.url" value="${weasis.pref.url}"/>-->
+		
 	</resources>
 
 	<application-desc main-class="org.weasis.launcher.WebstartLauncher">
