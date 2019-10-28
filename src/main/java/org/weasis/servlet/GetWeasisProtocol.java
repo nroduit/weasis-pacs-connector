@@ -131,7 +131,7 @@ public class GetWeasisProtocol extends HttpServlet {
                 weasisBaseUrl = getCodeBaseFromConnectorProperties(props);
             }
             params.remove(WeasisConfig.PARAM_CODEBASE);
-            addElement(configParamBuf, WeasisConfig.PARAM_CODEBASE, weasisBaseUrl, isRemoteLaunchConfigDefined);
+            addElementWithNullValue(configParamBuf, WeasisConfig.PARAM_CODEBASE, weasisBaseUrl, isRemoteLaunchConfigDefined);
 
             // GET weasisExtUrl FROM REQUEST ARGUMENTS
             String weasisExtUrl = getCodeBaseExtFromRequest(request);
@@ -141,7 +141,7 @@ public class GetWeasisProtocol extends HttpServlet {
                 weasisExtUrl = getCodeBaseExtFromConnectorProperties(props);
             }
             params.remove(WeasisConfig.PARAM_CODEBASE_EXT);
-            addElement(configParamBuf, WeasisConfig.PARAM_CODEBASE_EXT, weasisExtUrl, isRemoteLaunchConfigDefined);
+            addElementWithNullValue(configParamBuf, WeasisConfig.PARAM_CODEBASE_EXT, weasisExtUrl, isRemoteLaunchConfigDefined);
 
             // GET PROPERTIES PARAMETERS FROM REQUEST ARGUMENTS
             Map<String, String> properties = getPropertiesFromRequestParameters(params);
