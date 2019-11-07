@@ -38,8 +38,8 @@ public class GetWeasisProtocol extends HttpServlet {
 
     private static final String CODEBASE_PROPERTY = "weasis.base.url";
     private static final String CODEBASE_EXT_PROPERTY = "weasis.ext.url";
-    private static final String SERVICE_CONFIG = "weasis.config.url";
-    private static final String SERVICE_PREFS = "weasis.pref.url";
+    private static final String SERVICE_CONFIG_PROPERTY = "weasis.config.url";
+    private static final String SERVICE_PREFS_PROPERTY = "weasis.pref.url";
 
     public GetWeasisProtocol() {
         super();
@@ -66,7 +66,8 @@ public class GetWeasisProtocol extends HttpServlet {
             }
 
             ServletContext ctx = request.getSession().getServletContext();
-            ConnectorProperties connectorProperties = (ConnectorProperties) ctx.getAttribute("componentProperties");
+            final ConnectorProperties connectorProperties =
+                (ConnectorProperties) ctx.getAttribute("componentProperties");
             // Check if the source of this request is allowed
             if (!ServletUtil.isRequestAllowed(request, connectorProperties, LOGGER)) {
                 return;
@@ -106,61 +107,77 @@ public class GetWeasisProtocol extends HttpServlet {
 
             Map<String, String[]> params = new LinkedHashMap<>(request.getParameterMap());
 
+            // GET PROPERTIES PARAMETERS FROM REQUEST PARAMETERS
+            Map<String, String> requestProperties = getPropertiesFromRequestParameters(params);
+
             // ADD ARGUMENTS PARAMETERS
             handleRequestParameters(buf, params, WeasisConfig.PARAM_ARGUMENT);
 
-            // GET weasisConfigUrl FROM REQUEST ARGUMENTS
+            // GET weasisConfigUrl FROM REQUEST PARAMETERS
             String weasisConfigUrl = ServletUtil.getFirstParameter(params.remove(WeasisConfig.PARAM_CONFIG_URL));
 
+            String weasisConfigUrlProp = requestProperties.remove(SERVICE_CONFIG_PROPERTY);
+            if (weasisConfigUrl == null)
+                weasisConfigUrl = weasisConfigUrlProp;
+
             // OR GET weasisConfigUrl FROM CONNECTOR'S CONFIGURATION
-            if (!StringUtil.hasText(weasisConfigUrl)) {
-                weasisConfigUrl = props.getProperty(SERVICE_CONFIG);
+            if (weasisConfigUrl == null) { // request argument with empty value overrides connector's configuration
+                weasisConfigUrl = props.getProperty(SERVICE_CONFIG_PROPERTY);
             }
 
-            boolean isRemoteLaunchConfigDefined = (weasisConfigUrl != null);
-            // NOTE : if remote launch config is defined then any request PROPERTIES should be delegated to the remote
-            // service instead of being given directly to Weasis, but
+            boolean isRemoteLaunchConfigDefined = StringUtil.hasText(weasisConfigUrl);
+            // NOTE : if remote launch config is defined then any request PROPERTIES would be delegated to the remote
+            // service instead of being forwarded to Weasis
 
             StringBuilder configParamBuf = new StringBuilder();
 
-            // GET weasisBaseUrl FROM REQUEST ARGUMENTS
+            // GET weasisBaseUrl FROM REQUEST PARAMETERS
             String weasisBaseUrl = getCodeBaseFromRequest(request);
+            params.remove(WeasisConfig.PARAM_CODEBASE);
+
+            String weasisBaseUrlProp = requestProperties.remove(CODEBASE_PROPERTY);
+            if (weasisBaseUrl == null)
+                weasisBaseUrl = weasisBaseUrlProp;
 
             // OR GET weasisBaseUrl FROM CONNECTOR'S CONFIGURATION IF REMOTE LAUNCH CONFIG IS NOT DEFINED
-            if (!isRemoteLaunchConfigDefined && !StringUtil.hasText(weasisBaseUrl)) {
+            if (weasisBaseUrl == null && !isRemoteLaunchConfigDefined) {
                 weasisBaseUrl = getCodeBaseFromConnectorProperties(props);
             }
-            params.remove(WeasisConfig.PARAM_CODEBASE);
-            addElementWithNullValue(configParamBuf, WeasisConfig.PARAM_CODEBASE, weasisBaseUrl, isRemoteLaunchConfigDefined);
+            addElementWithEmptyValue(configParamBuf, WeasisConfig.PARAM_CODEBASE, weasisBaseUrl,
+                isRemoteLaunchConfigDefined);
 
-            // GET weasisExtUrl FROM REQUEST ARGUMENTS
+            // GET weasisExtUrl FROM REQUEST PARAMETERS
             String weasisExtUrl = getCodeBaseExtFromRequest(request);
+            params.remove(WeasisConfig.PARAM_CODEBASE_EXT);
+
+            String weasisExtUrlProp = requestProperties.remove(CODEBASE_EXT_PROPERTY);
+            if (weasisExtUrl == null)
+                weasisExtUrl = weasisExtUrlProp;
 
             // OR GET weasisExtUrl FROM CONNECTOR'S CONFIGURATION IF REMOTE LAUNCH CONFIG IS NOT DEFINED
-            if (!isRemoteLaunchConfigDefined && !StringUtil.hasText(weasisExtUrl)) {
+            if (weasisExtUrl == null && !isRemoteLaunchConfigDefined) {
                 weasisExtUrl = getCodeBaseExtFromConnectorProperties(props);
             }
-            params.remove(WeasisConfig.PARAM_CODEBASE_EXT);
-            addElementWithNullValue(configParamBuf, WeasisConfig.PARAM_CODEBASE_EXT, weasisExtUrl, isRemoteLaunchConfigDefined);
+            addElementWithEmptyValue(configParamBuf, WeasisConfig.PARAM_CODEBASE_EXT, weasisExtUrl,
+                isRemoteLaunchConfigDefined);
 
-            // GET PROPERTIES PARAMETERS FROM REQUEST ARGUMENTS
-            Map<String, String> properties = getPropertiesFromRequestParameters(params);
+            // GET weasisPrefURL FROM REQUEST PROPERTIES PARAMETERS
+            String weasisPrefURL = requestProperties.get(SERVICE_PREFS_PROPERTY);
 
-            // GET weasisPrefURL FROM CONNECTOR'S CONFIGURATION IF NOT PROVIDED BY REQUEST PROPERTIES AND REMOTE LAUNCH
-            // CONFIG IS NOT DEFINED
-            if (!isRemoteLaunchConfigDefined && properties.get(SERVICE_PREFS) == null) {
-                String weasisPrefURL = props.getProperty(SERVICE_PREFS);
+            // OR GET weasisPrefURL FROM CONNECTOR'S CONFIGURATION IF REMOTE LAUNCH CONFIG IS NOT DEFINED
+            if (weasisPrefURL == null && !isRemoteLaunchConfigDefined) {
+                weasisPrefURL = props.getProperty(SERVICE_PREFS_PROPERTY);
                 if (StringUtil.hasText(weasisPrefURL)) {
-                    properties.put(SERVICE_PREFS, weasisPrefURL);
+                    requestProperties.put(SERVICE_PREFS_PROPERTY, weasisPrefURL.trim());
                 }
             }
 
             // ADD PROPERTIES PARAMETERS
-            for (Entry<String, String> entry : properties.entrySet()) {
-                StringBuilder b = new StringBuilder(entry.getKey());
-                b.append(' ');
-                b.append(entry.getValue());
-                addElement(configParamBuf, WeasisConfig.PARAM_PROPERTY, b.toString(), isRemoteLaunchConfigDefined);
+            for (Entry<String, String> entry : requestProperties.entrySet()) {
+                StringBuilder propSB = new StringBuilder(entry.getKey());
+                propSB.append(' ');
+                propSB.append(entry.getValue());
+                addElement(configParamBuf, WeasisConfig.PARAM_PROPERTY, propSB.toString(), isRemoteLaunchConfigDefined);
             }
 
             // ADD AUTHORIZATION PARAMETERS
@@ -176,7 +193,7 @@ public class GetWeasisProtocol extends HttpServlet {
             if (isRemoteLaunchConfigDefined) {
 
                 // ADD ANY OTHER UNHANDLED PARAMETERS (those not removed)
-                // note : they can be consumed as placeholder in a template engine from the remoteLaunchConfig service
+                // note : they can be consumed as placeholder by a template engine within the remoteLaunchConfig service
                 Iterator<Entry<String, String[]>> itParams = params.entrySet().iterator();
 
                 while (itParams.hasNext()) {
@@ -184,12 +201,11 @@ public class GetWeasisProtocol extends HttpServlet {
                     String value = ServletUtil.getFirstParameter(param.getValue());
                     if (StringUtil.hasText(value))
                         value = removeEnglobingQuotes(value);
-                    addElementWithNullValue(configParamBuf, param.getKey(), value, isRemoteLaunchConfigDefined);
+                    addElementWithEmptyValue(configParamBuf, param.getKey(), value, isRemoteLaunchConfigDefined);
                     itParams.remove();
                 }
 
                 // ADD weasisConfigUrl URL WITH HANDLED PARAMETERS
-                // TODO verify URL integrity
 
                 configParamBuf.replace(0, 1, "?"); // replace first query separator '&' by "?"
                 weasisConfigUrl += configParamBuf.toString();
@@ -213,19 +229,21 @@ public class GetWeasisProtocol extends HttpServlet {
         }
     }
 
-    private static void addElementWithNullValue(StringBuilder buf, String key, String val) {
-        addElementWithNullValue(buf, key, val, false);
+    private static void addElementWithEmptyValue(StringBuilder buf, String key, String val) {
+        addElementWithEmptyValue(buf, key, val, false);
     }
 
-    private static void addElementWithNullValue(StringBuilder buf, String key, String val,
+    private static void addElementWithEmptyValue(StringBuilder buf, String key, String val,
         boolean isElementQueryParameter) {
-        buf.append(isElementQueryParameter ? '&' : ' ');
-        buf.append(key);
-        if (StringUtil.hasText(val)) {
-            if (isElementQueryParameter)
-                buf.append("=").append(val);
-            else
-                buf.append("=\"").append(val).append("\"");
+        if (val != null) {
+            buf.append(isElementQueryParameter ? '&' : ' ');
+            buf.append(key);
+            if (StringUtil.hasText(val)) {
+                if (isElementQueryParameter)
+                    buf.append("=").append(val);
+                else
+                    buf.append("=\"").append(val).append("\"");
+            }
         }
     }
 
@@ -254,17 +272,19 @@ public class GetWeasisProtocol extends HttpServlet {
 
     protected static String getCodeBaseFromConnectorProperties(ConnectorProperties props, boolean extCodeBase) {
         String codeBasePath = props.getProperty(CODEBASE_PROPERTY);
-        if (!StringUtil.hasText(codeBasePath)) {
-            return StringUtil.EMPTY_STRING;
-        }
-        if (extCodeBase) {
-            if (codeBasePath.endsWith("/"))
-                codeBasePath = codeBasePath.substring(0, codeBasePath.length() - 1);
-            codeBasePath = props.getProperty(CODEBASE_EXT_PROPERTY, codeBasePath + "-ext");
-        }
 
-        if (codeBasePath.endsWith("/")) {
-            codeBasePath = codeBasePath.substring(0, codeBasePath.length() - 1);
+        if (StringUtil.hasText(codeBasePath)) {
+            codeBasePath = codeBasePath.trim();
+
+            if (extCodeBase) {
+                if (codeBasePath.endsWith("/"))
+                    codeBasePath = codeBasePath.substring(0, codeBasePath.length() - 1);
+                codeBasePath = props.getProperty(CODEBASE_EXT_PROPERTY, codeBasePath + "-ext");
+            }
+
+            if (codeBasePath.endsWith("/")) {
+                codeBasePath = codeBasePath.substring(0, codeBasePath.length() - 1);
+            }
         }
         return codeBasePath;
     }
@@ -278,15 +298,15 @@ public class GetWeasisProtocol extends HttpServlet {
     }
 
     protected static String getCodeBaseFromRequest(HttpServletRequest request, boolean extCodeBase) {
-        String codeBasePath = StringUtil.EMPTY_STRING;
-        String queryCodeBasePath =
+        String codeBasePath =
             request.getParameter(extCodeBase ? WeasisConfig.PARAM_CODEBASE_EXT : WeasisConfig.PARAM_CODEBASE);
 
-        if (StringUtil.hasText(queryCodeBasePath)) {
-            if (queryCodeBasePath.startsWith("/")) {
-                codeBasePath = ServletUtil.getBaseURL(request, false) + queryCodeBasePath;
+        if (StringUtil.hasText(codeBasePath)) {
+            codeBasePath = codeBasePath.trim();
+
+            if (codeBasePath.startsWith("/")) {
+                codeBasePath = ServletUtil.getBaseURL(request, false) + codeBasePath;
             } else {
-                codeBasePath = StringUtil.hasText(queryCodeBasePath) ? queryCodeBasePath : StringUtil.EMPTY_STRING;
                 // supposed to be a new valid URL for codeBase
             }
             if (codeBasePath.endsWith("/"))
