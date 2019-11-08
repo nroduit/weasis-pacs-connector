@@ -8,6 +8,8 @@
 package org.weasis.servlet;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -106,6 +108,7 @@ public class GetWeasisProtocol extends HttpServlet {
             //// HANDLE REQUEST PARAMETERS
 
             Map<String, String[]> params = new LinkedHashMap<>(request.getParameterMap());
+            params.remove("no-redirect");
 
             // GET PROPERTIES PARAMETERS FROM REQUEST PARAMETERS
             Map<String, String> requestProperties = getPropertiesFromRequestParameters(params);
@@ -206,9 +209,10 @@ public class GetWeasisProtocol extends HttpServlet {
                 }
 
                 // ADD weasisConfigUrl URL WITH HANDLED PARAMETERS
-
-                configParamBuf.replace(0, 1, "?"); // replace first query separator '&' by "?"
-                weasisConfigUrl += configParamBuf.toString();
+                if (configParamBuf.length() > 0) {
+                    configParamBuf.replace(0, 1, "?"); // replace first query separator '&' by "?"
+                    weasisConfigUrl += configParamBuf.toString();
+                }
                 addElement(buf, WeasisConfig.PARAM_CONFIG_URL, weasisConfigUrl);
 
             } else {
@@ -217,13 +221,19 @@ public class GetWeasisProtocol extends HttpServlet {
             }
 
             // BUILD LAUNCH URL
-            StringBuilder wurl = new StringBuilder("weasis://");
-            wurl.append(URLEncoder.encode(buf.toString(), "UTF-8"));
+            String launcherUrlStr = "weasis://" + URLEncoder.encode(buf.toString().trim(), "UTF-8");
 
-            response.sendRedirect(wurl.toString());
-        } catch (
-
-        Exception e) {
+            if (request.getParameter("url") == null) {
+                response.sendRedirect(launcherUrlStr);
+            } else {
+                launcherUrlStr = URLDecoder.decode(launcherUrlStr, "UTF-8");
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.setContentType("text/plain");
+                response.setContentLength(launcherUrlStr.length());
+                response.getWriter().write(launcherUrlStr);
+            }
+            
+        } catch (Exception e) {
             LOGGER.error("Redirect to weasis secheme", e);
             ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
         }

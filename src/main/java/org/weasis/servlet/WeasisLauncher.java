@@ -15,8 +15,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Base64;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -108,8 +110,21 @@ public class WeasisLauncher extends HttpServlet {
                 buf.append(addparams);
             }
 
-            RequestDispatcher dispatcher = request.getRequestDispatcher(buf.toString());
-            dispatcher.forward(request, response);
+            if (request.getParameter("url") == null) {
+                RequestDispatcher dispatcher = request.getRequestDispatcher(buf.toString());
+                dispatcher.forward(request, response);
+            } else {
+                String launcherUrlStr = request.getScheme() + "://" + request.getServerName() + ":"
+                    + request.getServerPort() + request.getContextPath() + URLDecoder.decode(buf.toString(), "UTF-8")
+                    + Optional.ofNullable("&" + request.getQueryString()).orElse("");
+                // note : this is a convenient way to check printed URL response for test case, but if request passes
+                // through a proxy be aware that proxys IP would be shown instead of the request original one
+
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.setContentType("text/plain");
+                response.setContentLength(launcherUrlStr.length());
+                response.getWriter().write(launcherUrlStr);
+            }
 
         } catch (Exception e) {
             LOGGER.error("Weasis Servlet Launcher", e);

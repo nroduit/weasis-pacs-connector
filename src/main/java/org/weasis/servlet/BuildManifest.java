@@ -86,7 +86,7 @@ public class BuildManifest extends HttpServlet {
                 response.setStatus(HttpServletResponse.SC_OK);
 
                 if (request.getParameter("url") != null) {
-                    response.setContentType("text/xml");
+                    response.setContentType("text/plain");
                     response.getWriter().print(wadoQueryUrl);
                 } else {
                     response.sendRedirect(wadoQueryUrl);
