@@ -31,6 +31,7 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.mf.UploadXml;
 import org.weasis.dicom.mf.XmlManifest;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
+import org.weasis.query.CommonQueryParams;
 
 @WebServlet(urlPatterns = { "/weasis", "/IHEInvokeImageDisplay" })
 public class GetWeasisProtocol extends HttpServlet {
@@ -107,17 +108,19 @@ public class GetWeasisProtocol extends HttpServlet {
 
             //// HANDLE REQUEST PARAMETERS
 
-            Map<String, String[]> params = new LinkedHashMap<>(request.getParameterMap());
-            params.remove("no-redirect");
+            Map<String, String[]> requestParams = new LinkedHashMap<>(request.getParameterMap());
+
+            requestParams.keySet().removeIf(param -> CommonQueryParams.wadoQueryParams.contains(param));
+            requestParams.remove("url");
 
             // GET PROPERTIES PARAMETERS FROM REQUEST PARAMETERS
-            Map<String, String> requestProperties = getPropertiesFromRequestParameters(params);
+            Map<String, String> requestProperties = getPropertiesFromRequestParameters(requestParams);
 
             // ADD ARGUMENTS PARAMETERS
-            handleRequestParameters(buf, params, WeasisConfig.PARAM_ARGUMENT);
+            handleRequestParameters(buf, requestParams, WeasisConfig.PARAM_ARGUMENT);
 
             // GET weasisConfigUrl FROM REQUEST PARAMETERS
-            String weasisConfigUrl = ServletUtil.getFirstParameter(params.remove(WeasisConfig.PARAM_CONFIG_URL));
+            String weasisConfigUrl = ServletUtil.getFirstParameter(requestParams.remove(WeasisConfig.PARAM_CONFIG_URL));
 
             String weasisConfigUrlProp = requestProperties.remove(SERVICE_CONFIG_PROPERTY);
             if (weasisConfigUrl == null)
@@ -136,7 +139,7 @@ public class GetWeasisProtocol extends HttpServlet {
 
             // GET weasisBaseUrl FROM REQUEST PARAMETERS
             String weasisBaseUrl = getCodeBaseFromRequest(request);
-            params.remove(WeasisConfig.PARAM_CODEBASE);
+            requestParams.remove(WeasisConfig.PARAM_CODEBASE);
 
             String weasisBaseUrlProp = requestProperties.remove(CODEBASE_PROPERTY);
             if (weasisBaseUrl == null)
@@ -151,7 +154,7 @@ public class GetWeasisProtocol extends HttpServlet {
 
             // GET weasisExtUrl FROM REQUEST PARAMETERS
             String weasisExtUrl = getCodeBaseExtFromRequest(request);
-            params.remove(WeasisConfig.PARAM_CODEBASE_EXT);
+            requestParams.remove(WeasisConfig.PARAM_CODEBASE_EXT);
 
             String weasisExtUrlProp = requestProperties.remove(CODEBASE_EXT_PROPERTY);
             if (weasisExtUrl == null)
@@ -187,8 +190,8 @@ public class GetWeasisProtocol extends HttpServlet {
             addElement(configParamBuf, WeasisConfig.PARAM_AUTHORIZATION, ServletUtil.getAuthorizationValue(request),
                 isRemoteLaunchConfigDefined);
 
-            params.remove(WeasisConfig.PARAM_AUTHORIZATION);
-            params.remove("access_token");
+            requestParams.remove(WeasisConfig.PARAM_AUTHORIZATION);
+            requestParams.remove("access_token");
 
             // ADD WEASISCONFIG PARAMETERS >> $weasis:config "..."
             buf.append(" $weasis:config");
@@ -196,8 +199,7 @@ public class GetWeasisProtocol extends HttpServlet {
             if (isRemoteLaunchConfigDefined) {
 
                 // ADD ANY OTHER UNHANDLED PARAMETERS (those not removed)
-                // note : they can be consumed as placeholder by a template engine within the remoteLaunchConfig service
-                Iterator<Entry<String, String[]>> itParams = params.entrySet().iterator();
+                Iterator<Entry<String, String[]>> itParams = requestParams.entrySet().iterator();
 
                 while (itParams.hasNext()) {
                     Entry<String, String[]> param = itParams.next();
@@ -232,7 +234,7 @@ public class GetWeasisProtocol extends HttpServlet {
                 response.setContentLength(launcherUrlStr.length());
                 response.getWriter().write(launcherUrlStr);
             }
-            
+
         } catch (Exception e) {
             LOGGER.error("Redirect to weasis secheme", e);
             ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());

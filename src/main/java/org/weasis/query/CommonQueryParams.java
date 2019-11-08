@@ -1,10 +1,15 @@
 package org.weasis.query;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -42,13 +47,22 @@ public class CommonQueryParams {
     public static final String SERIES_UID = "seriesUID";
     public static final String OBJECT_UID = "objectUID";
 
-    /* IHE Radiology Technical Framework Supplement – Invoke Image Display (IID) */
+    // Archive property name to be used instead of those defined by "arc.config.list" in component properties
+    public static final String ARCHIVE = "archive";
+
+    // IHE Radiology Technical Framework Supplement – Invoke Image Display (IID)
     public static final String REQUEST_TYPE = "requestType";
 
     // Well-Known Values for Viewer Type Parameter
     public static final String IHE_BIR = "IHE_BIR";
     public static final String PATIENT_LEVEL = "PATIENT";
     public static final String STUDY_LEVEL = "STUDY";
+
+    public static final Set<String> wadoQueryParams = Collections.unmodifiableSet((Set<String>) Stream
+        .of(PATIENT_ID, PATIENT_NAME, PATIENT_BIRTHDATE, LOWER_DATETIME, UPPER_DATETIME, MOST_RECENT_RESULTS,
+            MODALITIES_IN_STUDY, VIEWER_TYPE, DIAGNOSTIC_QUALITY, KEY_IMAGES_ONLY, KEYWORDS, STUDY_UID,
+            ACCESSION_NUMBER, SERIES_UID, OBJECT_UID, REQUEST_TYPE, ARCHIVE)
+        .collect(Collectors.toCollection(HashSet::new)));
 
     protected final ConnectorProperties properties;
     protected final List<AbstractQueryConfiguration> archiveList;
@@ -66,7 +80,7 @@ public class CommonQueryParams {
 
     private void initArchiveList(HttpServletRequest request) {
         DicomNode callingNode = new DicomNode(properties.getProperty("aet", "PACS-CONNECTOR"));
-        String[] archives = requestMap.get("archive");
+        String[] archives = requestMap.get(ARCHIVE);
         String auth = ServletUtil.getAuthorizationValue(request);
 
         if (archives != null && archives.length > 0) {
@@ -192,10 +206,6 @@ public class CommonQueryParams {
         }
     }
 
-    public String getRequestType() {
-        return getFirstParam(requestMap.get(REQUEST_TYPE));
-    }
-
     public String getReqPatientID() {
         return getFirstParam(requestMap.get(PATIENT_ID));
     }
@@ -220,12 +230,12 @@ public class CommonQueryParams {
         return getFirstParam(requestMap.get(MOST_RECENT_RESULTS));
     }
 
-    public String getKeywords() {
-        return getFirstParam(requestMap.get(KEYWORDS));
-    }
-
     public String getModalitiesInStudy() {
         return getFirstParam(requestMap.get(MODALITIES_IN_STUDY));
+    }
+
+    public String getKeywords() {
+        return getFirstParam(requestMap.get(KEYWORDS));
     }
 
     public String getReqStudyUID() {
@@ -242,6 +252,10 @@ public class CommonQueryParams {
 
     public String getReqObjectUID() {
         return getFirstParam(requestMap.get(OBJECT_UID));
+    }
+
+    public String getRequestType() {
+        return getFirstParam(requestMap.get(REQUEST_TYPE));
     }
 
     public String[] getReqPatientIDs() {
