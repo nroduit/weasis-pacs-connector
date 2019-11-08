@@ -240,7 +240,7 @@ public class ServletUtil {
 
                 LOGGER.error("Not supported IID request type: {}", requestType);
                 params.addGeneralViewerMessage(new ViewerMessage("Unexpected Request",
-                    "IID request type: " + requestType, ViewerMessage.eLevel.ERROR));
+                    "Not supported IID request type: " + requestType, ViewerMessage.eLevel.ERROR));
             }
 
             // IF request doesn't fit IHEInvokeImageDisplay profile use pacsconnector's parameters
