@@ -23,7 +23,7 @@
 		<j2se version="1.8+" href="http://java.sun.com/products/autodl/j2se" initial-heap-size="${ihs}" max-heap-size="${mhs}" />
 		<j2se version="1.8+" initial-heap-size="${ihs}" max-heap-size="${mhs}" />
 
-		<jar href="${cdb}/weasis-launcher${profile}.jar" main="true" version="${app.version}"/>
+		<jar href="${cdb}/weasis-launcher${wcfg.profile}.jar" main="true" version="${app.version}"/>
 		<jar href="${cdb}/felix.jar" version="${felix.framework.version}"/>
 		<jar href="${cdb}/substance.jar" version="${substance.version}"/>
 		
@@ -40,6 +40,6 @@
 
 	<application-desc main-class="org.weasis.launcher.WebstartLauncher">
 		<!-- Define the location of the weasis config service -->
-		<argument>$weasis:config wcfg=${wcfg}?pro=weasis.user+${user}</argument>
+		<argument>$weasis:config wcfg=${wcfg}?pro=weasis.user+${wcfg.user}</argument>
 	</application-desc>
 </jnlp>

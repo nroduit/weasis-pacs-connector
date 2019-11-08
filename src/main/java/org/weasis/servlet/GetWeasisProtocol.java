@@ -194,17 +194,19 @@ public class GetWeasisProtocol extends HttpServlet {
             buf.append(" $weasis:config");
 
             if (isRemoteLaunchConfigDefined) {
-
-                // ADD ANY OTHER UNHANDLED PARAMETERS (those not removed)
-                // note : they can be consumed as placeholder by a template engine within the remoteLaunchConfig service
+                // ADD ANY OTHER UNHANDLED PARAMETERS, THOSE NOT REMOVED AND PREFIXED WITH 'wcfg.'
                 Iterator<Entry<String, String[]>> itParams = params.entrySet().iterator();
 
                 while (itParams.hasNext()) {
                     Entry<String, String[]> param = itParams.next();
-                    String value = ServletUtil.getFirstParameter(param.getValue());
-                    if (StringUtil.hasText(value))
-                        value = removeEnglobingQuotes(value);
-                    addElementWithEmptyValue(configParamBuf, param.getKey(), value, isRemoteLaunchConfigDefined);
+
+                    if (param.getKey().startsWith("wcfg.")) {
+                        String key = param.getKey().substring(5); // REMOVE PARAM PREFIX
+                        String value = ServletUtil.getFirstParameter(param.getValue());
+                        if (StringUtil.hasText(value))
+                            value = removeEnglobingQuotes(value);
+                        addElementWithEmptyValue(configParamBuf, key, value, isRemoteLaunchConfigDefined);
+                    }
                     itParams.remove();
                 }
 
@@ -232,7 +234,7 @@ public class GetWeasisProtocol extends HttpServlet {
                 response.setContentLength(launcherUrlStr.length());
                 response.getWriter().write(launcherUrlStr);
             }
-            
+
         } catch (Exception e) {
             LOGGER.error("Redirect to weasis secheme", e);
             ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
