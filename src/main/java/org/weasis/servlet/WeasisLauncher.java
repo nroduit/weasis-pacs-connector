@@ -43,7 +43,7 @@ import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.dicom.mf.thread.ManifestManagerThread;
 import org.weasis.query.CommonQueryParams;
 
-@WebServlet(urlPatterns = { "/viewer" })
+@WebServlet(name = "WeasisLauncher", urlPatterns = { "/viewer" })
 public class WeasisLauncher extends HttpServlet {
 
     private static final long serialVersionUID = 7933047406409849509L;
@@ -110,7 +110,7 @@ public class WeasisLauncher extends HttpServlet {
                 buf.append(addparams);
             }
 
-            if (request.getParameter("url") == null) {
+            if (request.getParameter(ConnectorProperties.PARAM_URL) == null) {
                 RequestDispatcher dispatcher = request.getRequestDispatcher(buf.toString());
                 dispatcher.forward(request, response);
             } else {

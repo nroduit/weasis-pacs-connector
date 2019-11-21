@@ -1,12 +1,17 @@
 package org.weasis.servlet;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -19,7 +24,15 @@ public class ConnectorProperties extends Properties {
     private static final String DELIM_STOP = "}";
 
     public static final String CONFIG_FILENAME = "config.filename";
+
     public static final String MANIFEST_VERSION = "mfv";
+    public static final String PARAM_URL = "url";
+    public static final String PARAM_LAUNCH = "launch";
+
+    private static final Set<String> connectorsParams =
+        Stream.of(MANIFEST_VERSION, PARAM_URL, PARAM_LAUNCH).collect(Collectors.toSet());
+
+    public static final Consumer<Collection<String>> removeParams = c -> c.removeAll(connectorsParams);
 
     private final List<Properties> arcList;
 

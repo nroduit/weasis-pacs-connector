@@ -51,13 +51,13 @@ public class BuildManifest extends HttpServlet {
     }
 
     private void buildManifest(HttpServletRequest request, HttpServletResponse response) {
-        
+
         response.setStatus(HttpServletResponse.SC_ACCEPTED);
 
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1
         response.setHeader("Pragma", "no-cache"); // HTTP 1.0
         response.setDateHeader("Expires", -1); // Proxies
-        
+
         try {
             if (LOGGER.isDebugEnabled()) {
                 ServletUtil.logInfo(request, LOGGER);
@@ -85,7 +85,7 @@ public class BuildManifest extends HttpServlet {
                 wadoQueryUrl = response.encodeRedirectURL(wadoQueryUrl);
                 response.setStatus(HttpServletResponse.SC_OK);
 
-                if (request.getParameter("url") != null) {
+                if (request.getParameter(ConnectorProperties.PARAM_URL) != null) {
                     response.setContentType("text/plain");
                     response.getWriter().print(wadoQueryUrl);
                 } else {

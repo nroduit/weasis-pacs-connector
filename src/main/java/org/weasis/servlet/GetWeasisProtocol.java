@@ -33,16 +33,16 @@ import org.weasis.dicom.mf.XmlManifest;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.query.CommonQueryParams;
 
-@WebServlet(urlPatterns = { "/weasis", "/IHEInvokeImageDisplay" })
+@WebServlet(name = "GetWeasisProtocol", urlPatterns = { "/weasis", "/IHEInvokeImageDisplay" })
 public class GetWeasisProtocol extends HttpServlet {
 
     private static final long serialVersionUID = 2987582758040784229L;
     private static final Logger LOGGER = LoggerFactory.getLogger(GetWeasisProtocol.class);
 
-    private static final String CODEBASE_PROPERTY = "weasis.base.url";
-    private static final String CODEBASE_EXT_PROPERTY = "weasis.ext.url";
-    private static final String SERVICE_CONFIG_PROPERTY = "weasis.config.url";
-    private static final String SERVICE_PREFS_PROPERTY = "weasis.pref.url";
+    public static final String CODEBASE_PROPERTY = "weasis.base.url";
+    public static final String CODEBASE_EXT_PROPERTY = "weasis.ext.url";
+    public static final String SERVICE_CONFIG_PROPERTY = "weasis.config.url";
+    public static final String SERVICE_PREFS_PROPERTY = "weasis.pref.url";
 
     public GetWeasisProtocol() {
         super();
@@ -110,8 +110,8 @@ public class GetWeasisProtocol extends HttpServlet {
 
             Map<String, String[]> requestParams = new LinkedHashMap<>(request.getParameterMap());
 
-            requestParams.keySet().removeIf(param -> CommonQueryParams.wadoQueryParams.contains(param));
-            requestParams.remove("url");
+            CommonQueryParams.removeParams.accept(requestParams.keySet());
+            ConnectorProperties.removeParams.accept(requestParams.keySet());
 
             // GET PROPERTIES PARAMETERS FROM REQUEST PARAMETERS
             Map<String, String> requestProperties = getPropertiesFromRequestParameters(requestParams);
@@ -225,7 +225,7 @@ public class GetWeasisProtocol extends HttpServlet {
             // BUILD LAUNCH URL
             String launcherUrlStr = "weasis://" + URLEncoder.encode(buf.toString().trim(), "UTF-8");
 
-            if (request.getParameter("url") == null) {
+            if (request.getParameter(ConnectorProperties.PARAM_URL) == null) {
                 response.sendRedirect(launcherUrlStr);
             } else {
                 launcherUrlStr = URLDecoder.decode(launcherUrlStr, "UTF-8");

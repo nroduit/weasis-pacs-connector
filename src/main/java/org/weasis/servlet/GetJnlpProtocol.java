@@ -12,12 +12,15 @@
 package org.weasis.servlet;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URLDecoder;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +28,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @deprecated JNLP protocol has been removed from Java 11, used GetWeasisProtocol instead
  */
-@WebServlet(urlPatterns = { "/getJnlpScheme/*" })
+@WebServlet(name = "GetJnlpProtocol", urlPatterns = { "/getJnlpScheme/*" })
 @Deprecated
 public class GetJnlpProtocol extends HttpServlet {
     private static final long serialVersionUID = 3831796275365799251L;
@@ -43,24 +46,35 @@ public class GetJnlpProtocol extends HttpServlet {
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
-            StringBuilder buf = new StringBuilder();
-            String baseUrl = request.getRequestURL().toString();
-            if (baseUrl.startsWith("http:")) {
-                buf.append("jnlp");
-                buf.append(baseUrl.substring(4).replaceFirst("/getJnlpScheme", ""));
-            } else if (baseUrl.startsWith("https:")) {
-                buf.append("jnlps");
-                buf.append(baseUrl.substring(5).replaceFirst("/getJnlpScheme", ""));
+            
+            URI buildJnlpURI = URI.create(request.getRequestURL().toString());
+            String buildJnlpUriScheme = buildJnlpURI.getScheme();
+
+            if (buildJnlpUriScheme.equalsIgnoreCase("HTTP")) {
+                buildJnlpUriScheme = "jnlp";
+            } else if (buildJnlpUriScheme.equalsIgnoreCase("HTTPS")) {
+                buildJnlpUriScheme = "jnlps";
             } else {
                 throw new IllegalStateException("Cannot not convert to jnlp no http or https request");
             }
 
-            String params = request.getQueryString();
-            if (params != null) {
-                buf.append("?");
-                buf.append(request.getQueryString());
+            String uriPath = buildJnlpURI.getPath().replaceFirst("/getJnlpScheme", "");
+
+            String buildJnlpUrl = new URI(buildJnlpUriScheme, buildJnlpURI.getUserInfo(), buildJnlpURI.getHost(),
+                buildJnlpURI.getPort(), uriPath, request.getQueryString(), buildJnlpURI.getFragment()).toString();
+
+            buildJnlpUrl = response.encodeRedirectURL(buildJnlpUrl);
+
+            if (request.getParameter(ConnectorProperties.PARAM_URL) == null) {
+                response.sendRedirect(buildJnlpUrl); // NOSONAR redirect to jnlp protocol
+            } else {
+                buildJnlpUrl = URLDecoder.decode(buildJnlpUrl, "UTF-8");
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.setContentType("text/plain");
+                response.setContentLength(buildJnlpUrl.length());
+                response.getWriter().write(buildJnlpUrl);
             }
-            response.sendRedirect(buf.toString()); // NOSONAR redirect to jnlp protocol
+
         } catch (Exception e) {
             LOGGER.error("Redirect to jnlp secheme", e);
             ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
