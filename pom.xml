@@ -15,6 +15,8 @@
 		<weasis-dicom-tools.version>5.17.1</weasis-dicom-tools.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+		<attachClasses>false</attachClasses>
 	</properties>
 
 	<licenses>
@@ -47,7 +49,8 @@
 			<!-- <url>http://www.dcm4che.org/maven2</url> (which will redirected to https://www.dcm4che.org/maven2). -->
 		</repository>
 	</repositories>
-	
+
+
 	<build>
 		<plugins>
 			<plugin>
@@ -89,6 +92,7 @@
 				<configuration>
 					<packagingExcludes>WEB-INF/lib/dcm4che-dict-*</packagingExcludes>
 					<warName>${project.artifactId}</warName>
+					<attachClasses>${attachClasses}</attachClasses>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -115,6 +119,7 @@
 						<configuration>
 							<packagingExcludes>WEB-INF/lib/dcm4che-dict-*,WEB-INF/lib/log4j*,WEB-INF/lib/slf4j*</packagingExcludes>
 							<warName>${project.artifactId}</warName>
+							<attachClasses>${attachClasses}</attachClasses>
 						</configuration>
 					</plugin>
 				</plugins>
