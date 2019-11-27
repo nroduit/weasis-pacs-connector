@@ -12,7 +12,6 @@ package org.weasis.servlet;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -32,7 +31,9 @@ import javax.servlet.annotation.WebListener;
 import org.jdom2.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.NetworkUtil;
+import org.weasis.core.api.util.URLParameters;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.dicom.mf.thread.ManifestManagerThread;
 
@@ -155,8 +156,8 @@ public class ManifestManager implements ServletContextListener {
         Properties archiveProps = new Properties();
         try {
             URL url = new URL(baseConfigDir + name);
-            try (InputStream inputStream = NetworkUtil.getUrlInputStream(url.openConnection())) {
-                archiveProps.load(inputStream);
+            try (ClosableURLConnection c = NetworkUtil.getUrlConnection(url, new URLParameters())) {
+                archiveProps.load(c.getInputStream());
                 LOGGER.info("Archive configuration: {}", url);
             }
         } catch (Exception e) {
@@ -178,7 +179,7 @@ public class ManifestManager implements ServletContextListener {
 
         try {
             URL url = new URL(baseConfigDir + jnlpName);
-            try (InputStream inputStream = NetworkUtil.getUrlInputStream(url.openConnection())) {
+            try (ClosableURLConnection c = NetworkUtil.getUrlConnection(url, new URLParameters())) {
                 properties.put(property, url.toString());
                 LOGGER.info("Default jnlp template: {}", url);
             }
