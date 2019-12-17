@@ -10,8 +10,11 @@
  *******************************************************************************/
 package org.weasis.servlet;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -61,24 +64,24 @@ public class ManifestManager implements ServletContextListener {
             final ConnectorProperties properties = new ConnectorProperties();
             try {
                 String configDir = System.getProperty("jboss.server.config.dir", "");
-                URL config = readConfigURL(configDir, "weasis-pacs-connector.properties");
-                if (config == null) {
-                    config = this.getClass().getResource("/weasis-connector-default.properties");
-                    LOGGER.info("Default configuration: {}", config);
+
+                URL configUrl = readConfigURL(configDir, "weasis-pacs-connector.properties");
+                if (configUrl == null) {
+                    configUrl = this.getClass().getResource("/weasis-connector-default.properties");
+                    LOGGER.info("Default configuration: {}", configUrl);
                 } else {
-                    LOGGER.info("External weasis-pacs-connector configuration: {}", config);
+                    LOGGER.info("External weasis-pacs-connector configuration: {}", configUrl);
                 }
                 configDir += "/";
 
-                if (config != null) {
-                    String baseConfigDir = getBaseConfigURL(config);
-                    properties.load(config.openStream());
+                if (configUrl != null) {
+                    String baseConfigDir = getBaseConfigURL(configUrl);
+                    properties.load(configUrl.openStream());
 
                     String requests = properties.getProperty("request.ids");
                     String requestIID = properties.getProperty("request.IID.level");
                     if (requests == null) {
-                        LOGGER.error(
-                            "No request ID is allowed for the web context /viewer and /manifest!");
+                        LOGGER.error("No request ID is allowed for the web context /viewer and /manifest!");
                     } else {
                         for (String id : requests.split(",")) {
                             properties.put(id.trim(), "true");
@@ -100,9 +103,8 @@ public class ManifestManager implements ServletContextListener {
                         }
                     }
 
-                    loadTemplate(sc, baseConfigDir, configDir,
-                        properties.getProperty("jnlp.default.name", DEFAULT_TEMPLATE), "weasis.default.jnlp",
-                        properties);
+                    initJnlpTemplate(sc, configDir, properties.getProperty("jnlp.default.name", DEFAULT_TEMPLATE),
+                        "weasis.default.jnlp", properties);
                 } else {
                     LOGGER.error("Cannot find  a configuration file for weasis-pacs-connector");
                 }
@@ -174,14 +176,17 @@ public class ManifestManager implements ServletContextListener {
         return archiveProps;
     }
 
-    private void loadTemplate(ServletContext sc, String baseConfigDir, String configDir, String jnlpName,
-        String property, Hashtable<Object, Object> properties) throws IOException {
+    private void initJnlpTemplate(ServletContext sc, String configDir, String jnlpName, String property,
+        Hashtable<Object, Object> properties) throws IOException {
 
         try {
-            URL url = new URL(baseConfigDir + jnlpName);
-            try (ClosableURLConnection c = NetworkUtil.getUrlConnection(url, new URLParameters())) {
+            URL url = readConfigURL(configDir, jnlpName);
+            try (ClosableURLConnection ulrConnection = NetworkUtil.getUrlConnection(url, new URLParameters())) {
+                try (InputStream in = ulrConnection.getInputStream()) {
+                    // check if resource exist like with JarURLConnection
+                }
                 properties.put(property, url.toString());
-                LOGGER.info("Default jnlp template: {}", url);
+                LOGGER.info("Default jnlp template : {}", url);
             }
         } catch (Exception e) {
             URL jnlpTemplate = this.getClass().getResource(configDir + jnlpName);
@@ -195,9 +200,10 @@ public class ManifestManager implements ServletContextListener {
 
             if (jnlpTemplate != null) {
                 properties.put(property, jnlpTemplate.toString());
-                LOGGER.info("Default jnlp template: {}", jnlpTemplate);
+                LOGGER.info("Default jnlp template : {}", jnlpTemplate);
             } else {
-                throw new IOException("Cannot find template configuration", e);
+                LOGGER.error("Error on getting JNLP template : {}", e.getLocalizedMessage());
+                throw new IOException("Cannot find template configuration");
             }
         }
     }
