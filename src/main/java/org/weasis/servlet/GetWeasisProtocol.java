@@ -224,15 +224,7 @@ public class GetWeasisProtocol extends HttpServlet {
             // BUILD LAUNCH URL
             String launcherUrlStr = "weasis://" + URLEncoder.encode(buf.toString().trim(), "UTF-8");
 
-            if (request.getParameter(ConnectorProperties.PARAM_URL) == null) {
-                response.sendRedirect(launcherUrlStr);
-            } else {
-                launcherUrlStr = URLDecoder.decode(launcherUrlStr, "UTF-8");
-                response.setStatus(HttpServletResponse.SC_OK);
-                response.setContentType("text/plain");
-                response.setContentLength(launcherUrlStr.length());
-                response.getWriter().write(launcherUrlStr);
-            }
+            response.sendRedirect(launcherUrlStr);
 
         } catch (Exception e) {
             LOGGER.error("Redirect to weasis secheme", e);

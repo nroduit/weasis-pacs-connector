@@ -64,16 +64,7 @@ public class GetJnlpProtocol extends HttpServlet {
                     uriPath, URLDecoder.decode(request.getQueryString(), "UTF-8"), buildJnlpURI.getFragment())
                         .toString();
 
-
-            if (request.getParameter(ConnectorProperties.PARAM_URL) == null) {
-                response.sendRedirect(buildJnlpUrl); // NOSONAR redirect to jnlp protocol
-            } else {
-                buildJnlpUrl = URLDecoder.decode(buildJnlpUrl, "UTF-8");
-                response.setStatus(HttpServletResponse.SC_OK);
-                response.setContentType("text/plain");
-                response.setContentLength(buildJnlpUrl.length());
-                response.getWriter().write(buildJnlpUrl);
-            }
+            response.sendRedirect(buildJnlpUrl); // NOSONAR redirect to jnlp protocol
 
         } catch (Exception e) {
             LOGGER.error("Redirect to jnlp secheme", e);
