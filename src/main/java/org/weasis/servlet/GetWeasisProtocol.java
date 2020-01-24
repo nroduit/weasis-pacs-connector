@@ -8,7 +8,6 @@
 package org.weasis.servlet;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -265,12 +264,21 @@ public class GetWeasisProtocol extends HttpServlet {
 
     private static void addElement(StringBuilder buf, String key, String val, boolean isElementQueryParameter) {
         if (StringUtil.hasText(val)) {
-            buf.append(isElementQueryParameter ? '&' : ' ');
-            buf.append(key);
-            if (isElementQueryParameter)
-                buf.append("=").append(val);
-            else
-                buf.append("=\"").append(val).append("\"");
+            if (WeasisConfig.PARAM_ARGUMENT.equalsIgnoreCase(key)) {
+                buf.append(" ");
+                if (!(val.startsWith("$")))
+                    buf.append("$");
+                buf.append(val);
+                // For identifying the commands at start-up, the symbol “$” must be added before the command
+                // @see https://nroduit.github.io/en/basics/commands/
+            } else {
+                buf.append(isElementQueryParameter ? '&' : ' ');
+                buf.append(key);
+                if (isElementQueryParameter)
+                    buf.append("=").append(val);
+                else
+                    buf.append("=\"").append(val).append("\"");
+            }
         }
     }
 
