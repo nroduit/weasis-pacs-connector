@@ -115,11 +115,12 @@ public class WeasisLauncher extends HttpServlet {
                 dispatcher.forward(request, response);
             } else {
                 String launcherUrlStr = request.getScheme() + "://" + request.getServerName() + ":"
-                    + request.getServerPort() + request.getContextPath() + URLDecoder.decode(buf.toString(), "UTF-8")
+                    + request.getServerPort() + request.getContextPath() + buf.toString()
                     + Optional.ofNullable("&" + request.getQueryString()).orElse("");
                 // note : this is a convenient way to check printed URL response for test case, but if request passes
                 // through a proxy be aware that proxys IP would be shown instead of the request original one
 
+                launcherUrlStr = URLDecoder.decode(launcherUrlStr, "UTF-8");
                 response.setStatus(HttpServletResponse.SC_OK);
                 response.setContentType("text/plain");
                 response.setContentLength(launcherUrlStr.length());
