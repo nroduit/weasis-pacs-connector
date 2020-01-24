@@ -20,7 +20,6 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +45,7 @@ public class GetJnlpProtocol extends HttpServlet {
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         try {
-            
+
             URI buildJnlpURI = URI.create(request.getRequestURL().toString());
             String buildJnlpUriScheme = buildJnlpURI.getScheme();
 
@@ -60,10 +59,11 @@ public class GetJnlpProtocol extends HttpServlet {
 
             String uriPath = buildJnlpURI.getPath().replaceFirst("/getJnlpScheme", "");
 
-            String buildJnlpUrl = new URI(buildJnlpUriScheme, buildJnlpURI.getUserInfo(), buildJnlpURI.getHost(),
-                buildJnlpURI.getPort(), uriPath, request.getQueryString(), buildJnlpURI.getFragment()).toString();
+            String buildJnlpUrl =
+                new URI(buildJnlpUriScheme, buildJnlpURI.getUserInfo(), buildJnlpURI.getHost(), buildJnlpURI.getPort(),
+                    uriPath, URLDecoder.decode(request.getQueryString(), "UTF-8"), buildJnlpURI.getFragment())
+                        .toString();
 
-            buildJnlpUrl = response.encodeRedirectURL(buildJnlpUrl);
 
             if (request.getParameter(ConnectorProperties.PARAM_URL) == null) {
                 response.sendRedirect(buildJnlpUrl); // NOSONAR redirect to jnlp protocol
