@@ -10,11 +10,9 @@
  *******************************************************************************/
 package org.weasis.servlet;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -66,12 +64,8 @@ public class ManifestManager implements ServletContextListener {
                 String configDir = System.getProperty("jboss.server.config.dir", "");
 
                 URL configUrl = readConfigURL(configDir, "weasis-pacs-connector.properties");
-                if (configUrl == null) {
-                    configUrl = this.getClass().getResource("/weasis-connector-default.properties");
-                    LOGGER.info("Default configuration: {}", configUrl);
-                } else {
-                    LOGGER.info("External weasis-pacs-connector configuration: {}", configUrl);
-                }
+                LOGGER.info("Path of weasis-pacs-connector configuration: {}", configUrl);
+                
                 configDir += "/";
 
                 if (configUrl != null) {
@@ -81,7 +75,7 @@ public class ManifestManager implements ServletContextListener {
                     String requests = properties.getProperty("request.ids");
                     String requestIID = properties.getProperty("request.IID.level");
                     if (requests == null) {
-                        LOGGER.error("No request ID is allowed for the web context /viewer and /manifest!");
+                        LOGGER.error("No request ID is allowed for the web services!");
                     } else {
                         for (String id : requests.split(",")) {
                             properties.put(id.trim(), "true");

@@ -1,12 +1,13 @@
 # Changelog
 
-## [v7.1.1](https://github.com/nroduit/weasis-pacs-connector/tree/v7.1.1) (2019-07-12)
+## [v7.1.2](https://github.com/nroduit/weasis-pacs-connector/tree/v7.1.2) (2020-03-07)
 
-[Full Changelog](https://github.com/nroduit/weasis-pacs-connector/compare/v7.1.0...v7.1.1)
+[Full Changelog](https://github.com/nroduit/weasis-pacs-connector/compare/v7.1.1...v7.1.2)
 
 **Implemented enhancements:**
 
-- Update to weasis-dicom-tools 5.17.1 [\#29](https://github.com/nroduit/weasis-pacs-connector/issues/29)
+- Connecting Weasis to DICOMCloud [\#32](https://github.com/nroduit/weasis-pacs-connector/issues/32)
+- Update to weasis-dicom-tools 5.19.1 [\#29](https://github.com/nroduit/weasis-pacs-connector/issues/29)
 
 **Fixed bugs:**
 

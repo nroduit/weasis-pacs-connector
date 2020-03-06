@@ -108,8 +108,7 @@ public class ConnectorProperties extends Properties {
         String applicationContextUrl = serverBaseUrl + request.getContextPath();
         extProps.put("application.context.url", applicationContextUrl);
 
-        // TODO extProps should be set only once in ManifestManager.contextInitialized() from context.getServerInfo()
-
+        // This should be done to ensure property change like serverBaseUrl when calling the servlet through different networks (LAN and WAN)
         ConnectorProperties dynamicProps = getDeepCopy();
 
         // Perform variable substitution with System OR configProps OR extProps properties
@@ -126,7 +125,6 @@ public class ConnectorProperties extends Properties {
                 String name = (String) e.nextElement();
                 dynProps.setProperty(name, substVars(dynProps.getProperty(name), name, null, dynProps, extProps));
             }
-            // TODO should archive property substitution be applpied any time getResolveConnectorProperties is called ??
         }
 
         String manifestVersion = request.getParameter(MANIFEST_VERSION);
