@@ -216,7 +216,7 @@ public class ServletUtil {
                 } else {
                     LOGGER.error("No ID found for STUDY request type: {}", requestType);
                     params.addGeneralViewerMessage(new ViewerMessage("Missing Study ID",
-                        "No study ID found in the request", ViewerMessage.eLevel.ERROR));
+                        "No study ID or AccessionNumber found in the request", ViewerMessage.eLevel.ERROR));
                 }
 
             } else if (PATIENT_LEVEL.equals(requestType) && isRequestIDAllowed(PATIENT_LEVEL, properties)) {

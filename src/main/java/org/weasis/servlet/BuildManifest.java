@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 
-@WebServlet(urlPatterns = "/manifest")
+@WebServlet(name = "BuildManifest", urlPatterns = "/manifest")
 public class BuildManifest extends HttpServlet {
 
     private static final long serialVersionUID = 575795035231900320L;
