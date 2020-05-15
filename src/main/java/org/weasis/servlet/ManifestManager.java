@@ -32,9 +32,6 @@ import javax.servlet.annotation.WebListener;
 import org.jdom2.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.util.ClosableURLConnection;
-import org.weasis.core.api.util.NetworkUtil;
-import org.weasis.core.api.util.URLParameters;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.dicom.mf.thread.ManifestManagerThread;
 
@@ -152,8 +149,8 @@ public class ManifestManager implements ServletContextListener {
         Properties archiveProps = new Properties();
         try {
             URL url = new URL(baseConfigDir + name);
-            try (ClosableURLConnection c = NetworkUtil.getUrlConnection(url, new URLParameters())) {
-                archiveProps.load(c.getInputStream());
+            try (InputStream stream = url.openStream()) {
+                archiveProps.load(stream);
                 LOGGER.info("Archive configuration: {}", url);
             }
         } catch (Exception e) {
@@ -175,13 +172,12 @@ public class ManifestManager implements ServletContextListener {
 
         try {
             URL url = readConfigURL(configDir, jnlpName);
-            try (ClosableURLConnection ulrConnection = NetworkUtil.getUrlConnection(url, new URLParameters())) {
-                try (InputStream in = ulrConnection.getInputStream()) {
-                    // check if resource exist like with JarURLConnection
-                }
-                properties.put(property, url.toString());
-                LOGGER.info("Default jnlp template : {}", url);
+            try (InputStream in = url.openStream()) {
+                // check if resource exist like with JarURLConnection
             }
+            properties.put(property, url.toString());
+            LOGGER.info("Default jnlp template : {}", url);
+
         } catch (Exception e) {
             URL jnlpTemplate = this.getClass().getResource(configDir + jnlpName);
             if (jnlpTemplate == null) {

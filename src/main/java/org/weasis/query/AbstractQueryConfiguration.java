@@ -4,8 +4,8 @@ import java.util.Base64;
 import java.util.Objects;
 import java.util.Properties;
 
-import org.weasis.core.api.util.LangUtil;
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.LangUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.mf.AbstractQueryResult;
 import org.weasis.dicom.mf.WadoParameters;
 import org.weasis.servlet.ConnectorProperties;

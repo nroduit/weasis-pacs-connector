@@ -11,8 +11,8 @@ import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.util.EscapeChars;
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.EscapeChars;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.mf.Patient;
 import org.weasis.dicom.mf.Series;
 import org.weasis.dicom.mf.SopInstance;

@@ -1,6 +1,6 @@
 package org.weasis.dicom.mf;
 
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.StringUtil;
 
 public class UploadXml implements XmlManifest {
 

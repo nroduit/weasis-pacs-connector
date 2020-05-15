@@ -12,18 +12,21 @@
 package org.weasis.servlet;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Base64;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.zip.GZIPOutputStream;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
@@ -35,8 +38,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.util.GzipManager;
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.FileUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.mf.UploadXml;
 import org.weasis.dicom.mf.XmlManifest;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
@@ -194,8 +197,7 @@ public class WeasisLauncher extends HttpServlet {
                     Future<XmlManifest> future = builder.getFuture();
                     XmlManifest xml = future.get(ManifestManagerThread.MAX_LIFE_CYCLE, TimeUnit.MILLISECONDS);
                     StringBuilder buf = new StringBuilder("$dicom:get -i ");
-                    buf.append(Base64.getEncoder().encode(GzipManager
-                        .gzipCompressToByte(xml.xmlManifest((String) props.get("manifest.version")).getBytes())));
+                    buf.append(Base64.getEncoder().encode(gzipCompressToByte(xml.xmlManifest((String) props.get("manifest.version")).getBytes())));
 
                     request.setAttribute(JnlpLauncher.ATTRIBUTE_UPLOADED_ARGUMENT, buf.toString());
                     // Remove the builder as it has been retrieved without calling RequestManifest servlet
@@ -239,5 +241,46 @@ public class WeasisLauncher extends HttpServlet {
             ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
         }
         return new UploadXml("INVALID", request.getCharacterEncoding());
+    }
+    
+    static byte[] gzipCompressToByte(byte[] bytes) throws IOException {
+        return gzipCompressToByte(bytes, 1);
+    }
+
+    /**
+     * @param bytes
+     * @param requiredByteNumber
+     *            for applying gzip. On network the safe value is 1400 (as MTU is 1500)
+     * @return
+     * @throws IOException
+     */
+    static byte[] gzipCompressToByte(byte[] bytes, int requiredByteNumber) throws IOException {
+        if (bytes.length >= requiredByteNumber) {
+            try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                            ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);) {
+                gzipCompress(inputStream, outputStream);
+                return outputStream.toByteArray();
+            }
+        }
+        return bytes;
+    }
+    
+    private static boolean gzipCompress(InputStream in, OutputStream out) throws IOException {
+        try (GZIPOutputStream gzipOut = new GZIPOutputStream(out)) {
+            byte[] buf = new byte[1024];
+            int offset;
+            while ((offset = in.read(buf)) > 0) {
+                gzipOut.write(buf, 0, offset);
+            }
+
+            // Finishes writing compressed data
+            gzipOut.finish();
+            return true;
+        } catch (IOException e) {
+            LOGGER.error("Cannot gzip compress", e); //$NON-NLS-1$
+            return false;
+        } finally {
+            FileUtil.safeClose(in);
+        }
     }
 }

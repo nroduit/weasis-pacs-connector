@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.util.LangUtil;
+import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.mf.ArcQuery;
 import org.weasis.dicom.mf.QueryResult;
 import org.weasis.dicom.mf.ViewerMessage;

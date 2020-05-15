@@ -31,7 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.StringUtil;
 
 @WebServlet(urlPatterns = "/WeasisConfig")
 public class WeasisConfig extends HttpServlet {

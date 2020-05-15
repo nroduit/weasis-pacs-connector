@@ -40,7 +40,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.util.TagUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.mf.ViewerMessage;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.query.AbstractQueryConfiguration;

@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.weasis.core.api.util.LangUtil;
+import org.weasis.core.util.LangUtil;
 
 public class ConnectorProperties extends Properties {
     private static final long serialVersionUID = -1461425609157253501L;

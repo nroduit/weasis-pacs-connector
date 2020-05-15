@@ -13,8 +13,8 @@ import java.util.stream.Stream;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.weasis.core.api.util.LangUtil;
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.LangUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.mf.QueryResult;
 import org.weasis.dicom.mf.ViewerMessage;
 import org.weasis.dicom.param.DicomNode;
