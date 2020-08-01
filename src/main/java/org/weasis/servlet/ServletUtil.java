@@ -30,6 +30,8 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletOutputStream;
@@ -167,8 +169,15 @@ public class ServletUtil {
     }
 
     public static void logInfo(HttpServletRequest request, Logger logger) {
+        String queryStr = request.getQueryString();
+
         logger.debug("HttpServletRequest - getRequestQueryURL: {}{}", request.getRequestURL(),
-            request.getQueryString() != null ? ("?" + request.getQueryString().trim()) : "");
+            queryStr != null ? ("?" + queryStr.trim()) : "");
+
+        logger.debug("HttpServletRequest - getParameters: {}", request.getParameterMap().entrySet().stream()
+            .flatMap(e -> Stream.of(e.getValue()).map(v -> e.getKey() + "=" + v)).collect(Collectors.joining("&")));
+        logger.debug("HttpServletRequest - getParameterMap: {}", request.getParameterMap().toString());
+
         logger.debug("HttpServletRequest - getContextPath: {}", request.getContextPath());
         logger.debug("HttpServletRequest - getServletPath: {}", request.getServletPath());
     }
