@@ -169,14 +169,12 @@ public class ServletUtil {
     }
 
     public static void logInfo(HttpServletRequest request, Logger logger) {
-        String queryStr = request.getQueryString();
 
         logger.debug("HttpServletRequest - getRequestQueryURL: {}{}", request.getRequestURL(),
-            queryStr != null ? ("?" + queryStr.trim()) : "");
+            request.getQueryString() != null ? ("?" + request.getQueryString().trim()) : "");
 
         logger.debug("HttpServletRequest - getParameters: {}", request.getParameterMap().entrySet().stream()
             .flatMap(e -> Stream.of(e.getValue()).map(v -> e.getKey() + "=" + v)).collect(Collectors.joining("&")));
-        logger.debug("HttpServletRequest - getParameterMap: {}", request.getParameterMap().toString());
 
         logger.debug("HttpServletRequest - getContextPath: {}", request.getContextPath());
         logger.debug("HttpServletRequest - getServletPath: {}", request.getServletPath());

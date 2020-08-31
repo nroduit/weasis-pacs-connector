@@ -86,7 +86,7 @@ public class GetWeasisProtocol extends HttpServlet {
                 builder = ServletUtil.buildManifest(request, new ManifestBuilder(manifest));
             }
 
-            // BUILDER IS NULL WHEN NO ALLOWED PARAMETER ARE GIVEN WHICH LEADS TO NO MANIFEST BUILT
+            // BUILDER IS NULL WHEN NO ALLOWED PARAMETER ARE GIVEN WHICH LEADS TO NO MANIFEST BUILD
 
             if (builder != null) {
                 String wadoQueryUrl = ServletUtil.buildManifestURL(request, builder, props, true);
