@@ -30,6 +30,8 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletOutputStream;
@@ -167,8 +169,13 @@ public class ServletUtil {
     }
 
     public static void logInfo(HttpServletRequest request, Logger logger) {
+
         logger.debug("HttpServletRequest - getRequestQueryURL: {}{}", request.getRequestURL(),
             request.getQueryString() != null ? ("?" + request.getQueryString().trim()) : "");
+
+        logger.debug("HttpServletRequest - getParameters: {}", request.getParameterMap().entrySet().stream()
+            .flatMap(e -> Stream.of(e.getValue()).map(v -> e.getKey() + "=" + v)).collect(Collectors.joining("&")));
+
         logger.debug("HttpServletRequest - getContextPath: {}", request.getContextPath());
         logger.debug("HttpServletRequest - getServletPath: {}", request.getServletPath());
     }
@@ -216,7 +223,7 @@ public class ServletUtil {
                 } else {
                     LOGGER.error("No ID found for STUDY request type: {}", requestType);
                     params.addGeneralViewerMessage(new ViewerMessage("Missing Study ID",
-                        "No study ID found in the request", ViewerMessage.eLevel.ERROR));
+                        "No study ID or AccessionNumber found in the request", ViewerMessage.eLevel.ERROR));
                 }
 
             } else if (PATIENT_LEVEL.equals(requestType) && isRequestIDAllowed(PATIENT_LEVEL, properties)) {

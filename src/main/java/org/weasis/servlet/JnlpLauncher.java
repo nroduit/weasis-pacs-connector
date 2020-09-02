@@ -173,7 +173,7 @@ public class JnlpLauncher extends HttpServlet {
             }
             String launcherStr = buildJnlpResponse(launcher);
 
-            LOGGER.debug("doGet() - launcherStr = [\n{}\n]", launcherStr);
+            LOGGER.trace("doGet() - launcherStr = [\n{}\n]", launcherStr);
 
             response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1
             response.setHeader("Pragma", "no-cache"); // HTTP 1.0

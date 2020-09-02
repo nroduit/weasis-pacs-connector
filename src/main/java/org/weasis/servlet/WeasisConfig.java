@@ -33,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.StringUtil;
 
-@WebServlet(urlPatterns = "/WeasisConfig")
+@WebServlet(name = "WeasisConfig", urlPatterns = "/WeasisConfig")
 public class WeasisConfig extends HttpServlet {
 
     private static final long serialVersionUID = 3012016354418267374L;
@@ -110,7 +110,7 @@ public class WeasisConfig extends HttpServlet {
         Boolean gzip = request.getParameter(PARAM_NO_GZIP) == null;
 
         response.setStatus(HttpServletResponse.SC_OK);
-        
+
         if (gzip) {
             try {
                 OutputStream outputStream = response.getOutputStream();
@@ -141,7 +141,6 @@ public class WeasisConfig extends HttpServlet {
             }
         }
 
-        
     }
 
     private void handleRequestArgumentParameter(List<String> arguments, Map<String, String[]> params) {
@@ -207,16 +206,17 @@ public class WeasisConfig extends HttpServlet {
             if (queryCodeBasePath.startsWith("/")) {
                 codeBasePath = ServletUtil.getBaseURL(request, false) + queryCodeBasePath;
             } else {
-                codeBasePath = StringUtil.hasText(queryCodeBasePath) ? queryCodeBasePath : StringUtil.EMPTY_STRING; // supposed to be a new valid URL for codeBase
+                codeBasePath = StringUtil.hasText(queryCodeBasePath) ? queryCodeBasePath : StringUtil.EMPTY_STRING;
+                // supposed to be a new valid URL for codeBase
             }
         } else {
             // If weasis codebase is not in the request, set the URL from the weasis-pacs-connector properties.
             codeBasePath = props.getProperty("weasis.base.url");
-            if(codeBasePath == null) {
+            if (codeBasePath == null) {
                 return StringUtil.EMPTY_STRING;
             }
-            if(extCodebase) {
-                codeBasePath = props.getProperty("weasis.ext.url", codeBasePath + "-ext");  
+            if (extCodebase) {
+                codeBasePath = props.getProperty("weasis.ext.url", codeBasePath + "-ext");
             }
         }
 

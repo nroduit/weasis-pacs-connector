@@ -14,6 +14,8 @@ package org.weasis.servlet;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -59,10 +61,18 @@ public class GetJnlpProtocol extends HttpServlet {
 
             String uriPath = buildJnlpURI.getPath().replaceFirst("/getJnlpScheme", "");
 
-            String buildJnlpUrl =
-                new URI(buildJnlpUriScheme, buildJnlpURI.getUserInfo(), buildJnlpURI.getHost(), buildJnlpURI.getPort(),
-                    uriPath, URLDecoder.decode(request.getQueryString(), "UTF-8"), buildJnlpURI.getFragment())
-                        .toString();
+            String queryParams = request.getQueryString();
+
+            if (queryParams != null) {
+                String requestEncoding = request.getCharacterEncoding();
+                if (requestEncoding == null)
+                    requestEncoding = StandardCharsets.UTF_8.defaultCharset().name();
+                // FIX double encoding with new URI created below 
+                queryParams = URLDecoder.decode(request.getQueryString(), requestEncoding);
+            }
+
+            String buildJnlpUrl = new URI(buildJnlpUriScheme, buildJnlpURI.getUserInfo(), buildJnlpURI.getHost(),
+                buildJnlpURI.getPort(), uriPath, queryParams, buildJnlpURI.getFragment()).toString();
 
             response.sendRedirect(buildJnlpUrl); // NOSONAR redirect to jnlp protocol
 
