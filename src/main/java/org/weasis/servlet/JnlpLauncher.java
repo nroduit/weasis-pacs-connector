@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -35,7 +34,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
+import javax.xml.XMLConstants;
 import org.jdom2.Attribute;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -437,8 +436,10 @@ public class JnlpLauncher extends HttpServlet {
         try (BufferedReader reader =
             new BufferedReader(new InputStreamReader(launcher.realPathURL.toURL().openConnection().getInputStream(),
                 StandardCharsets.UTF_8))) {
-
-            rootElt = new SAXBuilder(XMLReaders.NONVALIDATING, null, null).build(reader).getRootElement();
+            SAXBuilder builder = new SAXBuilder(XMLReaders.NONVALIDATING, null, null);
+            builder.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            builder.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+            rootElt = builder.build(reader).getRootElement();
         } catch (JDOMException e) {
             throw new ServletErrorException(HttpServletResponse.SC_NOT_ACCEPTABLE, "Can't parse launcher template", e);
         }

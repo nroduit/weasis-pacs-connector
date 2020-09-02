@@ -17,7 +17,6 @@ import static org.weasis.query.CommonQueryParams.PATIENT_LEVEL;
 import static org.weasis.query.CommonQueryParams.SERIES_UID;
 import static org.weasis.query.CommonQueryParams.STUDY_LEVEL;
 import static org.weasis.query.CommonQueryParams.STUDY_UID;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -32,12 +31,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.servlet.ServletContext;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.util.TagUtils;
 import org.slf4j.Logger;
@@ -160,7 +157,7 @@ public class ServletUtil {
             }
             if (!accept) {
                 if (logger != null) {
-                    logger.warn("The request from {} is not allowed.", clientHost);
+                    logger.warn("The request from {} is not allowed.", clientHost.replaceAll("[\n|\r|\t]", "_"));
                 }
                 return false;
             }
@@ -221,7 +218,7 @@ public class ServletUtil {
                         query.buildFromStudyInstanceUID(params, val);
                     }
                 } else {
-                    LOGGER.error("No ID found for STUDY request type: {}", requestType);
+                    LOGGER.error("No ID found for STUDY request type: {}", requestType.replaceAll("[\n|\r|\t]", "_"));
                     params.addGeneralViewerMessage(new ViewerMessage("Missing Study ID",
                         "No study ID or AccessionNumber found in the request", ViewerMessage.eLevel.ERROR));
                 }
@@ -237,7 +234,7 @@ public class ServletUtil {
                         query.buildFromPatientID(params, val);
                     }
                 } else {
-                    LOGGER.error("No ID found for PATIENT request type: {}", requestType);
+                    LOGGER.error("No ID found for PATIENT request type: {}", requestType.replaceAll("[\n|\r|\t]", "_"));
                     params.addGeneralViewerMessage(new ViewerMessage("Missing Patient ID",
                         "No patient ID found in the request", ViewerMessage.eLevel.ERROR));
                 }
@@ -245,7 +242,7 @@ public class ServletUtil {
                 if (!doBuildQuery)
                     return true;
 
-                LOGGER.error("Not supported IID request type: {}", requestType);
+                LOGGER.error("Not supported IID request type: {}", requestType.replaceAll("[\n|\r|\t]", "_"));
                 params.addGeneralViewerMessage(new ViewerMessage("Unexpected Request",
                     "Not supported IID request type: " + requestType, ViewerMessage.eLevel.ERROR));
             }

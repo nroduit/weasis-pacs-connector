@@ -23,12 +23,10 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
-
 import org.jdom2.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -157,8 +155,10 @@ public class ManifestManager implements ServletContextListener {
             LOGGER.debug("Get template", e);
             URL arcConfigFile = this.getClass().getResource(configDir + name);
             if (arcConfigFile != null) {
+              try (InputStream stream = arcConfigFile.openStream()) {
                 archiveProps.load(arcConfigFile.openStream());
                 LOGGER.info("Archive configuration: {}", arcConfigFile);
+              }
             } else {
                 throw new IOException("Cannot find archive configuration");
             }

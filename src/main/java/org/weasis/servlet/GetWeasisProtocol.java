@@ -15,14 +15,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
-
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.StringUtil;
@@ -355,6 +353,6 @@ public class GetWeasisProtocol extends HttpServlet {
     }
 
     private static String removeEnglobingQuotes(String value) {
-        return value.replaceAll("^\"|\"$", "");
+      return value.replaceAll("(?:^\")|(?:\"$)", "");
     }
 }

@@ -17,13 +17,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPOutputStream;
-
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.StringUtil;
@@ -59,7 +57,7 @@ public class RequestManifest extends HttpServlet {
 
         if (id == null) {
             String errorMsg = "Missing or bad 'id' parameter in request";
-            LOGGER.error("{}: {}", errorMsg, wadoXmlId);
+            LOGGER.error("{}: {}", errorMsg, wadoXmlId.replaceAll("[\n|\r|\t]", "_"));
             ServletUtil.sendResponseError(response, HttpServletResponse.SC_BAD_REQUEST, errorMsg);
             return;
         }
