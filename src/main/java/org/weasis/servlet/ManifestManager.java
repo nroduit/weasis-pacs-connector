@@ -156,7 +156,7 @@ public class ManifestManager implements ServletContextListener {
             URL arcConfigFile = this.getClass().getResource(configDir + name);
             if (arcConfigFile != null) {
               try (InputStream stream = arcConfigFile.openStream()) {
-                archiveProps.load(arcConfigFile.openStream());
+                archiveProps.load(stream);
                 LOGGER.info("Archive configuration: {}", arcConfigFile);
               }
             } else {
