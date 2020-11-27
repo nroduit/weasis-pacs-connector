@@ -1,21 +1,12 @@
 package org.weasis.servlet;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import org.weasis.core.util.LangUtil;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import javax.servlet.http.HttpServletRequest;
-
-import org.weasis.core.util.LangUtil;
 
 public class ConnectorProperties extends Properties {
     private static final long serialVersionUID = -1461425609157253501L;
@@ -30,7 +21,7 @@ public class ConnectorProperties extends Properties {
     public static final String PARAM_LAUNCH = "launch";
 
     private static final Set<String> connectorsParams =
-        Stream.of(MANIFEST_VERSION, PARAM_URL, PARAM_LAUNCH).collect(Collectors.toSet());
+            Stream.of(MANIFEST_VERSION, PARAM_URL, PARAM_LAUNCH).collect(Collectors.toSet());
 
     public static final Consumer<Collection<String>> removeParams = c -> c.removeAll(connectorsParams);
 
@@ -97,12 +88,22 @@ public class ConnectorProperties extends Properties {
 
     public ConnectorProperties getResolveConnectorProperties(HttpServletRequest request) {
         Properties extProps = new Properties();
-        boolean canonical = LangUtil.getEmptytoFalse(this.getProperty("server.canonical.hostname.mode"));
 
-        String serverHost = ServletUtil.getServerHost(request, canonical);
+        boolean useLocalHostServerName = LangUtil.getEmptytoFalse(this.getProperty("server.canonical.hostname.mode"));
+
+        // set the host name of the server to which the request was sent
+        // OR uses the canonicalHostName of the local host with the fully qualified domain name is reachable
+        String serverHost = ServletUtil.getServerHost(request, useLocalHostServerName);
         extProps.put("server.host", serverHost);
 
-        String serverBaseUrl = request.getScheme() + "://" + serverHost + ":" + request.getServerPort();
+        boolean useLocalHostPort = LangUtil.getEmptytoFalse(this.getProperty("server.localhost.port.mode"));
+        // set port number to which the request was sent
+        // OR use the IP port number of the interface on which the request was received
+        String serverPort = useLocalHostPort ? Integer.toString(request.getLocalPort()) : Integer.toString(request.getServerPort());
+        extProps.put("server.port", serverPort);
+
+
+        String serverBaseUrl = request.getScheme() + "://" + serverHost + ":" + serverPort;
         extProps.put("server.base.url", serverBaseUrl);
 
         String applicationContextUrl = serverBaseUrl + request.getContextPath();
@@ -112,7 +113,7 @@ public class ConnectorProperties extends Properties {
         ConnectorProperties dynamicProps = getDeepCopy();
 
         // Perform variable substitution with System OR configProps OR extProps properties
-        for (Enumeration<?> e = this.propertyNames(); e.hasMoreElements();) {
+        for (Enumeration<?> e = this.propertyNames(); e.hasMoreElements(); ) {
             String name = (String) e.nextElement();
             dynamicProps.setProperty(name, substVars(this.getProperty(name), name, null, this, extProps));
         }
@@ -121,7 +122,7 @@ public class ConnectorProperties extends Properties {
 
         // Perform variable substitution for archive properties with System OR configProps OR extProps properties
         for (Properties dynProps : dynamicProps.arcList) {
-            for (Enumeration<?> e = dynProps.propertyNames(); e.hasMoreElements();) {
+            for (Enumeration<?> e = dynProps.propertyNames(); e.hasMoreElements(); ) {
                 String name = (String) e.nextElement();
                 dynProps.setProperty(name, substVars(dynProps.getProperty(name), name, null, dynProps, extProps));
             }
@@ -137,7 +138,7 @@ public class ConnectorProperties extends Properties {
     }
 
     static String substVars(String val, String currentKey, Map<String, String> cycleMap, Properties configProps,
-        Properties extProps) {
+                            Properties extProps) {
 
         Map<String, String> map = cycleMap == null ? new HashMap<>() : cycleMap;
         map.put(currentKey, currentKey);
@@ -179,7 +180,7 @@ public class ConnectorProperties extends Properties {
 
         map.remove(variable);
         String result =
-            val.substring(0, startDelim) + substValue + val.substring(stopDelim + DELIM_STOP.length(), val.length());
+                val.substring(0, startDelim) + substValue + val.substring(stopDelim + DELIM_STOP.length(), val.length());
         return substVars(result, currentKey, map, configProps, extProps);
     }
 }
