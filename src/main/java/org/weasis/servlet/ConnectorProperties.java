@@ -18,10 +18,9 @@ public class ConnectorProperties extends Properties {
 
     public static final String MANIFEST_VERSION = "mfv";
     public static final String PARAM_URL = "url";
-    public static final String PARAM_LAUNCH = "launch";
 
     private static final Set<String> connectorsParams =
-            Stream.of(MANIFEST_VERSION, PARAM_URL, PARAM_LAUNCH).collect(Collectors.toSet());
+            Stream.of(MANIFEST_VERSION, PARAM_URL).collect(Collectors.toSet());
 
     public static final Consumer<Collection<String>> removeParams = c -> c.removeAll(connectorsParams);
 
@@ -90,21 +89,19 @@ public class ConnectorProperties extends Properties {
         Properties extProps = new Properties();
 
         boolean useLocalHostServerName = LangUtil.getEmptytoFalse(this.getProperty("server.canonical.hostname.mode"));
-
-        // set the host name of the server to which the request was sent
-        // OR uses the canonicalHostName of the local host with the fully qualified domain name is reachable
         String serverHost = ServletUtil.getServerHost(request, useLocalHostServerName);
         extProps.put("server.host", serverHost);
 
         boolean useLocalHostPort = LangUtil.getEmptytoFalse(this.getProperty("server.localhost.port.mode"));
-        // set port number to which the request was sent
-        // OR use the IP port number of the interface on which the request was received
-        String serverPort = useLocalHostPort ? Integer.toString(request.getLocalPort()) : Integer.toString(request.getServerPort());
+        String serverPort = ServletUtil.getServerPort(request, useLocalHostPort);
         extProps.put("server.port", serverPort);
-
 
         String serverBaseUrl = request.getScheme() + "://" + serverHost + ":" + serverPort;
         extProps.put("server.base.url", serverBaseUrl);
+
+        String serverLocalHostBaseUrl = request.getScheme() + "://" + ServletUtil.getServerHost(request, true) + ":" + ServletUtil.getServerPort(request, true);
+        extProps.put("server.localhost.base.url", serverLocalHostBaseUrl);
+
 
         String applicationContextUrl = serverBaseUrl + request.getContextPath();
         extProps.put("application.context.url", applicationContextUrl);

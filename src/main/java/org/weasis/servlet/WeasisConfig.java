@@ -10,11 +10,16 @@
  *******************************************************************************/
 package org.weasis.servlet;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.weasis.core.util.StringUtil;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,16 +27,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
-
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.weasis.core.util.StringUtil;
 
 @WebServlet(name = "WeasisConfig", urlPatterns = "/WeasisConfig")
 public class WeasisConfig extends HttpServlet {
@@ -204,7 +199,7 @@ public class WeasisConfig extends HttpServlet {
         String queryCodeBasePath = request.getParameter(extCodebase ? PARAM_CODEBASE_EXT : PARAM_CODEBASE);
         if (queryCodeBasePath != null) {
             if (queryCodeBasePath.startsWith("/")) {
-                codeBasePath = ServletUtil.getBaseURL(request, false) + queryCodeBasePath;
+                codeBasePath = ServletUtil.getBaseURL(request) + queryCodeBasePath;
             } else {
                 codeBasePath = StringUtil.hasText(queryCodeBasePath) ? queryCodeBasePath : StringUtil.EMPTY_STRING;
                 // supposed to be a new valid URL for codeBase
