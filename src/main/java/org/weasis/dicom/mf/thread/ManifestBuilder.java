@@ -10,12 +10,6 @@
  *******************************************************************************/
 package org.weasis.dicom.mf.thread;
 
-import java.util.ArrayList;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.LangUtil;
@@ -26,6 +20,14 @@ import org.weasis.dicom.mf.XmlManifest;
 import org.weasis.query.CommonQueryParams;
 import org.weasis.servlet.ServletUtil;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class ManifestBuilder implements Callable<XmlManifest> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ManifestBuilder.class);
@@ -34,9 +36,12 @@ public class ManifestBuilder implements Callable<XmlManifest> {
 
     private final int requestId;
     private final long startTimeMillis;
+
     private final CommonQueryParams params;
+
     private final XmlManifest xml;
     private Future<XmlManifest> future;
+    private long buildManifestDuration;
 
     public ManifestBuilder(CommonQueryParams params) {
         if (params == null) {
@@ -46,6 +51,7 @@ public class ManifestBuilder implements Callable<XmlManifest> {
         this.xml = null;
         this.requestId = COUNTER.incrementAndGet();
         this.startTimeMillis = System.currentTimeMillis();
+        this.buildManifestDuration = -1;
     }
 
     public ManifestBuilder(XmlManifest xml) {
@@ -56,10 +62,24 @@ public class ManifestBuilder implements Callable<XmlManifest> {
         this.xml = xml;
         this.requestId = COUNTER.incrementAndGet();
         this.startTimeMillis = System.currentTimeMillis();
+        this.buildManifestDuration = 0;
+    }
+
+    public final Map<String, String[]> getWadoQueryParams() {
+        Map<String, String[]> wadoQueryParams = null;
+        if (params != null) {
+            wadoQueryParams = new LinkedHashMap<>(params.getRequestMap());
+            CommonQueryParams.retainWadoQueryParams.accept(wadoQueryParams.keySet());
+        }
+        return wadoQueryParams;
     }
 
     public final long getStartTimeMillis() {
         return startTimeMillis;
+    }
+
+    public long getBuildManifestDuration() {
+        return buildManifestDuration;
     }
 
     public final int getRequestId() {
@@ -85,18 +105,21 @@ public class ManifestBuilder implements Callable<XmlManifest> {
                 LOGGER.warn("Empty patient list");
                 if (!params.hasGeneralViewerMessage() && !params.isAcceptNoImage()) {
                     params.addGeneralViewerMessage(new ViewerMessage("Empty Patient List",
-                        "No images have been found with given parameters ", ViewerMessage.eLevel.WARN));
+                            "No images have been found with given parameters ", ViewerMessage.eLevel.WARN));
                 }
             }
 
             ArcQuery wadoQuery = new ArcQuery(LangUtil.convertCollectionType(params.getArchiveList(),
-                new ArrayList<QueryResult>(), QueryResult.class));
+                    new ArrayList<QueryResult>(), QueryResult.class));
 
-            LOGGER.info("Build Manifest in {} ms [id={}]", System.currentTimeMillis() - startTime, requestId);
+            buildManifestDuration = System.currentTimeMillis() - startTime;
+            LOGGER.info("Build Manifest [id={}] in {} ms ", requestId, buildManifestDuration);
+
             return wadoQuery;
         } else {
             return xml;
         }
     }
+
 
 }
