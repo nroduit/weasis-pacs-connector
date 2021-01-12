@@ -149,7 +149,7 @@ public class RequestManifest extends HttpServlet {
                 PrintWriter writer = response.getWriter();
                 response.setContentType("text/xml");
                 response.setHeader("Content-Disposition", "filename=\"manifest-" + id + ".xml\";");
-                response.setContentLength(wadoXmlGenerated.length());
+
                 writer.print(wadoXmlGenerated);
             } catch (Exception e) {
                 String errorMsg = "Exception writing noGzip response [id=" + id + "]";
