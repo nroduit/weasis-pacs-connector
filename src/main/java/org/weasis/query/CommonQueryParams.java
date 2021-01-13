@@ -1,18 +1,5 @@
 package org.weasis.query;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.mf.QueryResult;
@@ -22,6 +9,12 @@ import org.weasis.query.db.DbQueryConfiguration;
 import org.weasis.query.dicom.DicomQueryConfiguration;
 import org.weasis.servlet.ConnectorProperties;
 import org.weasis.servlet.ServletUtil;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CommonQueryParams {
 
@@ -59,15 +52,17 @@ public class CommonQueryParams {
     public static final String STUDY_LEVEL = "STUDY";
 
     private static final Set<String> wadoQueryParams =
-        Stream.of(PATIENT_ID, PATIENT_NAME, PATIENT_BIRTHDATE, LOWER_DATETIME, UPPER_DATETIME, MOST_RECENT_RESULTS,
-            MODALITIES_IN_STUDY, VIEWER_TYPE, DIAGNOSTIC_QUALITY, KEY_IMAGES_ONLY, KEYWORDS, STUDY_UID,
-            ACCESSION_NUMBER, SERIES_UID, OBJECT_UID, REQUEST_TYPE, ARCHIVE).collect(Collectors.toSet());
+            Stream.of(PATIENT_ID, PATIENT_NAME, PATIENT_BIRTHDATE, LOWER_DATETIME, UPPER_DATETIME, MOST_RECENT_RESULTS,
+                    MODALITIES_IN_STUDY, VIEWER_TYPE, DIAGNOSTIC_QUALITY, KEY_IMAGES_ONLY, KEYWORDS, STUDY_UID,
+                    ACCESSION_NUMBER, SERIES_UID, OBJECT_UID, REQUEST_TYPE, ARCHIVE).collect(Collectors.toSet());
 
-    public static final Consumer<Collection<String>> removeParams = c -> c.removeAll(wadoQueryParams);
+    public static final Consumer<Collection<String>> removeWadoQueryParams = c -> c.removeAll(wadoQueryParams);
+    public static final Consumer<Collection<String>> retainWadoQueryParams = c -> c.retainAll(wadoQueryParams);
 
     protected final ConnectorProperties properties;
     protected final List<AbstractQueryConfiguration> archiveList;
     protected final Map<String, String[]> requestMap;
+
 
     public CommonQueryParams(HttpServletRequest request, ConnectorProperties properties) {
         if (properties == null) {
@@ -76,7 +71,12 @@ public class CommonQueryParams {
         this.properties = properties;
         this.archiveList = new ArrayList<>();
         this.requestMap = new HashMap<>(request.getParameterMap());
+
         initArchiveList(request);
+    }
+
+    public Map<String, String[]> getRequestMap() {
+        return Collections.unmodifiableMap(requestMap);
     }
 
     private void initArchiveList(HttpServletRequest request) {
@@ -207,6 +207,7 @@ public class CommonQueryParams {
         }
     }
 
+
     public String getReqPatientID() {
         return getFirstParam(requestMap.get(PATIENT_ID));
     }
@@ -284,7 +285,7 @@ public class CommonQueryParams {
             return false;
         }
         return map.get(REQUEST_TYPE) != null || map.get(PATIENT_ID) != null || map.get(STUDY_UID) != null
-            || map.get(ACCESSION_NUMBER) != null || map.get(SERIES_UID) != null || map.get(OBJECT_UID) != null;
+                || map.get(ACCESSION_NUMBER) != null || map.get(SERIES_UID) != null || map.get(OBJECT_UID) != null;
     }
 
 }

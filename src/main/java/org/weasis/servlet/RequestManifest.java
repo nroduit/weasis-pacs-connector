@@ -10,6 +10,19 @@
  *******************************************************************************/
 package org.weasis.servlet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.mf.XmlManifest;
+import org.weasis.dicom.mf.thread.ManifestBuilder;
+import org.weasis.dicom.mf.thread.ManifestManagerThread;
+import org.weasis.util.InetUtil;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -17,19 +30,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPOutputStream;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.weasis.core.util.StringUtil;
-import org.weasis.dicom.mf.XmlManifest;
-import org.weasis.dicom.mf.thread.ManifestBuilder;
-import org.weasis.dicom.mf.thread.ManifestManagerThread;
 
-@WebServlet(urlPatterns = "/RequestManifest")
+@WebServlet(name = "RequestManifest", urlPatterns = { "/RequestManifest" })
 public class RequestManifest extends HttpServlet {
 
     private static final long serialVersionUID = 3012016354418267374L;
@@ -37,6 +39,8 @@ public class RequestManifest extends HttpServlet {
 
     public static final String PARAM_ID = "id";
     public static final String PARAM_NO_GZIP = "noGzip";
+
+    public static final String CONSUME_MANIFEST_DURATION_HEADER = "ConsumeManifestDuration";
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -64,7 +68,7 @@ public class RequestManifest extends HttpServlet {
         LOGGER.debug("doGet [id={}] - START", id);
 
         ConcurrentHashMap<Integer, ManifestBuilder> threadsMap =
-            (ConcurrentHashMap<Integer, ManifestBuilder>) getServletContext().getAttribute("manifestBuilderMap");
+                (ConcurrentHashMap<Integer, ManifestBuilder>) getServletContext().getAttribute("manifestBuilderMap");
 
         if (threadsMap == null) {
             String errorMsg = "Missing 'ManifestBuilderMap' from current ServletContext";
@@ -73,9 +77,9 @@ public class RequestManifest extends HttpServlet {
             return;
         }
 
-        ManifestBuilder buidler = threadsMap.get(id);
+        ManifestBuilder builder = threadsMap.get(id);
 
-        if (buidler == null) {
+        if (builder == null) {
             String errorMsg = "No 'ManifestBuilder' found with id=" + id;
             LOGGER.error(errorMsg);
             ServletUtil.sendResponseError(response, HttpServletResponse.SC_NOT_FOUND, errorMsg);
@@ -86,7 +90,7 @@ public class RequestManifest extends HttpServlet {
         String errorMessage = null;
 
         try {
-            Future<XmlManifest> future = buidler.getFuture();
+            Future<XmlManifest> future = builder.getFuture();
             if (future != null) {
                 xml = future.get(ManifestManagerThread.MAX_LIFE_CYCLE, TimeUnit.MILLISECONDS);
             }
@@ -95,15 +99,21 @@ public class RequestManifest extends HttpServlet {
             LOGGER.error("Building Manifest Exception [id={}]", id, e1);
         }
 
+        long consumeManifestDuration = System.currentTimeMillis() - builder.getStartTimeMillis();
+        response.setHeader(CONSUME_MANIFEST_DURATION_HEADER,Long.toString(consumeManifestDuration));
+
+        String clientAddr = InetUtil.getClientHostFromRequest(request);
+        String callingComponent = request.getHeader("User-Agent");
+        LOGGER.info("Consume Manifest [id={}] in {} ms by HOST: {} [User-Agent: {}]", id,consumeManifestDuration, clientAddr, callingComponent);
+
         threadsMap.remove(id);
-        LOGGER.info("Consume ManifestBuilder with id={}", id);
 
         if (xml == null) {
             if (errorMessage == null) {
                 errorMessage = "Unexpected Exception";
             }
             ServletUtil.sendResponseError(response, HttpServletResponse.SC_NOT_FOUND,
-                "Cannot build Manifest [id=" + id + "] - " + errorMessage);
+                    "Cannot build Manifest [id=" + id + "] - " + errorMessage);
             return;
         }
 
@@ -111,7 +121,7 @@ public class RequestManifest extends HttpServlet {
         String wadoXmlGenerated = xml.xmlManifest(request.getParameter(ConnectorProperties.MANIFEST_VERSION));
         if (wadoXmlGenerated == null) {
             ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                "Error when building the xml manifest.");
+                    "Error when building the xml manifest.");
             return;
         }
 
@@ -139,7 +149,7 @@ public class RequestManifest extends HttpServlet {
                 PrintWriter writer = response.getWriter();
                 response.setContentType("text/xml");
                 response.setHeader("Content-Disposition", "filename=\"manifest-" + id + ".xml\";");
-                response.setContentLength(wadoXmlGenerated.length());
+
                 writer.print(wadoXmlGenerated);
             } catch (Exception e) {
                 String errorMsg = "Exception writing noGzip response [id=" + id + "]";

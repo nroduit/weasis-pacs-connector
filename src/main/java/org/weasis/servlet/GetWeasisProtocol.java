@@ -7,6 +7,20 @@
 
 package org.weasis.servlet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.mf.UploadXml;
+import org.weasis.dicom.mf.XmlManifest;
+import org.weasis.dicom.mf.thread.ManifestBuilder;
+import org.weasis.query.CommonQueryParams;
+
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -15,19 +29,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.weasis.core.util.StringUtil;
-import org.weasis.dicom.mf.UploadXml;
-import org.weasis.dicom.mf.XmlManifest;
-import org.weasis.dicom.mf.thread.ManifestBuilder;
-import org.weasis.query.CommonQueryParams;
 
 @WebServlet(name = "GetWeasisProtocol", urlPatterns = { "/weasis", "/IHEInvokeImageDisplay" })
 public class GetWeasisProtocol extends HttpServlet {
@@ -106,7 +107,7 @@ public class GetWeasisProtocol extends HttpServlet {
 
             Map<String, String[]> requestParams = new LinkedHashMap<>(request.getParameterMap());
 
-            CommonQueryParams.removeParams.accept(requestParams.keySet());
+            CommonQueryParams.removeWadoQueryParams.accept(requestParams.keySet());
             ConnectorProperties.removeParams.accept(requestParams.keySet());
 
             // GET PROPERTIES PARAMETERS FROM REQUEST PARAMETERS
@@ -224,7 +225,7 @@ public class GetWeasisProtocol extends HttpServlet {
             response.sendRedirect(launcherUrlStr);
 
         } catch (Exception e) {
-            LOGGER.error("Redirect to weasis secheme", e);
+            LOGGER.error("Redirect to weasis scheme", e);
             ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
@@ -314,7 +315,7 @@ public class GetWeasisProtocol extends HttpServlet {
             codeBasePath = codeBasePath.trim();
 
             if (codeBasePath.startsWith("/")) {
-                codeBasePath = ServletUtil.getBaseURL(request, false) + codeBasePath;
+                codeBasePath = ServletUtil.getBaseURL(request) + codeBasePath;
             } else {
                 // supposed to be a new valid URL for codeBase
             }

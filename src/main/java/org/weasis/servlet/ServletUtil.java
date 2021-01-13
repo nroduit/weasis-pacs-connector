@@ -10,13 +10,21 @@
  *******************************************************************************/
 package org.weasis.servlet;
 
-import static org.weasis.query.CommonQueryParams.ACCESSION_NUMBER;
-import static org.weasis.query.CommonQueryParams.OBJECT_UID;
-import static org.weasis.query.CommonQueryParams.PATIENT_ID;
-import static org.weasis.query.CommonQueryParams.PATIENT_LEVEL;
-import static org.weasis.query.CommonQueryParams.SERIES_UID;
-import static org.weasis.query.CommonQueryParams.STUDY_LEVEL;
-import static org.weasis.query.CommonQueryParams.STUDY_UID;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.util.TagUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.mf.ViewerMessage;
+import org.weasis.dicom.mf.thread.ManifestBuilder;
+import org.weasis.query.AbstractQueryConfiguration;
+import org.weasis.query.CommonQueryParams;
+import org.weasis.util.EncryptUtils;
+
+import javax.servlet.ServletContext;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -31,20 +39,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import org.dcm4che3.data.Attributes;
-import org.dcm4che3.util.TagUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.weasis.core.util.StringUtil;
-import org.weasis.dicom.mf.ViewerMessage;
-import org.weasis.dicom.mf.thread.ManifestBuilder;
-import org.weasis.query.AbstractQueryConfiguration;
-import org.weasis.query.CommonQueryParams;
-import org.weasis.util.EncryptUtils;
+
+import static org.weasis.query.CommonQueryParams.*;
 
 public class ServletUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(ServletUtil.class);
@@ -57,7 +53,7 @@ public class ServletUtil {
     }
 
     public static Integer getIntegerFromDicomElement(Attributes dicom, int tag, String privateCreatorID,
-        Integer defaultValue) {
+                                                     Integer defaultValue) {
         if (dicom == null || !dicom.containsValue(tag)) {
             return defaultValue;
         }
@@ -85,7 +81,7 @@ public class ServletUtil {
         if (val instanceof String[]) {
             return (String[]) val;
         } else if (val != null) {
-            return new String[] { val.toString() };
+            return new String[]{val.toString()};
         }
         return null;
     }
@@ -97,7 +93,7 @@ public class ServletUtil {
             arr[array.length] = arg;
             return arr;
         } else if (val != null) {
-            return new String[] { val.toString(), arg };
+            return new String[]{val.toString(), arg};
         }
         return arg;
     }
@@ -168,10 +164,10 @@ public class ServletUtil {
     public static void logInfo(HttpServletRequest request, Logger logger) {
 
         logger.debug("HttpServletRequest - getRequestQueryURL: {}{}", request.getRequestURL(),
-            request.getQueryString() != null ? ("?" + request.getQueryString().trim()) : "");
+                request.getQueryString() != null ? ("?" + request.getQueryString().trim()) : "");
 
         logger.debug("HttpServletRequest - getParameters: {}", request.getParameterMap().entrySet().stream()
-            .flatMap(e -> Stream.of(e.getValue()).map(v -> e.getKey() + "=" + v)).collect(Collectors.joining("&")));
+                .flatMap(e -> Stream.of(e.getValue()).map(v -> e.getKey() + "=" + v)).collect(Collectors.joining("&")));
 
         logger.debug("HttpServletRequest - getContextPath: {}", request.getContextPath());
         logger.debug("HttpServletRequest - getServletPath: {}", request.getServletPath());
@@ -187,8 +183,7 @@ public class ServletUtil {
 
     /**
      * @param params
-     * @param doBuildQuery
-     *            if FALSE only checks if it's worth calling this function again to build the query
+     * @param doBuildQuery if FALSE only checks if it's worth calling this function again to build the query
      * @return TRUE if building the query is required, that is calling again this function with param doBuildQuery=TRUE
      */
     public static boolean fillPatientList(CommonQueryParams params, final boolean doBuildQuery) {
@@ -220,7 +215,7 @@ public class ServletUtil {
                 } else {
                     LOGGER.error("No ID found for STUDY request type: {}", requestType.replaceAll("[\n|\r|\t]", "_"));
                     params.addGeneralViewerMessage(new ViewerMessage("Missing Study ID",
-                        "No study ID or AccessionNumber found in the request", ViewerMessage.eLevel.ERROR));
+                            "No study ID or AccessionNumber found in the request", ViewerMessage.eLevel.ERROR));
                 }
 
             } else if (PATIENT_LEVEL.equals(requestType) && isRequestIDAllowed(PATIENT_LEVEL, properties)) {
@@ -236,7 +231,7 @@ public class ServletUtil {
                 } else {
                     LOGGER.error("No ID found for PATIENT request type: {}", requestType.replaceAll("[\n|\r|\t]", "_"));
                     params.addGeneralViewerMessage(new ViewerMessage("Missing Patient ID",
-                        "No patient ID found in the request", ViewerMessage.eLevel.ERROR));
+                            "No patient ID found in the request", ViewerMessage.eLevel.ERROR));
                 }
             } else if (requestType != null) {
                 if (!doBuildQuery)
@@ -244,7 +239,7 @@ public class ServletUtil {
 
                 LOGGER.error("Not supported IID request type: {}", requestType.replaceAll("[\n|\r|\t]", "_"));
                 params.addGeneralViewerMessage(new ViewerMessage("Unexpected Request",
-                    "Not supported IID request type: " + requestType, ViewerMessage.eLevel.ERROR));
+                        "Not supported IID request type: " + requestType, ViewerMessage.eLevel.ERROR));
             }
 
             // IF request doesn't fit IHEInvokeImageDisplay profile use pacsconnector's parameters
@@ -299,7 +294,7 @@ public class ServletUtil {
         } catch (Exception e) {
             LOGGER.error("Error when building the patient list", e);
             params.addGeneralViewerMessage(new ViewerMessage("Unexpected Error",
-                "Unexpected Error when building the manifest: " + e.getMessage(), ViewerMessage.eLevel.ERROR));
+                    "Unexpected Error when building the manifest: " + e.getMessage(), ViewerMessage.eLevel.ERROR));
         }
 
         return false;
@@ -337,10 +332,30 @@ public class ServletUtil {
         return false;
     }
 
-    public static String getBaseURL(HttpServletRequest request, boolean canonicalHostName) {
-        return request.getScheme() + "://" + getServerHost(request, canonicalHostName) + ":" + request.getServerPort();
+    public static String getBaseURL(HttpServletRequest request) {
+        return request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
     }
 
+    /**
+     * Set port number to which the request was sent
+     * or use the IP port number of the interface on which the request was received
+     *
+     * @param request
+     * @param useLocalHostPort
+     * @return
+     */
+    public static String getServerPort(HttpServletRequest request, boolean useLocalHostPort) {
+        return useLocalHostPort ? Integer.toString(request.getLocalPort()) : Integer.toString(request.getServerPort());
+    }
+
+    /**
+     * Set the host name of the server to which the request was sent,
+     * or use the canonicalHostName of the local host with the fully qualified domain name is reachable
+     *
+     * @param request
+     * @param canonicalHostName
+     * @return
+     */
     public static String getServerHost(HttpServletRequest request, boolean canonicalHostName) {
         if (canonicalHostName) {
             try {
@@ -369,7 +384,7 @@ public class ServletUtil {
     public static ManifestBuilder buildManifest(HttpServletRequest request, ManifestBuilder builder) {
         ServletContext ctx = request.getSession().getServletContext();
         final ConcurrentHashMap<Integer, ManifestBuilder> builderMap =
-            (ConcurrentHashMap<Integer, ManifestBuilder>) ctx.getAttribute("manifestBuilderMap");
+                (ConcurrentHashMap<Integer, ManifestBuilder>) ctx.getAttribute("manifestBuilderMap");
 
         builder.submit((ExecutorService) ctx.getAttribute("manifestExecutor"));
         builderMap.put(builder.getRequestId(), builder);
@@ -377,9 +392,9 @@ public class ServletUtil {
     }
 
     public static String buildManifestURL(HttpServletRequest request, ManifestBuilder builder, Properties props,
-        boolean gzip) {
+                                          boolean gzip) {
         StringBuilder buf =
-            new StringBuilder(props.getProperty("manifest.base.url", props.getProperty("server.base.url")));
+                new StringBuilder(props.getProperty("manifest.base.url", props.getProperty("server.base.url")));
         buf.append(request.getContextPath());
         buf.append("/RequestManifest?");
         buf.append(RequestManifest.PARAM_ID);
@@ -443,11 +458,11 @@ public class ServletUtil {
             } else if (throwable instanceof SocketException) {
                 String message = throwable.getMessage();
                 ignoreException = message != null
-                    && (message.indexOf("Connection reset") != -1 || message.indexOf("Broken pipe") != -1
+                        && (message.indexOf("Connection reset") != -1 || message.indexOf("Broken pipe") != -1
                         || message.indexOf("Socket closed") != -1 || message.indexOf("connection abort") != -1);
             } else {
                 ignoreException = throwable.getClass().getName().indexOf("ClientAbortException") >= 0
-                    || throwable.getClass().getName().indexOf("EofException") >= 0;
+                        || throwable.getClass().getName().indexOf("EofException") >= 0;
             }
             if (ignoreException) {
                 break;
