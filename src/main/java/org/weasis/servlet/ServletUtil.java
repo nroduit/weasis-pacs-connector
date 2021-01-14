@@ -64,8 +64,7 @@ public class ServletUtil {
     try {
       return dicom.getInt(privateCreatorID, tag, defaultValue == null ? 0 : defaultValue);
     } catch (NumberFormatException e) {
-      LOGGER.error(
-          "Cannot parse Integer of {}: {} ", TagUtils.toString(tag), e.getMessage()); // $NON-NLS-1$
+      LOGGER.error("Cannot parse Integer of {}: {} ", TagUtils.toString(tag), e.getMessage());
     }
     return defaultValue;
   }

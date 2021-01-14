@@ -290,7 +290,7 @@ public class WeasisLauncher extends HttpServlet {
       gzipOut.finish();
       return true;
     } catch (IOException e) {
-      LOGGER.error("Cannot gzip compress", e); // $NON-NLS-1$
+      LOGGER.error("Cannot gzip compress", e);
       return false;
     } finally {
       FileUtil.safeClose(in);
