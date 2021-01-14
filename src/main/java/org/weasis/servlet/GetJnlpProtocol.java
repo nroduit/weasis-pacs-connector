@@ -1,11 +1,11 @@
-/**
- * ***************************************************************************** Copyright (c) 2014
- * Weasis Team. All rights reserved. This program and the accompanying materials are made available
- * under the terms of the Eclipse Public License v1.0 which accompanies this distribution, and is
- * available at http://www.eclipse.org/legal/epl-v10.html
+/*
+ * Copyright (c) 2014 Weasis Team and other contributors.
  *
- * <p>Contributors: Nicolas Roduit - initial API and implementation
- * *****************************************************************************
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
 package org.weasis.servlet;
 
@@ -20,6 +20,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+/** @author Nicolas Roduit */
 
 /** @deprecated JNLP protocol has been removed from Java 11, used GetWeasisProtocol instead */
 @WebServlet(

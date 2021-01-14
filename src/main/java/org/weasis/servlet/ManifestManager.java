@@ -1,11 +1,11 @@
-/**
- * ***************************************************************************** Copyright (c) 2014
- * Weasis Team. All rights reserved. This program and the accompanying materials are made available
- * under the terms of the Eclipse Public License v1.0 which accompanies this distribution, and is
- * available at http://www.eclipse.org/legal/epl-v10.html
+/*
+ * Copyright (c) 2014 Weasis Team and other contributors.
  *
- * <p>Contributors: Nicolas Roduit - initial API and implementation
- * *****************************************************************************
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
 package org.weasis.servlet;
 
@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.dicom.mf.thread.ManifestManagerThread;
 
+/** @author Nicolas Roduit */
 @WebListener
 public class ManifestManager implements ServletContextListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(ManifestManager.class);
