@@ -10,15 +10,15 @@
   <version>${revision}${changelist}</version>
 
   <properties>
-    <revision>7.2.0</revision>
+    <revision>7.3.0</revision>
     <changelist>-SNAPSHOT</changelist>
 
     <java-version>1.8</java-version>
     <enforcer.jdk-version>[${java-version},)</enforcer.jdk-version>
     <enforcer.maven-version>[3.2.5,)</enforcer.maven-version>
 
-    <weasis-dicom-tools.version>5.23.0.1</weasis-dicom-tools.version>
-    <weasis-core-img.version>4.5.0.1</weasis-core-img.version>
+    <weasis-dicom-tools.version>5.24.0</weasis-dicom-tools.version>
+    <weasis-core-img.version>4.5.3 </weasis-core-img.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
