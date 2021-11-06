@@ -188,7 +188,7 @@ public class GetWeasisProtocol extends HttpServlet {
       // ADD PROPERTIES PARAMETERS
       for (Entry<String, String> entry : requestProperties.entrySet()) {
         StringBuilder propSB = new StringBuilder(entry.getKey());
-        propSB.append(' ');
+        propSB.append('+');
         propSB.append(entry.getValue());
         addElement(
             configParamBuf,
