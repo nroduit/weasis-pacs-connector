@@ -11,7 +11,7 @@
 
   <properties>
     <revision>7.3.0</revision>
-    <changelist>-SNAPSHOT</changelist>
+    <changelist></changelist>
 
     <java-version>1.8</java-version>
     <enforcer.jdk-version>[${java-version},)</enforcer.jdk-version>
