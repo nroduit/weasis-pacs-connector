@@ -223,7 +223,7 @@
             <artifactId>maven-war-plugin</artifactId>
             <version>3.1.0</version>
             <configuration>
-              <packagingExcludes>WEB-INF/lib/dcm4che-dict-*,WEB-INF/lib/log4j*,WEB-INF/lib/slf4j*
+              <packagingExcludes>WEB-INF/lib/dcm4che-dict-*,WEB-INF/lib/log4j*,WEB-INF/lib/slf4j*,WEB-INF/lib/reload4j*
               </packagingExcludes>
               <warName>${project.artifactId}</warName>
               <attachClasses>${attachClasses}</attachClasses>
