@@ -10,8 +10,8 @@
   <version>${revision}${changelist}</version>
 
   <properties>
-    <revision>7.2.0</revision>
-    <changelist>-SNAPSHOT</changelist>
+    <revision>7.1.2</revision>
+    <changelist>-reload4j</changelist>
 
     <java-version>1.8</java-version>
     <enforcer.jdk-version>[${java-version},)</enforcer.jdk-version>
@@ -56,8 +56,8 @@
     <repository>
       <id>dcm4che</id>
       <name>dcm4che Repository</name>
-      <url>http://maven.dcm4che.org</url>
-      <!-- <url>http://www.dcm4che.org/maven2</url> (which will redirected to https://www.dcm4che.org/maven2). -->
+      <!-- <url>http://maven.dcm4che.org</url> -->
+      <url>https://www.dcm4che.org/maven2</url>
     </repository>
   </repositories>
 
@@ -255,7 +255,7 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-log4j12</artifactId>
-      <version>1.7.30</version>
+      <version>1.7.36</version>
     </dependency>
     <dependency>
       <groupId>org.weasis</groupId>
