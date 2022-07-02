@@ -100,6 +100,9 @@ public class RequestManifest extends HttpServlet {
       if (future != null) {
         xml = future.get(ManifestManagerThread.MAX_LIFE_CYCLE, TimeUnit.MILLISECONDS);
       }
+    } catch (InterruptedException e) {
+      LOGGER.warn("Interrupted Exception of [id={}]", id);
+      Thread.currentThread().interrupt();
     } catch (Exception e1) {
       errorMessage = e1.getMessage();
       LOGGER.error("Building Manifest Exception [id={}]", id, e1);

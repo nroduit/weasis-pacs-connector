@@ -120,11 +120,13 @@ public class WeasisLauncher extends HttpServlet {
 
       RequestDispatcher dispatcher = request.getRequestDispatcher(buf.toString());
       dispatcher.forward(request, response);
-
+    } catch (InterruptedException e) {
+      LOGGER.warn("Interrupted Exception of the current request");
+      Thread.currentThread().interrupt();
     } catch (Exception e) {
       LOGGER.error("Weasis Servlet Launcher", e);
       String msg = e.getMessage();
-      if (StringUtil.hasText(msg) && msg.startsWith("Unautorized")) {
+      if (StringUtil.hasText(msg) && msg.startsWith("Unauthorized")) {
         ServletUtil.sendResponseError(response, HttpServletResponse.SC_FORBIDDEN, msg);
       } else {
         ServletUtil.sendResponseError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
