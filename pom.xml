@@ -17,8 +17,8 @@
     <enforcer.jdk-version>[${java-version},)</enforcer.jdk-version>
     <enforcer.maven-version>[3.2.5,)</enforcer.maven-version>
 
-    <weasis-dicom-tools.version>5.25.1</weasis-dicom-tools.version>
-    <weasis-core-img.version>4.5.3 </weasis-core-img.version>
+    <weasis-dicom-tools.version>5.26.1</weasis-dicom-tools.version>
+    <weasis-core-img.version>4.5.5.1</weasis-core-img.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -121,7 +121,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
+        <version>3.9.0</version>
         <configuration>
           <source>${java-version}</source>
           <target>${java-version}</target>
@@ -130,7 +130,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-war-plugin</artifactId>
-        <version>3.3.1</version>
+        <version>3.3.2</version>
         <configuration>
           <packagingExcludes>WEB-INF/lib/dcm4che-dict-*</packagingExcludes>
           <warName>${project.artifactId}</warName>
@@ -141,7 +141,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>flatten-maven-plugin</artifactId>
-        <version>1.2.5</version>
+        <version>1.2.7</version>
         <configuration>
           <updatePomFile>true</updatePomFile>
           <flattenMode>resolveCiFriendliesOnly</flattenMode>
@@ -167,7 +167,7 @@
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
-        <version>2.7.0</version>
+        <version>2.23.0</version>
         <configuration>
           <java>
             <googleJavaFormat/>
@@ -212,7 +212,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.6.1</version>
+            <version>3.9.0</version>
             <configuration>
               <source>${java-version}</source>
               <target>${java-version}</target>
@@ -221,7 +221,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-war-plugin</artifactId>
-            <version>3.1.0</version>
+            <version>3.3.2</version>
             <configuration>
               <packagingExcludes>WEB-INF/lib/dcm4che-dict-*,WEB-INF/lib/log4j*,WEB-INF/lib/slf4j*,WEB-INF/lib/reload4j*
               </packagingExcludes>
@@ -238,7 +238,7 @@
     <dependency>
       <groupId>org.jdom</groupId>
       <artifactId>jdom2</artifactId>
-      <version>2.0.6</version>
+      <version>2.0.6.1</version>
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>
@@ -249,7 +249,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.13.1</version>
+      <version>4.13.2</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
