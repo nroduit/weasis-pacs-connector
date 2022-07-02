@@ -12,7 +12,9 @@ package org.weasis.util;
 import java.util.Arrays;
 import java.util.Base64;
 
-/** @author Nicolas Roduit */
+/**
+ * @author Nicolas Roduit
+ */
 public class EncryptUtils {
   private static final char START = '~';
   private static final int KEY_MIN_SIZE = 10; // inclusive

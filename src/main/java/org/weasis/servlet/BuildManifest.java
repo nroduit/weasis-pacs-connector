@@ -19,7 +19,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 
-/** @author Nicolas Roduit */
+/**
+ * @author Nicolas Roduit
+ */
 @WebServlet(name = "BuildManifest", urlPatterns = "/manifest")
 public class BuildManifest extends HttpServlet {
 

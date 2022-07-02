@@ -17,7 +17,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.mf.XmlManifest;
 
-/** @author Nicolas Roduit */
+/**
+ * @author Nicolas Roduit
+ */
 public class ManifestManagerThread extends Thread {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ManifestManagerThread.class);

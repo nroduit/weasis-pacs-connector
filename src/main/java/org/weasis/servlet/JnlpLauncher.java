@@ -44,7 +44,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.StringUtil;
 
-/** @author Nicolas Roduit */
+/**
+ * @author Nicolas Roduit
+ */
 @WebServlet(urlPatterns = "/")
 public class JnlpLauncher extends HttpServlet {
   private static final long serialVersionUID = 5979263846495591025L;

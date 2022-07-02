@@ -30,7 +30,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.StringUtil;
 
-/** @author Nicolas Roduit */
+/**
+ * @author Nicolas Roduit
+ */
 @WebServlet(name = "WeasisConfig", urlPatterns = "/WeasisConfig")
 public class WeasisConfig extends HttpServlet {
 

@@ -42,7 +42,9 @@ import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.dicom.mf.thread.ManifestManagerThread;
 import org.weasis.query.CommonQueryParams;
 
-/** @author Nicolas Roduit */
+/**
+ * @author Nicolas Roduit
+ */
 @WebServlet(
     name = "WeasisLauncher",
     urlPatterns = {"/viewer"})

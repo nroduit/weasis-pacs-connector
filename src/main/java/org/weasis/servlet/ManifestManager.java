@@ -32,7 +32,9 @@ import org.slf4j.LoggerFactory;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.dicom.mf.thread.ManifestManagerThread;
 
-/** @author Nicolas Roduit */
+/**
+ * @author Nicolas Roduit
+ */
 @WebListener
 public class ManifestManager implements ServletContextListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(ManifestManager.class);

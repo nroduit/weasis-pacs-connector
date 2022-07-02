@@ -46,7 +46,9 @@ import org.weasis.query.AbstractQueryConfiguration;
 import org.weasis.query.CommonQueryParams;
 import org.weasis.util.EncryptUtils;
 
-/** @author Nicolas Roduit */
+/**
+ * @author Nicolas Roduit
+ */
 public class ServletUtil {
   private static final Logger LOGGER = LoggerFactory.getLogger(ServletUtil.class);
 

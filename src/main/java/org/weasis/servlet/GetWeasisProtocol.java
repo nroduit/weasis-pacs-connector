@@ -31,7 +31,9 @@ import org.weasis.dicom.mf.XmlManifest;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.query.CommonQueryParams;
 
-/** @author Nicolas Roduit */
+/**
+ * @author Nicolas Roduit
+ */
 @WebServlet(
     name = "GetWeasisProtocol",
     urlPatterns = {"/weasis", "/IHEInvokeImageDisplay"})

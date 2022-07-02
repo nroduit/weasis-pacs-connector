@@ -29,7 +29,9 @@ import org.weasis.dicom.mf.thread.ManifestBuilder;
 import org.weasis.dicom.mf.thread.ManifestManagerThread;
 import org.weasis.util.InetUtil;
 
-/** @author Nicolas Roduit */
+/**
+ * @author Nicolas Roduit
+ */
 @WebServlet(
     name = "RequestManifest",
     urlPatterns = {"/RequestManifest"})

@@ -26,7 +26,9 @@ import org.weasis.dicom.mf.XmlManifest;
 import org.weasis.query.CommonQueryParams;
 import org.weasis.servlet.ServletUtil;
 
-/** @author Nicolas Roduit */
+/**
+ * @author Nicolas Roduit
+ */
 public class ManifestBuilder implements Callable<XmlManifest> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ManifestBuilder.class);

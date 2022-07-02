@@ -14,7 +14,9 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** @author Nicolas Roduit */
+/**
+ * @author Nicolas Roduit
+ */
 public class EncryptUtilsTest {
 
   private static StringBuilder builder = new StringBuilder();
