@@ -9,6 +9,8 @@
  */
 package org.weasis.servlet;
 
+import jakarta.servlet.http.HttpServletRequest;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -21,11 +23,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.servlet.http.HttpServletRequest;
 import org.weasis.core.util.LangUtil;
 
 public class ConnectorProperties extends Properties {
-  private static final long serialVersionUID = -1461425609157253501L;
+  @Serial private static final long serialVersionUID = -1461425609157253501L;
 
   private static final String DELIM_START = "${";
   private static final String DELIM_STOP = "}";
@@ -181,7 +182,7 @@ public class ConnectorProperties extends Properties {
       if (startDelim < 0) {
         return val;
       }
-      while (stopDelim >= 0) {
+      while (true) {
         int idx = val.indexOf(DELIM_START, startDelim + DELIM_START.length());
         if ((idx < 0) || (idx > stopDelim)) {
           break;
@@ -189,7 +190,7 @@ public class ConnectorProperties extends Properties {
           startDelim = idx;
         }
       }
-    } while ((startDelim > stopDelim) && (stopDelim >= 0));
+    } while (startDelim > stopDelim);
 
     String variable = val.substring(startDelim + DELIM_START.length(), stopDelim);
 
@@ -206,9 +207,7 @@ public class ConnectorProperties extends Properties {
 
     map.remove(variable);
     String result =
-        val.substring(0, startDelim)
-            + substValue
-            + val.substring(stopDelim + DELIM_STOP.length(), val.length());
+        val.substring(0, startDelim) + substValue + val.substring(stopDelim + DELIM_STOP.length());
     return substVars(result, currentKey, map, configProps, extProps);
   }
 }

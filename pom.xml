@@ -10,15 +10,16 @@
   <version>${revision}${changelist}</version>
 
   <properties>
-    <revision>7.3.1</revision>
+    <revision>8.0.0</revision>
     <changelist>-SNAPSHOT</changelist>
 
-    <java-version>1.8</java-version>
-    <enforcer.jdk-version>[${java-version},)</enforcer.jdk-version>
-    <enforcer.maven-version>[3.2.5,)</enforcer.maven-version>
+    <java-version>17</java-version>
+    <jdk-version>17</jdk-version>
+    <enforcer.jdk-version>[${jdk-version},)</enforcer.jdk-version>
+    <enforcer.maven-version>[3.8.1,)</enforcer.maven-version>
 
-    <weasis-dicom-tools.version>5.26.1</weasis-dicom-tools.version>
-    <weasis-core-img.version>4.5.5.1</weasis-core-img.version>
+    <weasis-dicom-tools.version>5.34.0.1</weasis-dicom-tools.version>
+    <weasis-core-img.version>4.11.0.1</weasis-core-img.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -37,68 +38,31 @@
     </license>
   </licenses>
 
-  <scm>
-    <connection>scm:git:git@github.com:nroduit/weasis-pacs-connector.git</connection>
-    <developerConnection>scm:git:https://github.com/nroduit/weasis-pacs-connector.git
-    </developerConnection>
-    <url>https://github.com/nroduit/weasis-pacs-connector</url>
-  </scm>
-
   <repositories>
     <repository>
-      <id>mvn-repo-master</id>
-      <url>https://raw.github.com/nroduit/mvn-repo/master/</url>
       <snapshots>
         <enabled>false</enabled>
       </snapshots>
+      <id>central</id>
+      <name>Central Repository</name>
+      <url>https://repo.maven.apache.org/maven2</url>
     </repository>
-
     <repository>
-      <id>dcm4che</id>
-      <name>dcm4che Repository</name>
-      <!-- <url>http://maven.dcm4che.org</url> -->
-      <url>https://www.dcm4che.org/maven2</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>mvn-repo-master</id>
+      <url>https://raw.github.com/nroduit/mvn-repo/master/</url>
     </repository>
   </repositories>
 
-
   <build>
-
-    <pluginManagement>
-      <plugins>
-        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself. -->
-        <plugin>
-          <groupId>org.eclipse.m2e</groupId>
-          <artifactId>lifecycle-mapping</artifactId>
-          <version>1.0.0</version>
-          <configuration>
-            <lifecycleMappingMetadata>
-              <pluginExecutions>
-                <pluginExecution>
-                  <pluginExecutionFilter>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>flatten-maven-plugin</artifactId>
-                    <versionRange>[1.1.0,)</versionRange>
-                    <goals>
-                      <goal>flatten</goal>
-                    </goals>
-                  </pluginExecutionFilter>
-                  <action>
-                    <ignore></ignore>
-                  </action>
-                </pluginExecution>
-              </pluginExecutions>
-            </lifecycleMappingMetadata>
-          </configuration>
-        </plugin>
-      </plugins>
-    </pluginManagement>
 
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.0.0-M3</version>
+        <version>3.5.0</version>
         <executions>
           <execution>
             <id>min-requirement</id>
@@ -121,16 +85,15 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.9.0</version>
+        <version>3.14.0</version>
         <configuration>
-          <source>${java-version}</source>
-          <target>${java-version}</target>
+          <release>${java-version}</release>
         </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-war-plugin</artifactId>
-        <version>3.3.2</version>
+        <version>3.4.0</version>
         <configuration>
           <packagingExcludes>WEB-INF/lib/dcm4che-dict-*</packagingExcludes>
           <warName>${project.artifactId}</warName>
@@ -141,7 +104,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>flatten-maven-plugin</artifactId>
-        <version>1.2.7</version>
+        <version>1.7.0</version>
         <configuration>
           <updatePomFile>true</updatePomFile>
           <flattenMode>resolveCiFriendliesOnly</flattenMode>
@@ -167,7 +130,7 @@
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
-        <version>2.23.0</version>
+        <version>2.44.5</version>
         <configuration>
           <java>
             <googleJavaFormat/>
@@ -212,16 +175,15 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.9.0</version>
+            <version>3.14.0</version>
             <configuration>
-              <source>${java-version}</source>
-              <target>${java-version}</target>
+              <release>${java-version}</release>
             </configuration>
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-war-plugin</artifactId>
-            <version>3.3.2</version>
+            <version>3.4.0</version>
             <configuration>
               <packagingExcludes>WEB-INF/lib/dcm4che-dict-*,WEB-INF/lib/log4j*,WEB-INF/lib/slf4j*,WEB-INF/lib/reload4j*
               </packagingExcludes>
@@ -241,16 +203,16 @@
       <version>2.0.6.1</version>
     </dependency>
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
-      <version>3.1.0</version>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <version>6.1.0</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.13.2</version>
-      <scope>provided</scope>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>6.0.0-RC2</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>

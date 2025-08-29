@@ -9,12 +9,12 @@
  */
 package org.weasis.util;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Objects;
-import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -176,6 +176,6 @@ public class InetUtil {
   //////////////////////////////////////////////////////////////////////////////
 
   private static boolean isEmpty(CharSequence cs) {
-    return cs == null || cs.length() == 0;
+    return cs == null || cs.isEmpty();
   }
 }

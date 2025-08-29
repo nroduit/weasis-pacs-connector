@@ -19,36 +19,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.StringUtil;
 
-public class DbQuery {
+public record DbQuery(Connection connection, Statement statement, ResultSet resultSet) {
+
   private static final Logger LOGGER = LoggerFactory.getLogger(DbQuery.class);
-
-  private final Connection connection;
-  private final ResultSet resultSet;
-  private final Statement statement;
-
-  public DbQuery(Connection connection, Statement statement, ResultSet resultSet) {
-    this.connection = connection;
-    this.resultSet = resultSet;
-    this.statement = statement;
-  }
-
-  public Connection getConnection() {
-    return connection;
-  }
-
-  public ResultSet getResultSet() {
-    return resultSet;
-  }
-
-  public Statement getStatement() {
-    return statement;
-  }
 
   public void close() {
     safeClose(connection, resultSet, statement);
   }
 
-  public static final void safeClose(Object... sqlObjects) {
+  public static void safeClose(Object... sqlObjects) {
     if (sqlObjects == null) {
       return;
     }
@@ -67,8 +46,7 @@ public class DbQuery {
     }
   }
 
-  public static final DbQuery executeDBQuery(String query, Properties dbProperties)
-      throws SQLException {
+  public static DbQuery executeDBQuery(String query, Properties dbProperties) throws SQLException {
     if (StringUtil.hasText(query) && dbProperties != null) {
       try {
         Class.forName(dbProperties.getProperty("arc.db.driver"));

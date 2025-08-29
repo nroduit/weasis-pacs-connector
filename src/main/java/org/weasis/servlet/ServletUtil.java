@@ -17,6 +17,10 @@ import static org.weasis.query.CommonQueryParams.SERIES_UID;
 import static org.weasis.query.CommonQueryParams.STUDY_LEVEL;
 import static org.weasis.query.CommonQueryParams.STUDY_UID;
 
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -31,10 +35,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.util.TagUtils;
 import org.slf4j.Logger;
@@ -326,8 +326,7 @@ public class ServletUtil {
   }
 
   static boolean hasText(String... str) {
-    return Objects.nonNull(str)
-        && Arrays.stream(str).filter(s -> StringUtil.hasText(s)).count() > 0;
+    return Objects.nonNull(str) && Arrays.stream(str).anyMatch(StringUtil::hasText);
   }
 
   static String decrypt(String message, String key, String level) {
@@ -464,19 +463,16 @@ public class ServletUtil {
     }
   }
 
-  private static int copy(final InputStream in, final OutputStream out, final int bufSize)
+  private static void copy(final InputStream in, final OutputStream out, final int bufSize)
       throws IOException {
     final byte[] buffer = new byte[bufSize];
-    int bytesCopied = 0;
     while (true) {
       int byteCount = in.read(buffer, 0, buffer.length);
       if (byteCount <= 0) {
         break;
       }
       out.write(buffer, 0, byteCount);
-      bytesCopied += byteCount;
     }
-    return bytesCopied;
   }
 
   private static void handleException(Exception e) {
@@ -489,14 +485,14 @@ public class ServletUtil {
         String message = throwable.getMessage();
         ignoreException =
             message != null
-                && (message.indexOf("Connection reset") != -1
-                    || message.indexOf("Broken pipe") != -1
-                    || message.indexOf("Socket closed") != -1
-                    || message.indexOf("connection abort") != -1);
+                && (message.contains("Connection reset")
+                    || message.contains("Broken pipe")
+                    || message.contains("Socket closed")
+                    || message.contains("connection abort"));
       } else {
         ignoreException =
-            throwable.getClass().getName().indexOf("ClientAbortException") >= 0
-                || throwable.getClass().getName().indexOf("EofException") >= 0;
+            throwable.getClass().getName().contains("ClientAbortException")
+                || throwable.getClass().getName().contains("EofException");
       }
       if (ignoreException) {
         break;

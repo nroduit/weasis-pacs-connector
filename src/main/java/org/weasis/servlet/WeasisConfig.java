@@ -9,23 +9,25 @@
  */
 package org.weasis.servlet;
 
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.Serial;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPOutputStream;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.StringUtil;
@@ -36,7 +38,7 @@ import org.weasis.core.util.StringUtil;
 @WebServlet(name = "WeasisConfig", urlPatterns = "/WeasisConfig")
 public class WeasisConfig extends HttpServlet {
 
-  private static final long serialVersionUID = 3012016354418267374L;
+  @Serial private static final long serialVersionUID = 3012016354418267374L;
   private static final Logger LOGGER = LoggerFactory.getLogger(WeasisConfig.class);
 
   public static final String PARAM_NO_GZIP = "noGzip";
@@ -114,7 +116,7 @@ public class WeasisConfig extends HttpServlet {
       return;
     }
 
-    Boolean gzip = request.getParameter(PARAM_NO_GZIP) == null;
+    boolean gzip = request.getParameter(PARAM_NO_GZIP) == null;
 
     response.setStatus(HttpServletResponse.SC_OK);
 
@@ -132,7 +134,6 @@ public class WeasisConfig extends HttpServlet {
         LOGGER.error(errorMsg, e);
         ServletUtil.sendResponseError(
             response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, errorMsg);
-        return;
       }
     } else {
       try {
@@ -146,7 +147,6 @@ public class WeasisConfig extends HttpServlet {
         LOGGER.error(errorMsg, e);
         ServletUtil.sendResponseError(
             response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, errorMsg);
-        return;
       }
     }
   }
@@ -155,9 +155,7 @@ public class WeasisConfig extends HttpServlet {
       List<String> arguments, Map<String, String[]> params) {
     String[] argValues = ServletUtil.getParameters(params.get(WeasisConfig.PARAM_ARGUMENT));
     if (argValues != null) {
-      for (String a : argValues) {
-        arguments.add(a);
-      }
+      arguments.addAll(Arrays.asList(argValues));
     }
   }
 

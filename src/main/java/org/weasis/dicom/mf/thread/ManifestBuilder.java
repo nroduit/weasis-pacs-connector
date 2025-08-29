@@ -9,7 +9,7 @@
  */
 package org.weasis.dicom.mf.thread;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -18,9 +18,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.mf.ArcQuery;
-import org.weasis.dicom.mf.QueryResult;
 import org.weasis.dicom.mf.ViewerMessage;
 import org.weasis.dicom.mf.XmlManifest;
 import org.weasis.query.CommonQueryParams;
@@ -113,10 +111,7 @@ public class ManifestBuilder implements Callable<XmlManifest> {
         }
       }
 
-      ArcQuery wadoQuery =
-          new ArcQuery(
-              LangUtil.convertCollectionType(
-                  params.getArchiveList(), new ArrayList<QueryResult>(), QueryResult.class));
+      ArcQuery wadoQuery = new ArcQuery(Collections.unmodifiableList(params.getArchiveList()));
 
       buildManifestDuration = System.currentTimeMillis() - startTime;
       LOGGER.info("Build Manifest [id={}] in {} ms ", requestId, buildManifestDuration);

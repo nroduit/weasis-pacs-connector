@@ -9,12 +9,20 @@
  */
 package org.weasis.servlet;
 
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serial;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -25,13 +33,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPOutputStream;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.FileUtil;
@@ -50,8 +51,13 @@ import org.weasis.query.CommonQueryParams;
     urlPatterns = {"/viewer"})
 public class WeasisLauncher extends HttpServlet {
 
-  private static final long serialVersionUID = 7933047406409849509L;
+  @Serial private static final long serialVersionUID = 7933047406409849509L;
   private static final Logger LOGGER = LoggerFactory.getLogger(WeasisLauncher.class);
+
+  protected static final String PARAM_UPLOAD = "upload";
+  protected static final String PARAM_SOURCE = "src";
+
+  protected static final String ATTRIBUTE_UPLOADED_ARGUMENT = "org.weasis.uploaded.arg";
 
   protected static final String PARAM_EMBED = "embedManifest";
 
@@ -162,9 +168,9 @@ public class WeasisLauncher extends HttpServlet {
       }
     }
     // Overrides template path
-    String queryLauncherPath = request.getParameter(JnlpLauncher.PARAM_SOURCE);
+    String queryLauncherPath = request.getParameter(PARAM_SOURCE);
     buf.append("&");
-    buf.append(JnlpLauncher.PARAM_SOURCE);
+    buf.append(PARAM_SOURCE);
     buf.append("=");
     if (queryLauncherPath != null) {
       if (queryLauncherPath.indexOf('/') == -1 || queryLauncherPath.startsWith("/")) {
@@ -217,7 +223,7 @@ public class WeasisLauncher extends HttpServlet {
                       gzipCompressToByte(
                           xml.xmlManifest((String) props.get("manifest.version")).getBytes())));
 
-          request.setAttribute(JnlpLauncher.ATTRIBUTE_UPLOADED_ARGUMENT, buf.toString());
+          request.setAttribute(ATTRIBUTE_UPLOADED_ARGUMENT, buf.toString());
           // Remove the builder as it has been retrieved without calling RequestManifest servlet
           final ConcurrentHashMap<Integer, ManifestBuilder> builderMap =
               (ConcurrentHashMap<Integer, ManifestBuilder>) ctx.getAttribute("manifestBuilderMap");
@@ -233,7 +239,7 @@ public class WeasisLauncher extends HttpServlet {
 
   static UploadXml uploadManifest(HttpServletRequest request, HttpServletResponse response) {
 
-    String uploadParam = request.getParameter(JnlpLauncher.PARAM_UPLOAD);
+    String uploadParam = request.getParameter(PARAM_UPLOAD);
     try {
       // Start reading XML manifest
       if ("manifest".equals(uploadParam)) {

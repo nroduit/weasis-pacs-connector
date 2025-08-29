@@ -9,10 +9,10 @@
  */
 package org.weasis.util;
 
-import org.hamcrest.core.IsEqual;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Nicolas Roduit
@@ -21,8 +21,8 @@ public class EncryptUtilsTest {
 
   private static StringBuilder builder = new StringBuilder();
 
-  @AfterClass
-  public static void afterClass() {
+  @AfterAll
+  public static void afterAll() {
     System.out.print(builder);
   }
 
@@ -42,7 +42,7 @@ public class EncryptUtilsTest {
 
   private void run(String message, String key) {
     String enc_res = EncryptUtils.encrypt(message, key);
-    Assert.assertNotNull("Encryption returns null!", enc_res);
+    assertNotNull(enc_res, "Encryption returns null!");
     builder.append("Encryption: [");
     builder.append(message);
     builder.append("] to [");
@@ -50,14 +50,13 @@ public class EncryptUtilsTest {
     builder.append("]\n");
 
     String dec_res = EncryptUtils.decrypt(enc_res, key);
-    Assert.assertNotNull("Decryption returns null!", dec_res);
+    assertNotNull(dec_res, "Decryption returns null!");
     builder.append("Decryption: [");
     builder.append(enc_res);
     builder.append("] to [");
     builder.append(dec_res);
     builder.append("]\n");
 
-    Assert.assertThat(
-        "Cannot get original message after decryption!", dec_res, IsEqual.equalTo(message));
+    assertEquals(message, dec_res, "Cannot get original message after decryption!");
   }
 }

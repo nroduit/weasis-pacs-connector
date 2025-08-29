@@ -9,18 +9,19 @@
  */
 package org.weasis.servlet;
 
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.Serial;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPOutputStream;
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.StringUtil;
@@ -37,7 +38,7 @@ import org.weasis.util.InetUtil;
     urlPatterns = {"/RequestManifest"})
 public class RequestManifest extends HttpServlet {
 
-  private static final long serialVersionUID = 3012016354418267374L;
+  @Serial private static final long serialVersionUID = 3012016354418267374L;
   private static final Logger LOGGER = LoggerFactory.getLogger(RequestManifest.class);
 
   public static final String PARAM_ID = "id";

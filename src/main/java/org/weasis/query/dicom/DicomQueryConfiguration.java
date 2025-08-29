@@ -9,7 +9,6 @@
  */
 package org.weasis.query.dicom;
 
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -152,7 +151,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
 
         List<Attributes> studies = state.getDicomRSP();
         if (studies != null && !studies.isEmpty()) {
-          Collections.sort(studies, getStudyComparator());
+          studies.sort(getStudyComparator());
           applyAllFilters(params, studies);
         }
       } catch (Exception e) {
@@ -220,7 +219,7 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
         if (StringUtil.hasText(m)) {
           boolean remove = true;
           for (String mod : params.getModalitiesInStudy().split(",")) {
-            if (m.indexOf(mod) != -1) {
+            if (m.contains(mod)) {
               remove = false;
               break;
             }

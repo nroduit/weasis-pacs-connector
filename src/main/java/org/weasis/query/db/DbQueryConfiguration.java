@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Properties;
+import org.dcm4che3.img.util.DateTimeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.EscapeChars;
@@ -25,7 +26,6 @@ import org.weasis.dicom.mf.Patient;
 import org.weasis.dicom.mf.Series;
 import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.Study;
-import org.weasis.dicom.util.DateUtil;
 import org.weasis.query.AbstractQueryConfiguration;
 import org.weasis.query.CommonQueryParams;
 
@@ -86,7 +86,7 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
     DbQuery dbQuery = null;
     try {
       dbQuery = DbQuery.executeDBQuery(query, properties);
-      buildListFromDB(dbQuery.getResultSet());
+      buildListFromDB(dbQuery.resultSet());
     } catch (Exception e) {
       LOGGER.error("DB query Error of {}", getArchiveConfigName(), e);
     } finally {
@@ -154,8 +154,8 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
         if (studyDateField != null) {
           LocalDateTime dateTime = getLocalDateTimeFromTimeStamp(resultSet, studyDateField);
           if (dateTime != null) {
-            study.setStudyDate(DateUtil.formatDicomDate(dateTime.toLocalDate()));
-            study.setStudyTime(DateUtil.formatDicomTime(dateTime.toLocalTime()));
+            study.setStudyDate(DateTimeUtils.formatDA(dateTime.toLocalDate()));
+            study.setStudyTime(DateTimeUtils.formatTM(dateTime.toLocalTime()));
           }
         }
 
@@ -202,18 +202,18 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
   }
 
   private String buildQuery(String clauseWhere) {
-    StringBuilder query = new StringBuilder();
-    query.append(properties.getProperty("arc.db.query.select"));
-    query.append(" where ").append(clauseWhere).append(" ");
-    query.append(properties.getProperty("arc.db.query.and"));
-    return query.toString();
+    return properties.getProperty("arc.db.query.select")
+        + " where "
+        + clauseWhere
+        + " "
+        + properties.getProperty("arc.db.query.and");
   }
 
   private static String getQueryString(String... strings) {
     StringBuilder queryString = new StringBuilder();
     for (String str : strings) {
       if (StringUtil.hasText(str)) {
-        if (queryString.length() > 0) {
+        if (!queryString.isEmpty()) {
           queryString.append(",");
         }
         queryString.append("'");
@@ -244,7 +244,7 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
       throws SQLException {
     Timestamp timestamp = resultSet.getTimestamp(field);
     if (timestamp != null) {
-      return DateUtil.formatDicomDate(timestamp.toLocalDateTime().toLocalDate());
+      return DateTimeUtils.formatDA(timestamp.toLocalDateTime().toLocalDate());
     }
     return null;
   }
@@ -253,7 +253,7 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
       throws SQLException {
     Timestamp timestamp = resultSet.getTimestamp(field);
     if (timestamp != null) {
-      return DateUtil.formatDicomTime(timestamp.toLocalDateTime().toLocalTime());
+      return DateTimeUtils.formatTM(timestamp.toLocalDateTime().toLocalTime());
     }
     return null;
   }
@@ -261,7 +261,7 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
   private static String getDate(ResultSet resultSet, String field) throws SQLException {
     java.sql.Date date = resultSet.getDate(field);
     if (date != null) {
-      return DateUtil.formatDicomDate(date.toLocalDate());
+      return DateTimeUtils.formatDA(date.toLocalDate());
     }
     return null;
   }
@@ -271,7 +271,7 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
     String dateStr = resultSet.getString(field);
     try {
       if (StringUtil.hasText(dateStr)) {
-        return DateUtil.formatDicomDate(
+        return DateTimeUtils.formatDA(
             LocalDate.parse(dateStr, DateTimeFormatter.ofPattern(sourceFormat)));
       }
     } catch (DateTimeParseException e) {
