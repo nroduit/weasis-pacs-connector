@@ -27,7 +27,9 @@
     <sonar.projectKey>weasis-pacs-connector</sonar.projectKey>
     <sonar.organization>nroduit-github</sonar.organization>
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
-    <attachClasses>false</attachClasses>
+    <sonar.language>java</sonar.language>
+    <sonar.java.source>${java-version}</sonar.java.source>
+    <sonar.exclusions>**/src/test/**</sonar.exclusions>
   </properties>
 
   <licenses>
