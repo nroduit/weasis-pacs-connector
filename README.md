@@ -6,39 +6,63 @@ weasis-pacs-connector provides the easiest way to launch the Weasis DICOM viewer
 
 **Note**: A simpler configuration without weasis-pacs-connector is possible if the DICOM archive has DICOMWeb services (see examples [here](https://nroduit.github.io/en/basics/customize/integration/#download-directly-with-dicomweb-restful-services)). 
 
-* The master branch requires Java 8+ and a servlet container 3.1. It works by default with [dcm4chee-arc-light](https://github.com/dcm4che/dcm4chee-arc-light). 
-* The [6.x branch](https://github.com/nroduit/weasis-pacs-connector/tree/6.x) requires Java 7+ and a servlet container 2.5. This is the latest version working with dcm4chee 2.18.x.
+## End of Life Notice
 
-:heavy_exclamation_mark:As **Java Webstart is deprecated**, prefer to use the [weasis protocol](https://nroduit.github.io/en/getting-started/weasis-protocol) (defined below by the **/weasis** service) instead of Java Web Start because it has been removed from [Java 11 release](https://www.oracle.com/technetwork/java/javase/11-relnote-issues-5012449.html#JDK-8185077) and because the end of public Oracle Java 8 updates from April 2019. It only works with Weasis 3.5 (or superior) installed on the system with a [native installer](https://nroduit.github.io/en/getting-started/).
+:warning: **weasis-pacs-connector is approaching end of life**. While this project will continue to receive critical maintenance and security updates, no new features are planned.
 
-This component gathers different services (:warning: => deprecated):
+For new deployments and enhanced functionality, consider migrating to **[ViewerHub](https://weasis.org/en/viewer-hub)**, the next-generation solution that provides:
+
+- Modern architecture with improved performance and scalability
+- Native support for multiple DICOM archive types (DB, DICOMWeb and DICOM C-FIND)
+- Enhanced security features and authentication mechanisms
+- Better integration with modern web frameworks and cloud environments
+- Active development with new features and improvements
+
+ViewerHub is designed to handle Weasis integration with various types of DICOM archives more efficiently and provides a future-proof solution for medical imaging workflows.
+
+
+## Version Requirements
+
+* **Version 8.x+** (master branch): Requires Java 17+ and Jakarta EE 9+ servlet container (Servlet API 5.0+). Uses Jakarta namespace and works by default with [dcm4chee-arc-light](https://github.com/dcm4che/dcm4chee-arc-light). **Java Web Start (JNLP) support has been completely removed.**
+* **Version 7.x** (7.x branch): Requires Java 8+ and a servlet container 3.1. This is the last version supporting Java Web Start.
+* **Version 6.x** ([6.x branch](https://github.com/nroduit/weasis-pacs-connector/tree/6.x)): Requires Java 7+ and a servlet container 2.5. This is the latest version working with dcm4chee 2.18.x.
+
+## Breaking Changes in 8.x
+
+:heavy_exclamation_mark: **Java Web Start (JNLP) support has been completely removed** in version 8.0.0. This modernization effort aligns with the removal of Java Web Start from Java 11+ and the end of its lifecycle. Use the [weasis protocol](#launch-weasis) instead.
+
+**Removed services:**
+- **/viewer** service (deprecated Java Web Start launcher)
+- **/[template]** services for JNLP file generation
+- All JNLP-related configuration properties
+
+**Migration path:** Replace any **/viewer** calls with **/weasis** service calls using the same parameters.
+
+This component provides the following services:
 
 | Service              | Description                                                                   |
 | -------------------- | ----------------------------------------------------------------------------- |
-| **/weasis**                | new protocol to launch Weasis with requested images, replacing Java Webstart 
-| **/viewer** :warning:      | launching Weasis with Java Webstart
-| **/IHEInvokeImageDisplay** | launching Weasis at Patient and Study level, compliant to the [IHE IID profile](http://www.ihe.net/Technical_Framework/upload/IHE_RAD_Suppl_IID.pdf)
-| **/manifest**              | building the xml manifest (containing the necessary UIDs) consumed by Weasis to retrieve all the images by WADO-URI requests
-| **/[template]** :warning:  | (default template: /weasis.jnlp) building a jnlp file from a template (jnlp template path, jnlp properties and jnp arguments can be passed via URL parameters, see the [JNLP Builder documentation](JnlpBuilder))
+| **/weasis**                | Protocol to launch Weasis with requested images using the weasis:// protocol
+| **/IHEInvokeImageDisplay** | Launching Weasis at Patient and Study level, compliant to the [IHE IID profile](http://www.ihe.net/Technical_Framework/upload/IHE_RAD_Suppl_IID.pdf)
+| **/manifest**              | Building the xml manifest (containing the necessary UIDs) consumed by Weasis to retrieve all the images by WADO-URI requests
 
 ## [Release History](CHANGELOG.md)
 
-
 ## Build weasis-pacs-connector
 
-Prerequisites: JDK 8 and Maven 3
+Prerequisites: JDK 17+ and Maven 3
 
-* Execute the maven command `mvn clean package` in the root directory of the project and get the package from /target/weasis-pacs-connector.war. Official releases are available at [here](http://sourceforge.net/projects/dcm4che/files/Weasis/weasis-pacs-connector/).
+* Execute the maven command `mvn clean package` in the root directory of the project and get the package from /target/weasis-pacs-connector.war. Official releases are available [here](http://sourceforge.net/projects/dcm4che/files/Weasis/weasis-pacs-connector/).
 
-* Use the loggerless profile for web application container which already embeds slf4j and log4j (like JBoss): `mvn clean package -Ploggerless`
+* Use the loggerless profile for web application containers which already embed slf4j and log4j (like JBoss): `mvn clean package -Ploggerless`
 
 ## Launch Weasis
 
-The **/weasis** service uses the [weasis protocol](https://nroduit.github.io/en/getting-started/weasis-protocol) by redirecting the `http://` request into `weasis://` (because some web frameworks such as the wiki or the URL field of some browsers only support the standard protocols). It replaces the old **/viewer** service using Java Webstart.
+The **/weasis** service uses the [weasis protocol](https://nroduit.github.io/en/getting-started/weasis-protocol) by redirecting the `http://` request into `weasis://` (because some web frameworks such as wikis or URL fields of some browsers only support standard protocols).
 
 * http://localhost:8080/weasis-pacs-connector/weasis?patientID=9702672
 * http://localhost:8080/weasis-pacs-connector/weasis?patientID=9702672%5E%5E%5Etest  
-  => to handle an universal patientID, add IssuerOfPatientID like in hl7: patientID=9702672^^^test
+  => to handle a universal patientID, add IssuerOfPatientID like in hl7: patientID=9702672^^^test
 * http://localhost:8080/weasis-pacs-connector/weasis?patientID=97026728&patientID=2023231696  
   => multiple patients
 * http://localhost:8080/weasis-pacs-connector/weasis?patientID=97026728&modalitiesInStudy=MR,XA  
@@ -58,8 +82,7 @@ Note: it is possible to limit the type of UIDs (patientID, studyUID, accessionNu
 
 ### Launch Weasis with IHE IID profile
 
-The [Invoke Image Display Profile](https://www.ihe.net/uploadedFiles/Documents/Radiology/IHE_RAD_Suppl_IID.pdf) allows the user of an Image Display Invoker, typically a nonimage-aware system like an EHR, PHR or RIS, to request the display of studies for a patient, and
-have the display performed by an image-aware system like an Image Display (PACS).
+The [Invoke Image Display Profile](https://www.ihe.net/uploadedFiles/Documents/Radiology/IHE_RAD_Suppl_IID.pdf) allows the user of an Image Display Invoker, typically a non-image-aware system like an EHR, PHR or RIS, to request the display of studies for a patient, and have the display performed by an image-aware system like an Image Display (PACS).
 
 * http://localhost:8080/weasis-pacs-connector/IHEInvokeImageDisplay?requestType=PATIENT&patientID=97026728&mostRecentResults=2  
   => query at patient level to get a number of the most recent studies
@@ -79,12 +102,11 @@ have the display performed by an image-aware system like an Image Display (PACS)
 Some Weasis [preferences](https://nroduit.github.io/en/basics/customize/preferences/) may be overridden in the URL parameters.
 
 * http://localhost:8080/weasis-pacs-connector/weasis?patientID=9702672&pro="weasis.aet%20MYAET"  
-  => Change the defaut Weasis calling AETitle for DICOM send and DICOM print (by default WEASIS_AE)
+  => Change the default Weasis calling AETitle for DICOM send and DICOM print (by default WEASIS_AE)
   
 Property syntax (key and value must be URL encoded): &pro="`key`%20`value`"
 
 To add parameters related to the launch configuration and user preferences without weasis-pacs-connector, refer to this [page](https://nroduit.github.io/en/getting-started/weasis-protocol/#modify-the-launch-parameters).
-
 
 ### Upload the manifest via http POST
 
@@ -94,7 +116,8 @@ When the manifest is built [outside weasis-pacs-connector](https://nroduit.githu
   => with the header parameter "Content-Type: text/xml; charset=UTF-8" and the manifest in the body of the POST request
   
 ## Getting the xml manifest
-Build an XML file containing the UIDs of the images which will be retrieved in Weasis. There is an [XLS schema](https://github.com/nroduit/Weasis/blob/master/weasis-dicom/weasis-dicom-explorer/src/main/resources/config/wado_query.xsd) to validate the content of xml. This file can be either compressed in gzip or uncompressed. Here are examples:  
+
+Build an XML file containing the UIDs of the images which will be retrieved in Weasis. There is an [XSD schema](https://github.com/nroduit/Weasis/blob/master/weasis-dicom/weasis-dicom-explorer/src/main/resources/config/wado_query.xsd) to validate the content of xml. This file can be either compressed in gzip or uncompressed. Here are examples:  
 
 * http://localhost:8080/weasis-pacs-connector/manifest?studyUID=1.3.6.1.4.1.5962.1.2.2.20031208063649.855
 * http://localhost:8080/weasis-pacs-connector/manifest?studyUID=1.3.6.1.4.1.5962.1.2.2.20031208063649.855&gzip  
@@ -104,7 +127,7 @@ Build an XML file containing the UIDs of the images which will be retrieved in W
   
 ## Installation
 
-It requires a web application container like Jetty, Tomcat or JBoss on the server side and an installation of [Weasis (native installer)](https://nroduit.github.io/en/getting-started/#try-weasis-now) on the client side.
+It requires a Jakarta EE 9+ compatible web application container (such as Tomcat 10+, Jetty 11+, or WildFly 24+) on the server side and an installation of [Weasis (native installer)](https://nroduit.github.io/en/getting-started/#try-weasis-now) on the client side.
 
 For installation with the dcm4chee user interface, see this [page](https://nroduit.github.io/en/getting-started/dcm4chee/).
 
@@ -121,9 +144,9 @@ Go [here](https://sourceforge.net/projects/dcm4che/files/Weasis/) and download t
 
 ## Configuration
 
-The default configurations works directly with [dcm4chee-arc-light](https://nroduit.github.io/en/getting-started/dcm4chee/). To override the configuration of weasis-pacs-connector, download [weasis-pacs-connector.properties](src/main/resources/weasis-pacs-connector.properties). This file named **weasis-pacs-connector.properties** and **[dicom-dcm4chee.properties](src/main/resources/dicom-dcm4chee-arc.properties)** must be placed in the classpath of the application:
+The default configuration works directly with [dcm4chee-arc-light](https://nroduit.github.io/en/getting-started/dcm4chee/). To override the configuration of weasis-pacs-connector, download [weasis-pacs-connector.properties](src/main/resources/weasis-pacs-connector.properties). This file named **weasis-pacs-connector.properties** and **[dicom-dcm4chee.properties](src/main/resources/dicom-dcm4chee-arc.properties)** must be placed in the classpath of the application:
 
-* In JBoss Wildfly 10, the location is wildfly/standalone/configuration
+* In WildFly, the location is wildfly/standalone/configuration
 * In Tomcat just specify the directory in shared.loader property of /conf/catalina.properties
 
 To add properties or arguments at launch, see [Launch Weasis with other parameters](#launch-weasis-with-other-parameters).

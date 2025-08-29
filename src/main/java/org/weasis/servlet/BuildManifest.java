@@ -15,12 +15,17 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.Serial;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
 
 /**
+ * Servlet responsible for building DICOM manifests. Handles both GET and POST requests to generate
+ * manifest URLs or redirect to manifest endpoints.
+ *
  * @author Nicolas Roduit
  */
 @WebServlet(name = "BuildManifest", urlPatterns = "/manifest")

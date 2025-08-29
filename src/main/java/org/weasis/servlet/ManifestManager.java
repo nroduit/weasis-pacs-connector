@@ -16,17 +16,11 @@ import jakarta.servlet.annotation.WebListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
-import java.util.Hashtable;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import org.jdom2.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.dicom.mf.thread.ManifestBuilder;
@@ -39,13 +33,10 @@ import org.weasis.dicom.mf.thread.ManifestManagerThread;
 public class ManifestManager implements ServletContextListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(ManifestManager.class);
 
-  public static final String DEFAULT_TEMPLATE = "weasis.jnlp";
-
   private final ConcurrentHashMap<Integer, ManifestBuilder> manifestBuilderMap =
       new ConcurrentHashMap<>();
   private final ManifestManagerThread manifestManagerThread =
       new ManifestManagerThread(manifestBuilderMap);
-  private final Map<URI, Element> jnlpTemplates = ManifestManager.<URI, Element>createLRUMap(20);
 
   @Override
   public void contextInitialized(ServletContextEvent context) {
@@ -96,12 +87,6 @@ public class ManifestManager implements ServletContextListener {
             }
           }
 
-          initJnlpTemplate(
-              sc,
-              configDir,
-              properties.getProperty("jnlp.default.name", DEFAULT_TEMPLATE),
-              "weasis.default.jnlp",
-              properties);
         } else {
           LOGGER.error("Cannot find  a configuration file for weasis-pacs-connector");
         }
@@ -110,7 +95,6 @@ public class ManifestManager implements ServletContextListener {
         LOGGER.error("Error on initialization of ManifestManager", e);
       }
       sc.setAttribute("componentProperties", properties);
-      sc.setAttribute("jnlpTemplates", jnlpTemplates);
 
       manifestManagerThread.setCleanFrequency(
           ServletUtil.getLongProperty(
@@ -179,54 +163,5 @@ public class ManifestManager implements ServletContextListener {
     }
     archiveProps.setProperty(ConnectorProperties.CONFIG_FILENAME, name);
     return archiveProps;
-  }
-
-  private void initJnlpTemplate(
-      ServletContext sc,
-      String configDir,
-      String jnlpName,
-      String property,
-      Hashtable<Object, Object> properties)
-      throws IOException {
-
-    try {
-      URL url = readConfigURL(configDir, jnlpName);
-      try (InputStream in = url.openStream()) {
-        // check if resource exist like with JarURLConnection
-      }
-      properties.put(property, url.toString());
-      LOGGER.info("Default jnlp template : {}", url);
-
-    } catch (Exception e) {
-      URL jnlpTemplate = this.getClass().getResource(configDir + jnlpName);
-      if (jnlpTemplate == null) {
-        try {
-          jnlpTemplate = sc.getResource("/" + jnlpName);
-        } catch (MalformedURLException ex) {
-          LOGGER.error("Error on getting template", ex);
-        }
-      }
-
-      if (jnlpTemplate != null) {
-        properties.put(property, jnlpTemplate.toString());
-        LOGGER.info("Default jnlp template : {}", jnlpTemplate);
-      } else {
-        LOGGER.error("Error on getting JNLP template : {}", e.getLocalizedMessage());
-        throw new IOException("Cannot find template configuration");
-      }
-    }
-  }
-
-  // Get map where the oldest entry when the limit size is reached
-  public static <K, V> Map<K, V> createLRUMap(final int maxEntries) {
-    return new LinkedHashMap<K, V>(maxEntries * 3 / 2, 0.7f, true) {
-
-      private static final long serialVersionUID = 6516827063164041400L;
-
-      @Override
-      protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
-        return size() > maxEntries;
-      }
-    };
   }
 }

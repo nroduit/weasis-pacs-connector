@@ -15,7 +15,9 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Serial;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -39,13 +41,15 @@ import org.weasis.query.CommonQueryParams;
     urlPatterns = {"/weasis", "/IHEInvokeImageDisplay"})
 public class GetWeasisProtocol extends HttpServlet {
 
-  private static final long serialVersionUID = 2987582758040784229L;
+  @Serial private static final long serialVersionUID = 2987582758040784229L;
   private static final Logger LOGGER = LoggerFactory.getLogger(GetWeasisProtocol.class);
 
   public static final String CODEBASE_PROPERTY = "weasis.base.url";
   public static final String CODEBASE_EXT_PROPERTY = "weasis.ext.url";
   public static final String SERVICE_CONFIG_PROPERTY = "weasis.config.url";
   public static final String SERVICE_PREFS_PROPERTY = "weasis.pref.url";
+
+  protected static final String PARAM_UPLOAD = "upload";
 
   public GetWeasisProtocol() {
     super();
@@ -54,7 +58,7 @@ public class GetWeasisProtocol extends HttpServlet {
   @Override
   public void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    UploadXml manifest = WeasisLauncher.uploadManifest(request, response);
+    UploadXml manifest = uploadManifest(request, response);
     if (manifest != null && "INVALID".equals(manifest.xmlManifest(null))) {
       return;
     }
@@ -376,5 +380,36 @@ public class GetWeasisProtocol extends HttpServlet {
 
   private static String removeEnglobingQuotes(String value) {
     return value.replaceAll("(?:^\")|(?:\"$)", "");
+  }
+
+  static UploadXml uploadManifest(HttpServletRequest request, HttpServletResponse response) {
+
+    String uploadParam = request.getParameter(PARAM_UPLOAD);
+    try {
+      // Start reading XML manifest
+      if ("manifest".equals(uploadParam)) {
+        StringBuilder buf = new StringBuilder();
+        String line;
+        BufferedReader reader = request.getReader();
+        while ((line = reader.readLine()) != null) {
+          buf.append(line);
+        }
+        if (buf.length() > 10) {
+          return new UploadXml(buf.toString(), request.getCharacterEncoding());
+        } else {
+          LOGGER.error("Invalid manifest: {}", buf);
+          ServletUtil.sendResponseError(
+              response, HttpServletResponse.SC_NO_CONTENT, "Invalid manifest: " + buf.toString());
+        }
+      } else {
+        // No manifest, threat as doGet()
+        return null;
+      }
+    } catch (Exception e) {
+      LOGGER.error("Weasis Servlet Launcher", e);
+      ServletUtil.sendResponseError(
+          response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+    return new UploadXml("INVALID", request.getCharacterEncoding());
   }
 }
