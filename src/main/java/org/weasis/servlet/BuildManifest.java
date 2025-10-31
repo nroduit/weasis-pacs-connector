@@ -56,6 +56,10 @@ public class BuildManifest extends HttpServlet {
   }
 
   private void buildManifest(HttpServletRequest request, HttpServletResponse response) {
+    LOGGER.info(
+        "Received manifest request from {} with parameters: {}",
+        request.getRemoteAddr(),
+        request.getQueryString());
 
     response.setStatus(HttpServletResponse.SC_ACCEPTED);
 

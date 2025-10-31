@@ -49,7 +49,10 @@ public class RequestManifest extends HttpServlet {
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-
+    LOGGER.info(
+        "Received manifest request from {} with ID {}",
+        request.getRemoteAddr(),
+        request.getParameter(PARAM_ID));
     response.setStatus(HttpServletResponse.SC_ACCEPTED);
 
     response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1
@@ -145,7 +148,7 @@ public class RequestManifest extends HttpServlet {
       return;
     }
 
-    Boolean gzip = request.getParameter(PARAM_NO_GZIP) == null;
+    boolean gzip = request.getParameter(PARAM_NO_GZIP) == null;
 
     response.setStatus(HttpServletResponse.SC_OK);
 
@@ -163,7 +166,6 @@ public class RequestManifest extends HttpServlet {
         LOGGER.error(errorMsg, e);
         ServletUtil.sendResponseError(
             response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, errorMsg);
-        return;
       }
     } else {
       try {
@@ -177,7 +179,6 @@ public class RequestManifest extends HttpServlet {
         LOGGER.error(errorMsg, e);
         ServletUtil.sendResponseError(
             response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, errorMsg);
-        return;
       }
     }
   }

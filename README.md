@@ -50,11 +50,9 @@ This component provides the following services:
 
 ## Build weasis-pacs-connector
 
-Prerequisites: JDK 17+ and Maven 3
+Prerequisites: JDK 17+ and Maven 3.8.1+
 
 * Execute the maven command `mvn clean package` in the root directory of the project and get the package from /target/weasis-pacs-connector.war. Official releases are available [here](http://sourceforge.net/projects/dcm4che/files/Weasis/weasis-pacs-connector/).
-
-* Use the loggerless profile for web application containers which already embed slf4j and log4j (like JBoss): `mvn clean package -Ploggerless`
 
 ## Launch Weasis
 

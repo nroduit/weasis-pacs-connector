@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Serial;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -50,6 +51,11 @@ public class GetWeasisProtocol extends HttpServlet {
   public static final String SERVICE_PREFS_PROPERTY = "weasis.pref.url";
 
   protected static final String PARAM_UPLOAD = "upload";
+  private static final String INVALID_MANIFEST = "INVALID";
+  private static final int MIN_MANIFEST_LENGTH = 10;
+  private static final String WEASIS_PROTOCOL_PREFIX = "weasis://?";
+  private static final String DICOM_GET_COMMAND = "$dicom:get -w \"";
+  private static final String WEASIS_CONFIG_COMMAND = " $weasis:config";
 
   public GetWeasisProtocol() {
     super();
@@ -59,7 +65,8 @@ public class GetWeasisProtocol extends HttpServlet {
   public void doPost(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
     UploadXml manifest = uploadManifest(request, response);
-    if (manifest != null && "INVALID".equals(manifest.xmlManifest(null))) {
+    if (manifest != null && INVALID_MANIFEST.equals(manifest.xmlManifest(null))) {
+      // Error response already sent in uploadManifest
       return;
     }
     invokeWeasis(request, response, manifest);
@@ -87,164 +94,10 @@ public class GetWeasisProtocol extends HttpServlet {
       }
 
       ConnectorProperties props = connectorProperties.getResolveConnectorProperties(request);
-      StringBuilder buf = new StringBuilder();
 
-      // BUILD WADO MANIFEST FROM WORKERTHREAD AND GET WADO QUERY URL TO RETRIEVE IT LATER
-
-      ManifestBuilder builder;
-      if (manifest == null) {
-        builder = ServletUtil.buildManifest(request, props);
-      } else {
-        builder = ServletUtil.buildManifest(request, new ManifestBuilder(manifest));
-      }
-
-      // BUILDER IS NULL WHEN NO ALLOWED PARAMETER ARE GIVEN WHICH LEADS TO NO MANIFEST BUILD
-
-      if (builder != null) {
-        String wadoQueryUrl = ServletUtil.buildManifestURL(request, builder, props, true);
-        wadoQueryUrl = response.encodeRedirectURL(wadoQueryUrl);
-
-        // ADD WADO MANIFEST PARAMETER >> $dicom:get -w "..."
-
-        int startIndex = wadoQueryUrl.indexOf(':');
-        if (startIndex > 0) {
-          buf.append("$dicom:get -w \"");
-        } else {
-          throw new IllegalStateException("Cannot not get a valid manifest URL " + wadoQueryUrl);
-        }
-        buf.append(wadoQueryUrl);
-        buf.append("\"");
-      }
-
-      //// HANDLE REQUEST PARAMETERS
-
-      Map<String, String[]> requestParams = new LinkedHashMap<>(request.getParameterMap());
-
-      CommonQueryParams.removeWadoQueryParams.accept(requestParams.keySet());
-      ConnectorProperties.removeParams.accept(requestParams.keySet());
-
-      // GET PROPERTIES PARAMETERS FROM REQUEST PARAMETERS
-      Map<String, String> requestProperties = getPropertiesFromRequestParameters(requestParams);
-
-      // ADD ARGUMENTS PARAMETERS
-      handleRequestParameters(buf, requestParams, WeasisConfig.PARAM_ARGUMENT);
-
-      // GET weasisConfigUrl FROM REQUEST PARAMETERS
-      String weasisConfigUrl =
-          ServletUtil.getFirstParameter(requestParams.remove(WeasisConfig.PARAM_CONFIG_URL));
-
-      String weasisConfigUrlProp = requestProperties.remove(SERVICE_CONFIG_PROPERTY);
-      if (weasisConfigUrl == null) weasisConfigUrl = weasisConfigUrlProp;
-
-      // OR GET weasisConfigUrl FROM CONNECTOR'S CONFIGURATION
-      if (weasisConfigUrl
-          == null) { // request argument with empty value overrides connector's configuration
-        weasisConfigUrl = props.getProperty(SERVICE_CONFIG_PROPERTY);
-      }
-
-      boolean isRemoteLaunchConfigDefined = StringUtil.hasText(weasisConfigUrl);
-      // NOTE : if remote launch config is defined then any request PROPERTIES would be delegated to
-      // the remote
-      // service instead of being forwarded to Weasis
-
-      StringBuilder configParamBuf = new StringBuilder();
-
-      // GET weasisBaseUrl FROM REQUEST PARAMETERS
-      String weasisBaseUrl = getCodeBaseFromRequest(request);
-      requestParams.remove(WeasisConfig.PARAM_CODEBASE);
-
-      String weasisBaseUrlProp = requestProperties.remove(CODEBASE_PROPERTY);
-      if (weasisBaseUrl == null) weasisBaseUrl = weasisBaseUrlProp;
-
-      // OR GET weasisBaseUrl FROM CONNECTOR'S CONFIGURATION IF REMOTE LAUNCH CONFIG IS NOT DEFINED
-      if (weasisBaseUrl == null && !isRemoteLaunchConfigDefined) {
-        weasisBaseUrl = getCodeBaseFromConnectorProperties(props);
-      }
-      addElementWithEmptyValue(
-          configParamBuf, WeasisConfig.PARAM_CODEBASE, weasisBaseUrl, isRemoteLaunchConfigDefined);
-
-      // GET weasisExtUrl FROM REQUEST PARAMETERS
-      String weasisExtUrl = getCodeBaseExtFromRequest(request);
-      requestParams.remove(WeasisConfig.PARAM_CODEBASE_EXT);
-
-      String weasisExtUrlProp = requestProperties.remove(CODEBASE_EXT_PROPERTY);
-      if (weasisExtUrl == null) weasisExtUrl = weasisExtUrlProp;
-
-      // OR GET weasisExtUrl FROM CONNECTOR'S CONFIGURATION IF REMOTE LAUNCH CONFIG IS NOT DEFINED
-      if (weasisExtUrl == null && !isRemoteLaunchConfigDefined) {
-        weasisExtUrl = getCodeBaseExtFromConnectorProperties(props);
-      }
-      addElementWithEmptyValue(
-          configParamBuf,
-          WeasisConfig.PARAM_CODEBASE_EXT,
-          weasisExtUrl,
-          isRemoteLaunchConfigDefined);
-
-      // GET weasisPrefURL FROM REQUEST PROPERTIES PARAMETERS
-      String weasisPrefURL = requestProperties.get(SERVICE_PREFS_PROPERTY);
-
-      // OR GET weasisPrefURL FROM CONNECTOR'S CONFIGURATION IF REMOTE LAUNCH CONFIG IS NOT DEFINED
-      if (weasisPrefURL == null && !isRemoteLaunchConfigDefined) {
-        weasisPrefURL = props.getProperty(SERVICE_PREFS_PROPERTY);
-        if (StringUtil.hasText(weasisPrefURL)) {
-          requestProperties.put(SERVICE_PREFS_PROPERTY, weasisPrefURL.trim());
-        }
-      }
-
-      // ADD PROPERTIES PARAMETERS
-      for (Entry<String, String> entry : requestProperties.entrySet()) {
-        StringBuilder propSB = new StringBuilder(entry.getKey());
-        propSB.append('+');
-        propSB.append(entry.getValue());
-        addElement(
-            configParamBuf,
-            WeasisConfig.PARAM_PROPERTY,
-            propSB.toString(),
-            isRemoteLaunchConfigDefined);
-      }
-
-      // ADD AUTHORIZATION PARAMETERS
-      addElement(
-          configParamBuf,
-          WeasisConfig.PARAM_AUTHORIZATION,
-          ServletUtil.getAuthorizationValue(request),
-          isRemoteLaunchConfigDefined);
-
-      requestParams.remove(WeasisConfig.PARAM_AUTHORIZATION);
-      requestParams.remove("access_token");
-
-      // ADD WEASISCONFIG PARAMETERS >> $weasis:config "..."
-      buf.append(" $weasis:config");
-
-      if (isRemoteLaunchConfigDefined) {
-
-        // ADD ANY OTHER UNHANDLED PARAMETERS (those not removed)
-        Iterator<Entry<String, String[]>> itParams = requestParams.entrySet().iterator();
-
-        while (itParams.hasNext()) {
-          Entry<String, String[]> param = itParams.next();
-          String value = ServletUtil.getFirstParameter(param.getValue());
-          if (StringUtil.hasText(value)) value = removeEnglobingQuotes(value);
-          addElementWithEmptyValue(
-              configParamBuf, param.getKey(), value, isRemoteLaunchConfigDefined);
-          itParams.remove();
-        }
-
-        // ADD weasisConfigUrl URL WITH HANDLED PARAMETERS
-        if (configParamBuf.length() > 0) {
-          configParamBuf.replace(0, 1, "?"); // replace first query separator '&' by "?"
-          weasisConfigUrl += configParamBuf.toString();
-        }
-        addElement(buf, WeasisConfig.PARAM_CONFIG_URL, weasisConfigUrl);
-
-      } else {
-        // OR BUILD CUSTOM CONFIG THAT WOULD BE HANDLED BY WEASIS AND NOT BY REMOTE LAUNCH CONFIG
-        // SERVICE
-        buf.append(" ").append(configParamBuf);
-      }
-
-      // BUILD LAUNCH URL
-      String launcherUrlStr = "weasis://" + URLEncoder.encode(buf.toString().trim(), "UTF-8");
+      LaunchUrlBuilder urlBuilder = new LaunchUrlBuilder(request, response, props, manifest);
+      String launcherUrlStr = urlBuilder.build();
+      LOGGER.info("Redirect to Weasis launcher URL: {}", launcherUrlStr);
 
       response.sendRedirect(launcherUrlStr);
 
@@ -255,8 +108,180 @@ public class GetWeasisProtocol extends HttpServlet {
     }
   }
 
-  private static void addElementWithEmptyValue(StringBuilder buf, String key, String val) {
-    addElementWithEmptyValue(buf, key, val, false);
+  private static class LaunchUrlBuilder {
+    private final HttpServletRequest request;
+    private final HttpServletResponse response;
+    private final ConnectorProperties props;
+    private final XmlManifest manifest;
+    private final Map<String, String[]> requestParams;
+    private final Map<String, String> requestProperties;
+    private final StringBuilder commandBuffer;
+    private final StringBuilder configBuffer;
+    private boolean isRemoteLaunchConfigDefined;
+
+    public LaunchUrlBuilder(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        ConnectorProperties props,
+        XmlManifest manifest) {
+      this.request = request;
+      this.response = response;
+      this.props = props;
+      this.manifest = manifest;
+      this.requestParams = new LinkedHashMap<>(request.getParameterMap());
+      this.commandBuffer = new StringBuilder();
+      this.configBuffer = new StringBuilder();
+
+      // Clean up request parameters
+      CommonQueryParams.removeWadoQueryParams.accept(requestParams.keySet());
+      ConnectorProperties.removeParams.accept(requestParams.keySet());
+
+      this.requestProperties = getPropertiesFromRequestParameters(requestParams);
+    }
+
+    public String build() {
+      addManifestCommand();
+      handleArguments();
+      String weasisConfigUrl = resolveConfigUrl();
+      this.isRemoteLaunchConfigDefined = StringUtil.hasText(weasisConfigUrl);
+
+      addCodebaseParameters();
+      addPreferencesParameter();
+      addPropertiesParameters();
+
+      if (isRemoteLaunchConfigDefined) {
+        addRemainingParametersToConfig();
+        String finalConfigUrl = buildFinalConfigUrl(weasisConfigUrl);
+        commandBuffer.append(WEASIS_CONFIG_COMMAND);
+        addElement(commandBuffer, WeasisConfig.PARAM_CONFIG_URL, finalConfigUrl);
+      } else if (!configBuffer.isEmpty()) {
+        commandBuffer.append(WEASIS_CONFIG_COMMAND);
+        commandBuffer.append(" ").append(configBuffer);
+      }
+
+      return WEASIS_PROTOCOL_PREFIX
+          + URLEncoder.encode(commandBuffer.toString().trim(), StandardCharsets.UTF_8);
+    }
+
+    private void addManifestCommand() {
+      ManifestBuilder builder;
+      if (manifest == null) {
+        builder = ServletUtil.buildManifest(request, props);
+      } else {
+        builder = ServletUtil.buildManifest(request, new ManifestBuilder(manifest));
+      }
+
+      if (builder != null) {
+        String wadoQueryUrl = ServletUtil.buildManifestURL(request, builder, props, true);
+        wadoQueryUrl = response.encodeRedirectURL(wadoQueryUrl);
+
+        int startIndex = wadoQueryUrl.indexOf(':');
+        if (startIndex > 0) {
+          commandBuffer.append(DICOM_GET_COMMAND);
+        } else {
+          throw new IllegalStateException("Cannot not get a valid manifest URL " + wadoQueryUrl);
+        }
+        commandBuffer.append(wadoQueryUrl);
+        commandBuffer.append("\"");
+      }
+    }
+
+    private void handleArguments() {
+      handleRequestParameters(commandBuffer, requestParams, WeasisConfig.PARAM_ARGUMENT);
+    }
+
+    private String resolveConfigUrl() {
+      String weasisConfigUrl =
+          ServletUtil.getFirstParameter(requestParams.remove(WeasisConfig.PARAM_CONFIG_URL));
+
+      String weasisConfigUrlProp = requestProperties.remove(SERVICE_CONFIG_PROPERTY);
+      if (weasisConfigUrl == null) {
+        weasisConfigUrl = weasisConfigUrlProp;
+      }
+
+      if (weasisConfigUrl == null) {
+        weasisConfigUrl = props.getProperty(SERVICE_CONFIG_PROPERTY);
+      }
+
+      return weasisConfigUrl;
+    }
+
+    private void addCodebaseParameters() {
+      String weasisBaseUrl =
+          resolveParameter(
+              getCodeBaseFromRequest(request),
+              requestProperties.remove(CODEBASE_PROPERTY),
+              () -> getCodeBaseFromConnectorProperties(props));
+      requestParams.remove(WeasisConfig.PARAM_CODEBASE);
+      addElementWithEmptyValue(
+          configBuffer, WeasisConfig.PARAM_CODEBASE, weasisBaseUrl, isRemoteLaunchConfigDefined);
+
+      String weasisExtUrl =
+          resolveParameter(
+              getCodeBaseExtFromRequest(request),
+              requestProperties.remove(CODEBASE_EXT_PROPERTY),
+              () -> getCodeBaseExtFromConnectorProperties(props));
+      requestParams.remove(WeasisConfig.PARAM_CODEBASE_EXT);
+      addElementWithEmptyValue(
+          configBuffer, WeasisConfig.PARAM_CODEBASE_EXT, weasisExtUrl, isRemoteLaunchConfigDefined);
+    }
+
+    private void addPreferencesParameter() {
+      String weasisPrefURL = requestProperties.get(SERVICE_PREFS_PROPERTY);
+
+      if (weasisPrefURL == null && !isRemoteLaunchConfigDefined) {
+        weasisPrefURL = props.getProperty(SERVICE_PREFS_PROPERTY);
+        if (StringUtil.hasText(weasisPrefURL)) {
+          requestProperties.put(SERVICE_PREFS_PROPERTY, weasisPrefURL.trim());
+        }
+      }
+    }
+
+    private void addPropertiesParameters() {
+      for (Entry<String, String> entry : requestProperties.entrySet()) {
+        String propertyValue = entry.getKey() + "+" + entry.getValue();
+        addElement(
+            configBuffer, WeasisConfig.PARAM_PROPERTY, propertyValue, isRemoteLaunchConfigDefined);
+      }
+    }
+
+    private void addRemainingParametersToConfig() {
+      Iterator<Entry<String, String[]>> itParams = requestParams.entrySet().iterator();
+
+      while (itParams.hasNext()) {
+        Entry<String, String[]> param = itParams.next();
+        String value = ServletUtil.getFirstParameter(param.getValue());
+        if (StringUtil.hasText(value)) {
+          value = removeEnglobingQuotes(value);
+        }
+        addElementWithEmptyValue(configBuffer, param.getKey(), value, isRemoteLaunchConfigDefined);
+        itParams.remove();
+      }
+    }
+
+    private String buildFinalConfigUrl(String weasisConfigUrl) {
+      if (!configBuffer.isEmpty()) {
+        configBuffer.replace(0, 1, "?");
+        return weasisConfigUrl + configBuffer.toString();
+      }
+      return weasisConfigUrl;
+    }
+
+    private String resolveParameter(
+        String fromRequest,
+        String fromProperty,
+        java.util.function.Supplier<String> fromConnector) {
+      if (fromRequest != null) {
+        return fromRequest;
+      }
+      if (fromProperty != null) {
+        return fromProperty;
+      }
+      if (!isRemoteLaunchConfigDefined) {
+        return fromConnector.get();
+      }
+      return null;
+    }
   }
 
   private static void addElementWithEmptyValue(
@@ -303,20 +328,17 @@ public class GetWeasisProtocol extends HttpServlet {
 
   protected static String getCodeBaseFromConnectorProperties(
       ConnectorProperties props, boolean extCodeBase) {
+    String propertyName = extCodeBase ? CODEBASE_EXT_PROPERTY : CODEBASE_PROPERTY;
     String codeBasePath = props.getProperty(CODEBASE_PROPERTY);
 
     if (StringUtil.hasText(codeBasePath)) {
       codeBasePath = codeBasePath.trim();
 
       if (extCodeBase) {
-        if (codeBasePath.endsWith("/"))
-          codeBasePath = codeBasePath.substring(0, codeBasePath.length() - 1);
         codeBasePath = props.getProperty(CODEBASE_EXT_PROPERTY, codeBasePath + "-ext");
       }
 
-      if (codeBasePath.endsWith("/")) {
-        codeBasePath = codeBasePath.substring(0, codeBasePath.length() - 1);
-      }
+      return removeTrailingSlash(codeBasePath);
     }
     return codeBasePath;
   }
@@ -330,23 +352,26 @@ public class GetWeasisProtocol extends HttpServlet {
   }
 
   protected static String getCodeBaseFromRequest(HttpServletRequest request, boolean extCodeBase) {
-    String codeBasePath =
-        request.getParameter(
-            extCodeBase ? WeasisConfig.PARAM_CODEBASE_EXT : WeasisConfig.PARAM_CODEBASE);
+    String paramName = extCodeBase ? WeasisConfig.PARAM_CODEBASE_EXT : WeasisConfig.PARAM_CODEBASE;
+    String codeBasePath = request.getParameter(paramName);
 
     if (StringUtil.hasText(codeBasePath)) {
       codeBasePath = codeBasePath.trim();
 
       if (codeBasePath.startsWith("/")) {
         codeBasePath = ServletUtil.getBaseURL(request) + codeBasePath;
-      } else {
-        // supposed to be a new valid URL for codeBase
       }
-      if (codeBasePath.endsWith("/"))
-        codeBasePath = codeBasePath.substring(0, codeBasePath.length() - 1);
+      return removeTrailingSlash(codeBasePath);
     }
 
     return codeBasePath;
+  }
+
+  private static String removeTrailingSlash(String path) {
+    if (path != null && path.endsWith("/")) {
+      return path.substring(0, path.length() - 1);
+    }
+    return path;
   }
 
   private static Map<String, String> getPropertiesFromRequestParameters(
@@ -385,31 +410,37 @@ public class GetWeasisProtocol extends HttpServlet {
   static UploadXml uploadManifest(HttpServletRequest request, HttpServletResponse response) {
 
     String uploadParam = request.getParameter(PARAM_UPLOAD);
+    if (!"manifest".equals(uploadParam)) {
+      // No manifest, treat as doGet()
+      return null;
+    }
     try {
-      // Start reading XML manifest
-      if ("manifest".equals(uploadParam)) {
-        StringBuilder buf = new StringBuilder();
-        String line;
-        BufferedReader reader = request.getReader();
-        while ((line = reader.readLine()) != null) {
-          buf.append(line);
-        }
-        if (buf.length() > 10) {
-          return new UploadXml(buf.toString(), request.getCharacterEncoding());
-        } else {
-          LOGGER.error("Invalid manifest: {}", buf);
-          ServletUtil.sendResponseError(
-              response, HttpServletResponse.SC_NO_CONTENT, "Invalid manifest: " + buf.toString());
-        }
-      } else {
-        // No manifest, threat as doGet()
-        return null;
+      String manifestContent = readManifestFromRequest(request);
+
+      if (manifestContent.length() <= MIN_MANIFEST_LENGTH) {
+        LOGGER.error("Invalid manifest: too short (length={})", manifestContent.length());
+        ServletUtil.sendResponseError(
+            response, HttpServletResponse.SC_BAD_REQUEST, "Invalid manifest: content too short");
+        return new UploadXml(INVALID_MANIFEST, request.getCharacterEncoding());
       }
-    } catch (Exception e) {
-      LOGGER.error("Weasis Servlet Launcher", e);
+      return new UploadXml(manifestContent, request.getCharacterEncoding());
+
+    } catch (IOException e) {
+      LOGGER.error("Error reading manifest from request", e);
       ServletUtil.sendResponseError(
           response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+      return new UploadXml(INVALID_MANIFEST, request.getCharacterEncoding());
     }
-    return new UploadXml("INVALID", request.getCharacterEncoding());
+  }
+
+  private static String readManifestFromRequest(HttpServletRequest request) throws IOException {
+    StringBuilder buf = new StringBuilder();
+    try (BufferedReader reader = request.getReader()) {
+      String line;
+      while ((line = reader.readLine()) != null) {
+        buf.append(line);
+      }
+    }
+    return buf.toString();
   }
 }

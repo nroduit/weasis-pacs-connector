@@ -243,8 +243,8 @@ public class DicomQueryConfiguration extends AbstractQueryConfiguration {
         Attributes s = studies.get(i);
         String desc = StringUtil.deAccent(s.getString(Tag.StudyDescription, "").toUpperCase());
 
-        for (int j = 0; j < keys.length; j++) {
-          if (desc.contains(keys[j])) {
+        for (String key : keys) {
+          if (desc.contains(key)) {
             continue studyLabel;
           }
         }

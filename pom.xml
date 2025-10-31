@@ -18,8 +18,8 @@
     <enforcer.jdk-version>[${jdk-version},)</enforcer.jdk-version>
     <enforcer.maven-version>[3.8.1,)</enforcer.maven-version>
 
-    <weasis-dicom-tools.version>5.34.0.1</weasis-dicom-tools.version>
-    <weasis-core-img.version>4.11.0.1</weasis-core-img.version>
+    <weasis-dicom-tools.version>5.34.1.1</weasis-dicom-tools.version>
+    <weasis.core.img.version>4.12.2</weasis.core.img.version>
 
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -30,6 +30,7 @@
     <sonar.language>java</sonar.language>
     <sonar.java.source>${java-version}</sonar.java.source>
     <sonar.exclusions>**/src/test/**</sonar.exclusions>
+    <attachClasses>false</attachClasses>
   </properties>
 
   <licenses>
@@ -54,17 +55,17 @@
         <enabled>false</enabled>
       </snapshots>
       <id>mvn-repo-master</id>
-      <url>https://raw.github.com/nroduit/mvn-repo/master/</url>
+      <url>https://raw.githubusercontent.com/nroduit/mvn-repo/master/</url>
     </repository>
   </repositories>
 
   <build>
-
+    <finalName>${project.artifactId}</finalName>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.5.0</version>
+        <version>3.6.2</version>
         <executions>
           <execution>
             <id>min-requirement</id>
@@ -87,7 +88,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.14.0</version>
+        <version>3.14.1</version>
         <configuration>
           <release>${java-version}</release>
         </configuration>
@@ -97,8 +98,6 @@
         <artifactId>maven-war-plugin</artifactId>
         <version>3.4.0</version>
         <configuration>
-          <packagingExcludes>WEB-INF/lib/dcm4che-dict-*</packagingExcludes>
-          <warName>${project.artifactId}</warName>
           <attachClasses>${attachClasses}</attachClasses>
         </configuration>
       </plugin>
@@ -106,7 +105,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>flatten-maven-plugin</artifactId>
-        <version>1.7.0</version>
+        <version>1.7.3</version>
         <configuration>
           <updatePomFile>true</updatePomFile>
           <flattenMode>resolveCiFriendliesOnly</flattenMode>
@@ -132,7 +131,7 @@
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
-        <version>2.44.5</version>
+        <version>3.0.0</version>
         <configuration>
           <java>
             <googleJavaFormat/>
@@ -169,35 +168,6 @@
     </plugins>
   </build>
 
-  <profiles>
-    <profile>
-      <id>loggerless</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.14.0</version>
-            <configuration>
-              <release>${java-version}</release>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-war-plugin</artifactId>
-            <version>3.4.0</version>
-            <configuration>
-              <packagingExcludes>WEB-INF/lib/dcm4che-dict-*,WEB-INF/lib/log4j*,WEB-INF/lib/slf4j*,WEB-INF/lib/reload4j*
-              </packagingExcludes>
-              <warName>${project.artifactId}</warName>
-              <attachClasses>${attachClasses}</attachClasses>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
-
   <dependencies>
     <dependency>
       <groupId>org.jdom</groupId>
@@ -213,13 +183,19 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
-      <version>6.0.0-RC2</version>
+      <version>6.0.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <version>1.7.36</version>
+      <artifactId>slf4j-api</artifactId>
+      <version>2.0.17</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.5.19</version>
+      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.weasis</groupId>
@@ -230,6 +206,10 @@
           <artifactId>junit</artifactId>
         </exclusion>
         <!-- Only required by storeSCU for uncompressing data not supported by the destination, not useful for this package -->
+        <exclusion>
+          <groupId>org.dcm4che</groupId>
+          <artifactId>dcm4che-dict</artifactId>
+        </exclusion>
         <exclusion>
           <groupId>org.dcm4che</groupId>
           <artifactId>dcm4che-imageio</artifactId>
@@ -252,7 +232,7 @@
     <dependency>
       <groupId>org.weasis.core</groupId>
       <artifactId>weasis-core-img</artifactId>
-      <version>${weasis-core-img.version}</version>
+      <version>${weasis.core.img.version}</version>
     </dependency>
   </dependencies>
 </project>

@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Objects;
 import java.util.Properties;
 import org.dcm4che3.img.util.DateTimeUtils;
 import org.slf4j.Logger;
@@ -86,7 +87,7 @@ public class DbQueryConfiguration extends AbstractQueryConfiguration {
     DbQuery dbQuery = null;
     try {
       dbQuery = DbQuery.executeDBQuery(query, properties);
-      buildListFromDB(dbQuery.resultSet());
+      buildListFromDB(Objects.requireNonNull(dbQuery).resultSet());
     } catch (Exception e) {
       LOGGER.error("DB query Error of {}", getArchiveConfigName(), e);
     } finally {

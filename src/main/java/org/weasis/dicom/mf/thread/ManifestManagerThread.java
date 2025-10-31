@@ -31,6 +31,7 @@ public class ManifestManagerThread extends Thread {
 
   private volatile long maxLifeCycle = MAX_LIFE_CYCLE;
   private volatile long cleanFrequency = CLEAN_FREQUENCY;
+  private volatile boolean running = true;
 
   /**
    * The role of the ManifestManagerThread class is to clean the non consumed threads.
@@ -38,8 +39,10 @@ public class ManifestManagerThread extends Thread {
    * @param manifestBuilderMap the thread safe hashMap
    */
   public ManifestManagerThread(ConcurrentMap<Integer, ManifestBuilder> manifestBuilderMap) {
+    super("ManifestManagerThread");
+    setDaemon(true);
     if (manifestBuilderMap == null) {
-      throw new IllegalArgumentException();
+      throw new IllegalArgumentException("manifestBuilderMap cannot be null");
     }
     this.manifestBuilderMap = manifestBuilderMap;
     this.maxLifeCycle = MAX_LIFE_CYCLE;
@@ -51,6 +54,9 @@ public class ManifestManagerThread extends Thread {
   }
 
   public void setMaxLifeCycle(long maxLifeCycle) {
+    if (maxLifeCycle <= 0) {
+      throw new IllegalArgumentException("maxLifeCycle must be positive");
+    }
     this.maxLifeCycle = maxLifeCycle;
   }
 
@@ -59,37 +65,55 @@ public class ManifestManagerThread extends Thread {
   }
 
   public void setCleanFrequency(long cleanFrequency) {
+    if (cleanFrequency <= 0) {
+      throw new IllegalArgumentException("cleanFrequency must be positive");
+    }
     this.cleanFrequency = cleanFrequency;
+  }
+
+  public void shutdown() {
+    running = false;
+    interrupt();
   }
 
   @Override
   public void run() {
-    while (isAlive() && !isInterrupted()) {
-      for (Entry<Integer, ManifestBuilder> entry : manifestBuilderMap.entrySet()) {
-        Integer key = entry.getKey();
-        ManifestBuilder manifestBuilder = entry.getValue();
+    while (running && !isInterrupted()) {
+      cleanExpiredManifests();
+      try {
+        Thread.sleep(cleanFrequency);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        LOGGER.debug("ManifestManagerThread interrupted", e);
+        break;
+      }
+    }
+    LOGGER.info("ManifestManagerThread stopped");
+  }
 
-        long diff = System.currentTimeMillis() - manifestBuilder.getStartTimeMillis();
+  private void cleanExpiredManifests() {
+    long currentTime = System.currentTimeMillis();
+    for (Entry<Integer, ManifestBuilder> entry : manifestBuilderMap.entrySet()) {
+      Integer key = entry.getKey();
+      ManifestBuilder manifestBuilder = entry.getValue();
 
-        if (diff > MAX_LIFE_CYCLE) {
-          Future<XmlManifest> future = manifestBuilder.getFuture();
-          if (future != null && !future.isDone()) {
-            // If the builder process is still running after 5 minutes, kill it.
-            future.cancel(true);
-          }
+      long diff = currentTime - manifestBuilder.getStartTimeMillis();
 
-          manifestBuilderMap.remove(key);
-          LOGGER.info(
-              "Remove ManifestBuilder with key={}, not consumed after {} sec",
+      if (diff > maxLifeCycle) {
+        Future<XmlManifest> future = manifestBuilder.getFuture();
+        if (future != null && !future.isDone()) {
+          future.cancel(true);
+          LOGGER.warn(
+              "Cancelled running ManifestBuilder with key={} after {} sec",
               key,
               TimeUnit.MILLISECONDS.toSeconds(diff));
         }
-      }
-      try {
-        Thread.sleep(CLEAN_FREQUENCY);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        LOGGER.warn(e.getMessage());
+
+        manifestBuilderMap.remove(key);
+        LOGGER.info(
+            "Removed ManifestBuilder with key={}, not consumed after {} sec",
+            key,
+            TimeUnit.MILLISECONDS.toSeconds(diff));
       }
     }
   }

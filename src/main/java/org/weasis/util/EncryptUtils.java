@@ -49,7 +49,7 @@ public class EncryptUtils {
     int kl = kChars.length;
     int ml = mChars.length;
     // If key is longer than message, take the key length for result
-    char[] newmsg = new char[kl > ml ? kl : ml];
+    char[] newmsg = new char[Math.max(kl, ml)];
 
     for (int i = 0; i < newmsg.length; i++) {
       newmsg[i] = (char) (mChars[i % ml] ^ kChars[i % kl]);
@@ -78,7 +78,7 @@ public class EncryptUtils {
     int kl = kChars.length;
     int ml = mChars.length;
     // If key is longer than message, take the key length for result
-    char[] newmsg = new char[kl > ml ? kl : ml];
+    char[] newmsg = new char[Math.max(kl, ml)];
 
     int cutMessage = -1;
     for (int i = 0; i < newmsg.length; i++) {

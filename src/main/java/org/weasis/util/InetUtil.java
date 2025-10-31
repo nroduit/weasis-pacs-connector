@@ -161,7 +161,7 @@ public class InetUtil {
   /**
    * Removes the fully qualified domain name suffix <br>
    *
-   * @param host
+   * @param host as literal IP address (IPV4/IPV6) or hostName (even in fully qualified
    * @return <b>hostName</b> in its simplest form without any unneeded SUFFIX part
    */
   private static String removeFQDN(String host) {

@@ -18,16 +18,11 @@ import static org.weasis.query.CommonQueryParams.STUDY_LEVEL;
 import static org.weasis.query.CommonQueryParams.STUDY_UID;
 
 import jakarta.servlet.ServletContext;
-import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetAddress;
-import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Properties;
@@ -73,8 +68,7 @@ public class ServletUtil {
   }
 
   public static String getFirstParameter(Object val) {
-    if (val instanceof String[]) {
-      String[] params = (String[]) val;
+    if (val instanceof String[] params) {
       if (params.length > 0) {
         return params[0];
       }
@@ -132,7 +126,7 @@ public class ServletUtil {
   }
 
   public static String getAuthorizationValue(HttpServletRequest request) {
-    String auth = null;
+    String auth;
     String tokenParams = request.getParameter("access_token");
     if (StringUtil.hasText(tokenParams)) {
       auth = "Bearer " + tokenParams;
@@ -196,7 +190,7 @@ public class ServletUtil {
   }
 
   /**
-   * @param params
+   * @param params the common query parameters
    * @param doBuildQuery if FALSE only checks if it's worth calling this function again to build the
    *     query
    * @return TRUE if building the query is required, that is calling again this function with param
@@ -352,7 +346,7 @@ public class ServletUtil {
 
   private static boolean isRequestIDAllowed(String id, Properties properties) {
     if (id != null) {
-      return Boolean.valueOf(properties.getProperty(id));
+      return Boolean.parseBoolean(properties.getProperty(id));
     }
     return false;
   }
@@ -364,10 +358,6 @@ public class ServletUtil {
   /**
    * Set port number to which the request was sent or use the IP port number of the interface on
    * which the request was received
-   *
-   * @param request
-   * @param useLocalHostPort
-   * @return
    */
   public static String getServerPort(HttpServletRequest request, boolean useLocalHostPort) {
     return useLocalHostPort
@@ -378,10 +368,6 @@ public class ServletUtil {
   /**
    * Set the host name of the server to which the request was sent, or use the canonicalHostName of
    * the local host with the fully qualified domain name is reachable
-   *
-   * @param request
-   * @param canonicalHostName
-   * @return
    */
   public static String getServerHost(HttpServletRequest request, boolean canonicalHostName) {
     if (canonicalHostName) {
@@ -445,80 +431,6 @@ public class ServletUtil {
     String wadoQueryUrl = buf.toString();
     LOGGER.debug("wadoQueryUrl = {}", wadoQueryUrl);
     return wadoQueryUrl;
-  }
-
-  public static void write(InputStream in, OutputStream out) throws IOException {
-    try {
-      copy(in, out, 2048);
-    } catch (Exception e) {
-      handleException(e);
-    } finally {
-      try {
-        in.close();
-        out.flush();
-      } catch (IOException e) {
-        // jetty 6 throws broken pipe exception here too
-        handleException(e);
-      }
-    }
-  }
-
-  private static void copy(final InputStream in, final OutputStream out, final int bufSize)
-      throws IOException {
-    final byte[] buffer = new byte[bufSize];
-    while (true) {
-      int byteCount = in.read(buffer, 0, buffer.length);
-      if (byteCount <= 0) {
-        break;
-      }
-      out.write(buffer, 0, byteCount);
-    }
-  }
-
-  private static void handleException(Exception e) {
-    Throwable throwable = e;
-    boolean ignoreException = false;
-    while (throwable != null) {
-      if (throwable instanceof SQLException) {
-        break; // leave false and quit loop
-      } else if (throwable instanceof SocketException) {
-        String message = throwable.getMessage();
-        ignoreException =
-            message != null
-                && (message.contains("Connection reset")
-                    || message.contains("Broken pipe")
-                    || message.contains("Socket closed")
-                    || message.contains("connection abort"));
-      } else {
-        ignoreException =
-            throwable.getClass().getName().contains("ClientAbortException")
-                || throwable.getClass().getName().contains("EofException");
-      }
-      if (ignoreException) {
-        break;
-      }
-      throwable = throwable.getCause();
-    }
-
-    if (!ignoreException) {
-      throw new IllegalStateException("Unable to write the response", e);
-    }
-  }
-
-  public static void write(String str, ServletOutputStream out) {
-    try {
-      byte[] bytes = str.getBytes();
-      out.write(bytes, 0, bytes.length);
-    } catch (Exception e) {
-      handleException(e);
-    } finally {
-      try {
-        out.flush();
-      } catch (IOException e) {
-        // jetty 6 throws broken pipe exception here too
-        handleException(e);
-      }
-    }
   }
 
   public static void sendResponseError(HttpServletResponse response, int code, String message) {
