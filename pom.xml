@@ -11,7 +11,7 @@
 
   <properties>
     <revision>8.0.0</revision>
-    <changelist>-SNAPSHOT</changelist>
+    <changelist></changelist>
 
     <java-version>17</java-version>
     <jdk-version>17</jdk-version>
