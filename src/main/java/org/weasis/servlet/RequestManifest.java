@@ -49,16 +49,6 @@ public class RequestManifest extends HttpServlet {
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException {
-    LOGGER.info(
-        "Received manifest request from {} with ID {}",
-        request.getRemoteAddr(),
-        request.getParameter(PARAM_ID));
-    response.setStatus(HttpServletResponse.SC_ACCEPTED);
-
-    response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1
-    response.setHeader("Pragma", "no-cache"); // HTTP 1.0
-    response.setDateHeader("Expires", -1); // Proxies
-
     String wadoXmlId = request.getParameter(PARAM_ID);
     Integer id = null;
     try {
@@ -66,6 +56,13 @@ public class RequestManifest extends HttpServlet {
     } catch (NumberFormatException e1) {
       // Do nothing
     }
+    LOGGER.info("Received manifest request from {} with ID {}", request.getRemoteAddr(), id);
+
+    response.setStatus(HttpServletResponse.SC_ACCEPTED);
+
+    response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1
+    response.setHeader("Pragma", "no-cache"); // HTTP 1.0
+    response.setDateHeader("Expires", -1); // Proxies
 
     if (id == null) {
       String errorMsg = "Missing or bad 'id' parameter in request";
