@@ -130,16 +130,10 @@ It requires a Jakarta EE 9+ compatible web application container (such as Tomcat
 
 For installation with the dcm4chee user interface, see this [page](https://nroduit.github.io/en/getting-started/dcm4chee/).
 
-Go [here](https://sourceforge.net/projects/dcm4che/files/Weasis/) and download these following files:
+Go [here](https://sourceforge.net/projects/dcm4che/files/Weasis/) and download [weasis-pacs-connector.war] in the folder weasis-pacs-connector.
 
-* From weasis-pacs-connector folder:
-	- [weasis-pacs-connector.war] Connector between the archive of images and the viewer
-* From the folder with the latest version number (Optional if you want to run only the native version installed on the client system):
-	- [weasis.war] Weasis web package which will upgrade the local installation for minor releases (all the plug-ins except the launcher).
-	- [weasis-ext.war] Optional package for additional plug-ins (e.g. exporting the images to build an ISO image for CD/DVD)
-	- [weasis-i18n.war] Optional package for [Weasis translations](https://nroduit.github.io/en/getting-started/translating/)
 
-**Note**: If Weasis is not installed on the server side, the parameter `cdb` with no value must be added to the URL (e.g. http://localhost:8080/weasis-pacs-connector/weasis?patientID=9702672&cdb) or the `weasis.base.url` property in the weasis-pacs-connector [configuration](src/main/resources/weasis-pacs-connector.properties#L53) must be commented or set to null.
+**Note**: If Weasis is not installed on the server side (only with [ViewerHub](https://weasis.org/en/viewer-hub) and weasis-native package), the parameter `cdb` with no value must be added to the URL (e.g. http://localhost:8080/weasis-pacs-connector/weasis?patientID=9702672&cdb) or the `weasis.base.url` property in the weasis-pacs-connector [configuration](src/main/resources/weasis-pacs-connector.properties#L53) must be commented or set to null.
 
 ## Configuration
 
