@@ -1,5 +1,15 @@
 # Changelog
 
+## [v8.0.0](https://github.com/nroduit/weasis-pacs-connector/tree/v8.0.0) (2025-11-07)
+
+
+[Full Changelog](https://github.com/nroduit/weasis-pacs-connector/compare/v7.1.2...v8.0.0)
+
+**Implemented enhancements:**
+
+- Can't get ML manifest with dcm4chee-arc 5.31.2 + WildFly 29.0.1 [\#47](https://github.com/nroduit/weasis-pacs-connector/issues/47)
+- Update to weasis-dicom-tools 5.34.1
+
 ## [v7.1.2](https://github.com/nroduit/weasis-pacs-connector/tree/v7.1.2) (2020-03-07)
 
 [Full Changelog](https://github.com/nroduit/weasis-pacs-connector/compare/v7.1.1...v7.1.2)
